@@ -4,6 +4,7 @@ Website học **ngữ pháp** và luyện **nghe & chép chính tả** tiếng A
 
 - 📘 **Lý thuyết**: 81 chủ điểm (8 chủ điểm đã có nội dung đầy đủ), công thức tô màu theo thành phần câu, dòng thời gian, lỗi người Việt hay mắc, ví dụ có phát âm.
 - ✍️ **Quiz ngữ pháp**: 7 dạng bài (trắc nghiệm, chia động từ, điền từ, tìm lỗi sai, viết lại câu, sắp xếp từ, nối), có giải thích ngay sau mỗi câu. Có bộ đề theo chủ điểm, theo nhóm (vd tất cả câu điều kiện) và tổng hợp theo cấp.
+- 🔤 **Bảng phiên âm IPA** (`/ipa`): 44 âm (12 nguyên âm đơn, 8 nguyên âm đôi, 24 phụ âm) với hướng dẫn khẩu hình, âm tiếng Việt gần giống, lỗi hay gặp, ghi chú Anh-Mỹ, từ ví dụ nghe được (thường & chậm), cặp từ so sánh; hướng dẫn đọc phiên âm, quy tắc đọc đuôi -s/-es, -ed và bài luyện nghe phân biệt cặp âm.
 - 🎧 **Nghe & chép** (kiểu dailydictation): nghe từng câu, gõ lại, bấm *Kiểm tra*: từ đúng hiện ra, từ sai bị che `***` để nghe lại và tự sửa. Có gợi ý từng từ, hiện đáp án, đổi tốc độ, phím tắt.
 
 Kế hoạch chi tiết: [PLAN.md](./PLAN.md).
@@ -47,7 +48,8 @@ src/
 ├── content/                # NỘI DUNG — sửa/thêm bài học ở đây
 │   ├── catalog.ts          # Danh mục 81 chủ điểm A1–C1
 │   ├── topics/             # Lý thuyết + câu hỏi cho từng chủ điểm
-│   └── dictations.ts       # Bài nghe & chép
+│   ├── dictations.ts       # Bài nghe & chép
+│   └── ipa.ts              # 44 âm IPA, hướng dẫn đọc, quy tắc đuôi -s/-ed
 ├── core/                   # Logic thuần + test: chuẩn hóa, chấm dictation, chấm quiz
 └── lib/                    # Tiến độ (localStorage), TTS, lộ trình, bộ đề
 ```

@@ -12,19 +12,21 @@ export interface VoiceOption {
   label: string;
 }
 
-function pickEnglishVoices(all: SpeechSynthesisVoice[]): SpeechSynthesisVoice[] {
+function pickEnglishVoices(all: SpeechSynthesisVoice[], prefer: "en-US" | "en-GB"): SpeechSynthesisVoice[] {
   const en = all.filter((v) => v.lang.toLowerCase().startsWith("en"));
-  // Ưu tiên giọng Mỹ, Anh, sau đó các giọng tiếng Anh khác.
+  const first = prefer.toLowerCase();
+  const second = first === "en-us" ? "en-gb" : "en-us";
+  // Ưu tiên giọng theo `prefer`, sau đó giọng Anh/Mỹ còn lại, rồi các giọng tiếng Anh khác.
   const rank = (v: SpeechSynthesisVoice) => {
-    const l = v.lang.toLowerCase();
-    let r = l.startsWith("en-us") ? 0 : l.startsWith("en-gb") ? 1 : 2;
+    const l = v.lang.toLowerCase().replace("_", "-");
+    let r = l.startsWith(first) ? 0 : l.startsWith(second) ? 1 : 2;
     if (/google|natural|neural|premium|enhanced/i.test(v.name)) r -= 0.5;
     return r;
   };
   return en.sort((a, b) => rank(a) - rank(b));
 }
 
-export function useSpeech() {
+export function useSpeech({ prefer = "en-US", storageKey = "engquiz:voice" }: { prefer?: "en-US" | "en-GB"; storageKey?: string } = {}) {
   const [supported, setSupported] = useState(true);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voiceId, setVoiceId] = useState<string>("");
@@ -38,12 +40,12 @@ export function useSpeech() {
     }
     const synth = window.speechSynthesis;
     const refresh = () => {
-      const list = pickEnglishVoices(synth.getVoices());
+      const list = pickEnglishVoices(synth.getVoices(), prefer);
       setVoices(list);
       setVoiceId((cur) => {
         if (cur && list.some((v) => v.voiceURI === cur)) return cur;
         try {
-          const saved = window.localStorage.getItem("engquiz:voice");
+          const saved = window.localStorage.getItem(storageKey);
           if (saved && list.some((v) => v.voiceURI === saved)) return saved;
         } catch {}
         return list[0]?.voiceURI ?? "";
@@ -55,14 +57,17 @@ export function useSpeech() {
       synth.removeEventListener("voiceschanged", refresh);
       synth.cancel();
     };
-  }, []);
+  }, [prefer, storageKey]);
 
-  const chooseVoice = useCallback((id: string) => {
-    setVoiceId(id);
-    try {
-      window.localStorage.setItem("engquiz:voice", id);
-    } catch {}
-  }, []);
+  const chooseVoice = useCallback(
+    (id: string) => {
+      setVoiceId(id);
+      try {
+        window.localStorage.setItem(storageKey, id);
+      } catch {}
+    },
+    [storageKey],
+  );
 
   const stop = useCallback(() => {
     if (!supported) return;

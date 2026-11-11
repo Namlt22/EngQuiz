@@ -1,4 +1,4 @@
-import { BookOpen, Headphones, House, Layers, PenLine } from "lucide-react";
+import { AudioLines, BookOpen, Headphones, House, Layers, PenLine } from "lucide-react";
 
 export const NAV_ITEMS = [
   { href: "/", label: "Trang chủ", icon: House, match: (p: string) => p === "/" },
@@ -6,4 +6,5 @@ export const NAV_ITEMS = [
   { href: "/grammar", label: "Lý thuyết", icon: BookOpen, match: (p: string) => p.startsWith("/grammar") },
   { href: "/quiz", label: "Quiz", icon: PenLine, match: (p: string) => p.startsWith("/quiz") },
   { href: "/dictation", label: "Nghe chép", icon: Headphones, match: (p: string) => p.startsWith("/dictation") },
+  { href: "/ipa", label: "Phát âm", icon: AudioLines, match: (p: string) => p.startsWith("/ipa") },
 ];

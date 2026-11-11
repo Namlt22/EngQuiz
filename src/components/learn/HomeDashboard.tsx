@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BookOpen, Flame, Headphones, PenLine, Sparkles, Star, Trophy } from "lucide-react";
+import { ArrowRight, AudioLines, BookOpen, Flame, Headphones, PenLine, Sparkles, Star, Trophy } from "lucide-react";
 import { getDictation } from "@/content/dictations";
 import { LEVELS } from "@/content/levels";
 import { getTopicContent } from "@/content/topics";
@@ -134,6 +134,18 @@ export function HomeDashboard() {
           text="Nghe từng câu, gõ lại, từ sai được che *** để bạn nghe lại và tự sửa."
         />
       </section>
+
+      <Link href="/ipa" className="card group flex items-center gap-4 p-5 transition hover:shadow-md md:p-6">
+        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white">
+          <AudioLines className="size-7" />
+        </span>
+        <div className="flex-1">
+          <h3 className="text-lg font-bold">Bảng phiên âm IPA</h3>
+          <p className="text-sm text-muted">44 âm tiếng Anh: khẩu hình, âm Việt gần giống, lỗi hay gặp, nghe mẫu và luyện phân biệt cặp âm.</p>
+        </div>
+        <span className="hidden font-mono text-2xl font-semibold text-muted sm:block">/æ/ /θ/ /ʃ/</span>
+        <ArrowRight className="size-5 text-muted transition group-hover:translate-x-1" />
+      </Link>
 
       {featuredDictation && (
         <section className="card flex flex-col items-start gap-4 p-5 md:flex-row md:items-center md:p-6">
