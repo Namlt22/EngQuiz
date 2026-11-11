@@ -58,7 +58,7 @@ export function listQuizSets(): QuizSet[] {
         level,
         title: `Tổng hợp ${level}`,
         subtitle: `${slugs.length} chủ điểm`,
-        items: interleave(slugs, 20),
+        items: interleave(slugs, 30),
       });
     }
   }

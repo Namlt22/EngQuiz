@@ -31,6 +31,20 @@ describe("topic content", () => {
         for (const q of t.questions) expect(q.explanation.length, q.id).toBeGreaterThan(5);
       });
 
+      it("có bài nghe chép đi kèm", () => {
+        expect(DICTATIONS.some((d) => d.topicSlug === t.slug), t.slug).toBe(true);
+      });
+
+      it("điền từ / chia động từ có đúng một chỗ trống; trắc nghiệm không trùng phương án", () => {
+        for (const q of t.questions) {
+          if (q.type === "verb_form" || q.type === "gap_fill") {
+            expect(q.prompt.split("___").length - 1, q.id).toBe(1);
+          }
+          if (q.type === "mcq") expect(new Set(q.options).size, q.id).toBe(q.options.length);
+          if (q.type === "error_id") expect(q.segments.filter((s) => s.underline).length, q.id).toBeGreaterThanOrEqual(2);
+        }
+      });
+
       it("đáp án hợp lệ và tự chấm đúng chính nó", () => {
         for (const q of t.questions) {
           switch (q.type) {
@@ -56,6 +70,7 @@ describe("topic content", () => {
               break;
             default:
               expect(q.answers.length, q.id).toBeGreaterThan(0);
+              for (const a of q.answers) expect(gradeQuestion(q, { type: q.type, text: a } as never), `${q.id}: ${a}`).toBe(true);
           }
         }
       });

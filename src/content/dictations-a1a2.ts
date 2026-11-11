@@ -1,0 +1,233 @@
+/**
+ * Bài nghe & chép cho các chủ điểm A1–A2 (mỗi chủ điểm một bài, 5 câu dùng đúng cấu trúc).
+ */
+import type { DictationExercise, LevelCode } from "./types";
+
+function grammar(
+  topicSlug: string,
+  level: LevelCode,
+  title: string,
+  description: string,
+  rate: number,
+  sentences: [en: string, vi: string][],
+): DictationExercise {
+  return {
+    id: topicSlug,
+    title,
+    level,
+    kind: "grammar",
+    topicSlug,
+    description,
+    rate,
+    sentences: sentences.map(([text, vi]) => ({ text, vi })),
+  };
+}
+
+export const DICTATIONS_A1_A2: DictationExercise[] = [
+  /* ---------------- A1 ---------------- */
+  grammar("pronouns", "A1", "Bạn bè quanh tôi", "Đại từ chủ ngữ và tân ngữ: I / me, he / him, they / them.", 0.8, [
+    ["I like her, and she likes me.", "Tôi quý cô ấy và cô ấy quý tôi."],
+    ["Can you help us, please?", "Bạn giúp chúng tôi được không?"],
+    ["He gives them some books.", "Anh ấy đưa cho họ vài quyển sách."],
+    ["We often play with him after school.", "Chúng tôi hay chơi với cậu ấy sau giờ học."],
+    ["They visit us every summer.", "Họ đến thăm chúng tôi mỗi mùa hè."],
+  ]),
+  grammar("possessives", "A1", "Đồ của ai?", "my, your, his, her, their và sở hữu cách 's.", 0.8, [
+    ["This is Lan's bag.", "Đây là túi của Lan."],
+    ["Their house is very big.", "Nhà của họ rất to."],
+    ["My father's car is red.", "Ô tô của bố tôi màu đỏ."],
+    ["Is that your phone?", "Kia có phải điện thoại của bạn không?"],
+    ["The cat is playing with its toy.", "Con mèo đang chơi với đồ chơi của nó."],
+  ]),
+  grammar("articles-basic", "A1", "a, an hay the?", "Nghe kỹ các mạo từ nhỏ: a, an, the.", 0.8, [
+    ["I have a dog and a cat.", "Tôi có một con chó và một con mèo."],
+    ["The dog is very friendly.", "Con chó rất thân thiện."],
+    ["She is an English teacher.", "Cô ấy là giáo viên tiếng Anh."],
+    ["We are waiting for the bus.", "Chúng tôi đang đợi xe buýt."],
+    ["I eat an apple every day.", "Mỗi ngày tôi ăn một quả táo."],
+  ]),
+  grammar("plural-nouns", "A1", "Ở chợ", "Nghe đuôi số nhiều -s / -es và danh từ bất quy tắc.", 0.8, [
+    ["There are many people at the market.", "Ở chợ có rất nhiều người."],
+    ["My mother buys two kilos of tomatoes.", "Mẹ tôi mua hai cân cà chua."],
+    ["The children are playing with the boxes.", "Bọn trẻ đang chơi với những cái hộp."],
+    ["I brush my teeth twice a day.", "Tôi đánh răng hai lần một ngày."],
+    ["Those women are my aunts.", "Những người phụ nữ kia là các cô của tôi."],
+  ]),
+  grammar("demonstratives", "A1", "Cái này, cái kia", "this / that / these / those.", 0.8, [
+    ["This is my new phone.", "Đây là điện thoại mới của tôi."],
+    ["Are those your shoes?", "Kia có phải giày của bạn không?"],
+    ["These flowers are for you.", "Những bông hoa này là dành cho bạn."],
+    ["That house over there is very old.", "Ngôi nhà đằng kia rất cũ."],
+    ["Hello, this is Nam speaking.", "Alô, Nam đây."],
+  ]),
+  grammar("some-any", "A1", "Trong tủ lạnh", "some / any với danh từ đếm được và không đếm được.", 0.8, [
+    ["There is some milk in the fridge.", "Trong tủ lạnh có một ít sữa."],
+    ["We don't have any eggs.", "Chúng ta không còn quả trứng nào."],
+    ["Would you like some tea?", "Bạn có muốn uống chút trà không?"],
+    ["Is there any bread left?", "Còn bánh mì không?"],
+    ["I need some information, please.", "Làm ơn cho tôi xin một số thông tin."],
+  ]),
+  grammar("there-is-are", "A1", "Phòng của tôi", "There is / There are — mô tả căn phòng.", 0.8, [
+    ["There is a big window in my room.", "Phòng tôi có một cửa sổ lớn."],
+    ["There are two beds and a desk.", "Có hai cái giường và một cái bàn học."],
+    ["There isn't a TV in my room.", "Phòng tôi không có TV."],
+    ["Are there any books on the shelf?", "Trên giá có quyển sách nào không?"],
+    ["There is a lamp next to the bed.", "Có một cái đèn cạnh giường."],
+  ]),
+  grammar("frequency-adverbs", "A1", "Thói quen hằng ngày", "always, usually, often, sometimes, never.", 0.8, [
+    ["I always get up at six.", "Tôi luôn dậy lúc sáu giờ."],
+    ["She is never late for class.", "Cô ấy không bao giờ đi học muộn."],
+    ["We sometimes eat out on Sundays.", "Thỉnh thoảng chúng tôi ăn ngoài vào Chủ nhật."],
+    ["How often do you play sports?", "Bạn chơi thể thao bao lâu một lần?"],
+    ["He usually walks to school.", "Cậu ấy thường đi bộ đến trường."],
+  ]),
+  grammar("simple-vs-continuous", "A1", "Mỗi ngày và ngay lúc này", "Phân biệt hiện tại đơn và hiện tại tiếp diễn khi nghe.", 0.85, [
+    ["I usually drink tea, but today I'm drinking coffee.", "Tôi thường uống trà, nhưng hôm nay tôi uống cà phê."],
+    ["Look! The children are dancing.", "Nhìn kìa! Bọn trẻ đang nhảy."],
+    ["She works in a bank.", "Cô ấy làm việc ở ngân hàng."],
+    ["They are watching a film at the moment.", "Lúc này họ đang xem phim."],
+    ["Do you know the answer?", "Bạn có biết câu trả lời không?"],
+  ]),
+  grammar("can-cant", "A1", "Bạn làm được gì?", "can / can't — chú ý can đọc nhẹ, can't đọc mạnh.", 0.8, [
+    ["I can swim, but I can't dive.", "Tôi biết bơi nhưng không biết lặn."],
+    ["Can you speak Japanese?", "Bạn có nói được tiếng Nhật không?"],
+    ["My grandmother can cook very well.", "Bà tôi nấu ăn rất giỏi."],
+    ["Can I use your pen?", "Tôi dùng bút của bạn được không?"],
+    ["Birds can fly, but penguins can't.", "Chim biết bay nhưng chim cánh cụt thì không."],
+  ]),
+  grammar("imperatives", "A1", "Lời dặn của cô giáo", "Câu mệnh lệnh, Don't, Let's.", 0.8, [
+    ["Open your books, please.", "Các em mở sách ra."],
+    ["Don't be late tomorrow.", "Ngày mai đừng đến muộn nhé."],
+    ["Let's go to the park.", "Chúng ta đi công viên đi."],
+    ["Please turn off your phone.", "Làm ơn tắt điện thoại."],
+    ["Be careful! The floor is wet.", "Cẩn thận! Sàn nhà đang ướt."],
+  ]),
+  grammar("prepositions-time-place", "A1", "Khi nào, ở đâu?", "in / on / at — giới từ rất ngắn, dễ nghe sót.", 0.8, [
+    ["I was born in 2010.", "Tôi sinh năm 2010."],
+    ["We have English on Monday.", "Chúng tôi học tiếng Anh vào thứ Hai."],
+    ["The film starts at eight o'clock.", "Phim bắt đầu lúc tám giờ."],
+    ["My keys are on the table.", "Chìa khóa của tôi ở trên bàn."],
+    ["She is at home now.", "Bây giờ cô ấy đang ở nhà."],
+  ]),
+  grammar("question-words", "A1", "Hỏi và đáp", "What, Where, When, Why, How many...", 0.8, [
+    ["What is your name?", "Tên bạn là gì?"],
+    ["Where do you live?", "Bạn sống ở đâu?"],
+    ["When is your birthday?", "Sinh nhật bạn là khi nào?"],
+    ["Why are you late?", "Sao bạn đến muộn?"],
+    ["How many brothers do you have?", "Bạn có mấy anh em trai?"],
+  ]),
+
+  /* ---------------- A2 ---------------- */
+  grammar("past-be", "A2", "Hôm qua", "was / were, wasn't / weren't.", 0.9, [
+    ["I was at home yesterday.", "Hôm qua tôi ở nhà."],
+    ["The weather was very cold.", "Thời tiết rất lạnh."],
+    ["Were you tired after the trip?", "Bạn có mệt sau chuyến đi không?"],
+    ["They weren't at school last Friday.", "Thứ Sáu tuần trước họ không đi học."],
+    ["There were many people at the concert.", "Có rất nhiều người ở buổi hòa nhạc."],
+  ]),
+  grammar("past-continuous", "A2", "Lúc tám giờ tối qua", "was / were + V-ing.", 0.9, [
+    ["At eight last night, I was doing my homework.", "Lúc tám giờ tối qua, tôi đang làm bài tập."],
+    ["My sister was watching TV.", "Em gái tôi đang xem TV."],
+    ["My parents were talking in the kitchen.", "Bố mẹ tôi đang nói chuyện trong bếp."],
+    ["It was raining heavily.", "Trời đang mưa to."],
+    ["What were you doing at that time?", "Lúc đó bạn đang làm gì?"],
+  ]),
+  grammar("past-simple-vs-continuous", "A2", "Bị cắt ngang", "Hành động đang diễn ra thì một việc khác xảy đến.", 0.9, [
+    ["I was walking home when it started to rain.", "Tôi đang đi bộ về nhà thì trời bắt đầu mưa."],
+    ["While she was cooking, the phone rang.", "Trong lúc cô ấy nấu ăn thì điện thoại reo."],
+    ["We were having dinner when the lights went out.", "Chúng tôi đang ăn tối thì mất điện."],
+    ["He broke his leg while he was playing football.", "Anh ấy gãy chân khi đang đá bóng."],
+    ["When I arrived, they were waiting for me.", "Khi tôi đến, họ đang đợi tôi."],
+  ]),
+  grammar("will-going-to", "A2", "Kế hoạch và dự đoán", "will / 'll và be going to — nghe rõ dạng rút gọn.", 0.9, [
+    ["Look at the sky! It's going to rain.", "Nhìn trời kìa! Sắp mưa rồi."],
+    ["I'm going to visit my grandparents this summer.", "Hè này tôi định về thăm ông bà."],
+    ["I think you'll pass the exam.", "Tôi nghĩ bạn sẽ đỗ kỳ thi."],
+    ["Don't worry, I'll help you.", "Đừng lo, tôi sẽ giúp bạn."],
+    ["What are you going to do tonight?", "Tối nay bạn định làm gì?"],
+  ]),
+  grammar("present-continuous-future", "A2", "Lịch hẹn", "Hiện tại tiếp diễn cho kế hoạch đã sắp xếp.", 0.9, [
+    ["I'm meeting my friends at the cinema tonight.", "Tối nay tôi gặp bạn bè ở rạp chiếu phim."],
+    ["We're flying to Da Nang on Friday.", "Thứ Sáu chúng tôi bay ra Đà Nẵng."],
+    ["What are you doing this weekend?", "Cuối tuần này bạn làm gì?"],
+    ["She's having a party next Saturday.", "Thứ Bảy tới cô ấy tổ chức tiệc."],
+    ["My parents are coming to visit next week.", "Tuần sau bố mẹ tôi đến thăm."],
+  ]),
+  grammar("present-perfect", "A2", "Bạn đã từng...?", "have / has + V3 — chú ý 've và 's rút gọn.", 0.9, [
+    ["Have you ever been to Japan?", "Bạn đã từng đến Nhật Bản chưa?"],
+    ["I've never eaten durian.", "Tôi chưa bao giờ ăn sầu riêng."],
+    ["She has just finished her homework.", "Cô ấy vừa làm xong bài tập."],
+    ["We have lived here since 2015.", "Chúng tôi sống ở đây từ năm 2015."],
+    ["Have you seen my keys?", "Bạn có thấy chìa khóa của tôi không?"],
+  ]),
+  grammar("comparatives-superlatives", "A2", "Hơn và nhất", "Nghe đuôi -er / -est, more / the most.", 0.9, [
+    ["My brother is taller than me.", "Anh trai tôi cao hơn tôi."],
+    ["This is the most beautiful beach in Vietnam.", "Đây là bãi biển đẹp nhất Việt Nam."],
+    ["Today is hotter than yesterday.", "Hôm nay nóng hơn hôm qua."],
+    ["Hanoi is bigger than Hue.", "Hà Nội lớn hơn Huế."],
+    ["It was the best day of my life.", "Đó là ngày tuyệt nhất đời tôi."],
+  ]),
+  grammar("as-as", "A2", "Bằng nhau", "as ... as, not as ... as, the same as.", 0.9, [
+    ["Lan is as tall as her mother.", "Lan cao bằng mẹ."],
+    ["This phone is not as expensive as that one.", "Điện thoại này không đắt bằng cái kia."],
+    ["He can run as fast as a horse.", "Anh ấy chạy nhanh như ngựa."],
+    ["My bag is the same as yours.", "Túi của tôi giống túi của bạn."],
+    ["Hue is not as big as Hanoi.", "Huế không lớn bằng Hà Nội."],
+  ]),
+  grammar("adverbs-manner", "A2", "Như thế nào?", "Nghe đuôi -ly của trạng từ.", 0.9, [
+    ["She sings beautifully.", "Cô ấy hát rất hay."],
+    ["Please drive carefully.", "Làm ơn lái xe cẩn thận."],
+    ["He speaks English very well.", "Anh ấy nói tiếng Anh rất giỏi."],
+    ["The children are playing happily.", "Bọn trẻ đang chơi vui vẻ."],
+    ["My father works hard every day.", "Bố tôi làm việc chăm chỉ mỗi ngày."],
+  ]),
+  grammar("quantifiers", "A2", "Bao nhiêu?", "much, many, a few, a little, a lot of.", 0.9, [
+    ["How many students are there in your class?", "Lớp bạn có bao nhiêu học sinh?"],
+    ["We don't have much time.", "Chúng ta không có nhiều thời gian."],
+    ["I have a few friends in Hanoi.", "Tôi có vài người bạn ở Hà Nội."],
+    ["Can I have a little sugar, please?", "Cho tôi xin một chút đường nhé?"],
+    ["There are a lot of people here.", "Ở đây có rất nhiều người."],
+  ]),
+  grammar("must-have-to-should", "A2", "Quy định và lời khuyên", "must, mustn't, have to, don't have to, should.", 0.9, [
+    ["You must wear a helmet.", "Bạn phải đội mũ bảo hiểm."],
+    ["Students mustn't use phones in class.", "Học sinh không được dùng điện thoại trong lớp."],
+    ["I have to get up early tomorrow.", "Ngày mai tôi phải dậy sớm."],
+    ["You don't have to pay. It's free.", "Bạn không cần trả tiền. Miễn phí mà."],
+    ["You should drink more water.", "Bạn nên uống nhiều nước hơn."],
+  ]),
+  grammar("could-would-like", "A2", "Nói lịch sự", "Could you...? / Would you like...? / I'd like...", 0.9, [
+    ["Could you help me, please?", "Bạn có thể giúp tôi được không?"],
+    ["Would you like something to drink?", "Bạn có muốn uống gì không?"],
+    ["I'd like a glass of orange juice.", "Cho tôi một cốc nước cam."],
+    ["When I was young, I could climb trees.", "Hồi nhỏ tôi biết trèo cây."],
+    ["Could I sit here?", "Tôi ngồi đây được không?"],
+  ]),
+  grammar("verb-to-ing-basic", "A2", "Sở thích và dự định", "Động từ + to V / V-ing.", 0.9, [
+    ["I enjoy reading books in the evening.", "Tôi thích đọc sách vào buổi tối."],
+    ["She wants to become a doctor.", "Cô ấy muốn trở thành bác sĩ."],
+    ["We decided to stay at home.", "Chúng tôi quyết định ở nhà."],
+    ["Have you finished doing your homework?", "Bạn làm xong bài tập chưa?"],
+    ["My brother is good at playing chess.", "Anh tôi chơi cờ vua giỏi."],
+  ]),
+  grammar("conjunctions-basic", "A2", "Nối câu", "and, but, or, because, so.", 0.9, [
+    ["I was tired, so I went to bed early.", "Tôi mệt nên đi ngủ sớm."],
+    ["She likes cats, but she doesn't like dogs.", "Cô ấy thích mèo nhưng không thích chó."],
+    ["We stayed at home because it was raining.", "Chúng tôi ở nhà vì trời mưa."],
+    ["Would you like tea or coffee?", "Bạn muốn uống trà hay cà phê?"],
+    ["He is smart and very kind.", "Anh ấy thông minh và rất tốt bụng."],
+  ]),
+  grammar("conditional-type-0", "A2", "Sự thật luôn đúng", "If + hiện tại đơn, hiện tại đơn.", 0.9, [
+    ["If you heat ice, it melts.", "Nếu bạn làm nóng đá, nó sẽ tan."],
+    ["Plants die if they don't get water.", "Cây sẽ chết nếu không có nước."],
+    ["If you mix red and white, you get pink.", "Trộn đỏ với trắng sẽ được màu hồng."],
+    ["When I drink coffee at night, I can't sleep.", "Hễ uống cà phê buổi tối là tôi không ngủ được."],
+    ["If it rains, the streets get wet.", "Hễ trời mưa là đường phố bị ướt."],
+  ]),
+  grammar("possessive-reflexive", "A2", "Của tôi, tự tôi", "mine, yours... và myself, herself...", 0.9, [
+    ["This book is mine, not yours.", "Quyển sách này là của tôi, không phải của bạn."],
+    ["Be careful! Don't hurt yourself.", "Cẩn thận! Đừng để bị thương."],
+    ["She made the cake herself.", "Cô ấy tự làm cái bánh."],
+    ["Is this house theirs?", "Ngôi nhà này có phải của họ không?"],
+    ["We enjoyed ourselves at the party.", "Chúng tôi đã rất vui ở bữa tiệc."],
+  ]),
+];

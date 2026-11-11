@@ -1,3 +1,4 @@
+import { DICTATIONS_A1_A2 } from "./dictations-a1a2";
 import type { DictationExercise, DictationKind } from "./types";
 
 export const DICTATION_KIND_LABELS: Record<DictationKind, { label: string; description: string }> = {
@@ -6,7 +7,7 @@ export const DICTATION_KIND_LABELS: Record<DictationKind, { label: string; descr
   conversation: { label: "Hội thoại", description: "Đối thoại trong tình huống hằng ngày" },
 };
 
-export const DICTATIONS: DictationExercise[] = [
+const BASE_DICTATIONS: DictationExercise[] = [
   /* ---------------- Theo chủ điểm ngữ pháp ---------------- */
   {
     id: "to-be-basics",
@@ -233,6 +234,9 @@ export const DICTATIONS: DictationExercise[] = [
     ],
   },
 ];
+
+/** Thứ tự: bài gốc trước, sau đó bài theo từng chủ điểm A1–A2; trang danh sách tự nhóm theo loại và lọc theo cấp. */
+export const DICTATIONS: DictationExercise[] = [...BASE_DICTATIONS, ...DICTATIONS_A1_A2];
 
 export function getDictation(id: string): DictationExercise | undefined {
   return DICTATIONS.find((d) => d.id === id);

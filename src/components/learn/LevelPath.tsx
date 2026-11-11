@@ -11,6 +11,8 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 export function LevelPath({ level, accent }: { level: LevelCode; accent: string }) {
   const progress = useProgress();
   const nodes = buildLevelPath(level, progress);
+  // Chỉ nhắc cách học vượt ở thẻ bị khóa đầu tiên để trang không bị lặp chữ.
+  const firstLocked = nodes.findIndex((n) => n.locked);
 
   return (
     <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -56,7 +58,7 @@ export function LevelPath({ level, accent }: { level: LevelCode; accent: string 
                 <span className="ml-auto text-xs font-semibold text-muted">{mastery}%</span>
               </div>
               <ProgressBar value={mastery} className="mt-2 h-1.5" barClassName={accent} />
-              {n.locked && (
+              {n.locked && i === firstLocked && (
                 <p className="mt-2 text-xs text-muted">Nên học chủ điểm trước. Làm quiz đạt ≥ {PASS_PERCENT}% để học vượt.</p>
               )}
             </Link>
