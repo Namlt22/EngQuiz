@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------- Design tokens (PLAN.md mục 7.2) ---------- */
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --fg: #0f172a;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --primary: #4f46e5;
+  --primary-fg: #ffffff;
+  --primary-soft: #eef2ff;
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+
+  /* Màu thành phần câu trong công thức */
+  --role-subject: #2563eb;
+  --role-aux: #7c3aed;
+  --role-verb: #16a34a;
+  --role-object: #64748b;
+}
+
+.dark {
+  --bg: #0b1120;
+  --surface: #131c2e;
+  --surface-2: #1c2639;
+  --fg: #f1f5f9;
+  --muted: #94a3b8;
+  --line: #26324a;
+  --primary: #818cf8;
+  --primary-fg: #0b1120;
+  --primary-soft: #1e1b4b;
+  --success: #4ade80;
+  --success-soft: #052e16;
+  --danger: #f87171;
+  --danger-soft: #450a0a;
+  --warning: #fbbf24;
+  --warning-soft: #422006;
+
+  --role-subject: #60a5fa;
+  --role-aux: #a78bfa;
+  --role-verb: #4ade80;
+  --role-object: #94a3b8;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+  --color-primary-soft: var(--primary-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-role-subject: var(--role-subject);
+  --color-role-aux: var(--role-aux);
+  --color-role-verb: var(--role-verb);
+  --color-role-object: var(--role-object);
+
+  --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+@utility card {
+  @apply rounded-2xl border border-line bg-surface shadow-sm;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition
+    focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary
+    disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-primary text-primary-fg shadow-sm hover:brightness-110 active:scale-[0.98];
+}
+@utility btn-ghost {
+  @apply btn border border-line bg-surface text-fg hover:bg-surface-2;
+}
+@utility btn-success {
+  @apply btn bg-success text-white hover:brightness-110 dark:text-bg;
+}
+@utility chip {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+}
+@utility input {
+  @apply w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-fg outline-none transition
+    placeholder:text-muted focus:border-primary focus:ring-4 focus:ring-primary/15;
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+.animate-pop-in { animation: pop-in 0.25s ease-out both; }
+.animate-shake { animation: shake 0.3s ease-in-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -664,10 +664,27 @@ engquiz/
 
 ---
 
-## 15. Quyết định còn mở
+## 15. Quyết định đã chốt & trạng thái
 
-1. **Mức độ "dễ dãi" khi chấm dictation:** có tính dấu câu và hoa/thường không? Lỗi gõ sai 1 ký tự được bao nhiêu điểm? *(Đề xuất ở mục 5.5, cần chốt.)*
-2. **Bắt buộc học theo thứ tự hay mở tự do?** Đề xuất: khóa nhẹ, gợi ý thứ tự nhưng cho phép nhảy cóc nếu làm bài kiểm tra nhanh đạt ≥ 80%.
-3. **Có cần đăng nhập để học không?** Đề xuất: đọc lý thuyết không cần đăng nhập (tốt cho SEO và thu hút); làm quiz/nghe–chép cần đăng nhập để lưu tiến độ (cho làm thử 1 bộ không cần đăng nhập).
-4. **Hạ tầng:** Vercel + Neon (nhanh, ít vận hành) hay VPS + Docker (rẻ hơn khi lớn)?
-5. **Tên thương hiệu & linh vật.**
+| # | Nội dung | Quyết định |
+|---|---|---|
+| 1 | Chấm dictation | Theo kiểu **dailydictation.com**: chép từng câu, kiểm tra → từ sai bị che `***`, sửa đến khi đúng; có gợi ý từng từ / hiện đáp án / bỏ qua. Bỏ qua dấu câu và hoa/thường; sai 1 ký tự ở từ dài = gần đúng (nửa điểm); sai đuôi ngữ pháp = sai. Điểm câu tính ở lần kiểm tra đầu. |
+| 2 | Thứ tự học | Khóa nhẹ: gợi ý thứ tự, cho học vượt khi quiz chủ điểm đạt ≥ 80%. |
+| 3 | Đăng nhập | Lý thuyết không cần đăng nhập. (Giai đoạn local: chưa có tài khoản, tiến độ lưu localStorage.) |
+| 4 | Hạ tầng | Lên kế hoạch sau. |
+| 5 | Thương hiệu | Lên kế hoạch sau; tạm dùng logo chữ "EngQuiz". |
+
+### Giai đoạn local (đã triển khai)
+Để chạy được ngay trên máy không cần cài đặt thêm, bản đầu tiên đơn giản hóa so với mục 8:
+- **Một ứng dụng Next.js** (chưa tách monorepo); logic thuần nằm ở `src/core` kèm unit test.
+- **Nội dung lưu dạng file TypeScript** trong `src/content` (chưa có DB/CMS).
+- **Tiến độ lưu localStorage** (chưa có tài khoản).
+- **Âm thanh dùng Web Speech API** của trình duyệt (chưa tạo file TTS).
+
+Đã có: 81 chủ điểm trong danh mục, 8 chủ điểm đầy đủ (to be, hiện tại đơn, hiện tại tiếp diễn, quá khứ đơn, điều kiện loại 1/2/3, bị động), 80 câu quiz đủ 7 dạng, 13 bài nghe chép (theo chủ điểm, truyện ngắn, hội thoại).
+
+### Bước tiếp theo
+1. Bổ sung nội dung A1–B1 (52 chủ điểm).
+2. Bài kiểm tra xếp lớp & kiểm tra cuối cấp; chế độ "Kiểm tra" có đếm giờ cho quiz.
+3. Ôn tập ngắt quãng (SRS) cho câu sai.
+4. Backend (PostgreSQL + Prisma), tài khoản, CMS, audio TTS tạo sẵn.
