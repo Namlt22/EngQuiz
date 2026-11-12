@@ -41,7 +41,17 @@ npm run dev
 
 Mở http://localhost:3000. Nếu cổng khác 3000, sửa `AUTH_URL` trong `.env` cho khớp.
 
-**Đăng nhập khi dev:** để trống `EMAIL_SERVER` thì link đăng nhập được **in ra terminal** chạy `npm run dev` thay vì gửi email. Muốn gửi email thật, điền `EMAIL_SERVER` (dạng `smtp://user:pass@host:587`) và `EMAIL_FROM`. Nút Google chỉ hiện khi có `AUTH_GOOGLE_ID` và `AUTH_GOOGLE_SECRET`.
+**Đăng nhập khi dev:** để trống `EMAIL_SERVER` thì link đăng nhập được **in ra terminal** chạy `npm run dev` thay vì gửi email. Nút Google chỉ hiện khi có `AUTH_GOOGLE_ID` và `AUTH_GOOGLE_SECRET`.
+
+### Gửi email đăng nhập (ví dụ Gmail)
+
+1. Bật xác minh 2 bước cho tài khoản Google, rồi tạo **Mật khẩu ứng dụng** (App password) tại https://myaccount.google.com/apppasswords — được chuỗi 16 ký tự.
+2. Sửa `.env` (thay `@` trong email bằng `%40`, bỏ dấu cách trong mật khẩu ứng dụng):
+   ```
+   EMAIL_SERVER=smtps://ten.ban%40gmail.com:matkhauungdung16kytu@smtp.gmail.com:465
+   EMAIL_FROM=EngQuiz <ten.ban@gmail.com>
+   ```
+3. Khởi động lại `npm run dev`. Dịch vụ khác (Brevo, Resend SMTP, Mailgun…) dùng cùng định dạng `smtp(s)://user:pass@host:port`.
 
 | Lệnh | Tác dụng |
 |---|---|
