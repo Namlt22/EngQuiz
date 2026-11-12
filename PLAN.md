@@ -681,10 +681,10 @@ engquiz/
 - **Tiến độ lưu localStorage** (chưa có tài khoản).
 - **Âm thanh dùng Web Speech API** của trình duyệt (chưa tạo file TTS).
 
-Đã có: 81 chủ điểm trong danh mục; **A1 (16/16) và A2 (18/18) đầy đủ**, cùng 3 chủ điểm B1–B2 (điều kiện loại 2/3, bị động) — tổng 37 chủ điểm, 322 câu quiz đủ 7 dạng, 42 bài nghe chép (mỗi chủ điểm một bài + truyện ngắn, hội thoại); bảng phiên âm IPA 44 âm.
+Đã có: 81 chủ điểm trong danh mục; **A1 (16/16), A2 (18/18) và B1 (18/18) đầy đủ**, cùng 1 chủ điểm B2 (điều kiện loại 3) — tổng 53 chủ điểm, 472 câu quiz đủ 7 dạng, 58 bài nghe chép (mỗi chủ điểm một bài + truyện ngắn, hội thoại); bảng phiên âm IPA 44 âm. Nội dung MVP A1–B1 (mục 11, giai đoạn 1) đã hoàn tất.
 
 ### Bước tiếp theo
-1. Bổ sung nội dung B1 (còn 16 chủ điểm), rồi B2–C1.
+1. Bổ sung nội dung B2 (còn 16 chủ điểm), rồi C1.
 2. Bài kiểm tra xếp lớp & kiểm tra cuối cấp; chế độ "Kiểm tra" có đếm giờ cho quiz.
 3. Ôn tập ngắt quãng (SRS) cho câu sai.
 4. Backend (PostgreSQL + Prisma), tài khoản, CMS, audio TTS tạo sẵn.

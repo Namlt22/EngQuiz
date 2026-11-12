@@ -2,7 +2,7 @@
 
 Website học **ngữ pháp** và luyện **nghe & chép chính tả** tiếng Anh theo lộ trình **A1 → C1**.
 
-- 📘 **Lý thuyết**: 81 chủ điểm; A1 và A2 đã đầy đủ (37 chủ điểm có nội dung), công thức tô màu theo thành phần câu, dòng thời gian, lỗi người Việt hay mắc, ví dụ có phát âm.
+- 📘 **Lý thuyết**: 81 chủ điểm; A1, A2 và B1 đã đầy đủ (53 chủ điểm có nội dung, 472 câu quiz), công thức tô màu theo thành phần câu, dòng thời gian, lỗi người Việt hay mắc, ví dụ có phát âm.
 - ✍️ **Quiz ngữ pháp**: 7 dạng bài (trắc nghiệm, chia động từ, điền từ, tìm lỗi sai, viết lại câu, sắp xếp từ, nối), có giải thích ngay sau mỗi câu. Có bộ đề theo chủ điểm, theo nhóm (vd tất cả câu điều kiện) và tổng hợp theo cấp.
 - 🔤 **Bảng phiên âm IPA** (`/ipa`): 44 âm (12 nguyên âm đơn, 8 nguyên âm đôi, 24 phụ âm) với hướng dẫn khẩu hình, âm tiếng Việt gần giống, lỗi hay gặp, ghi chú Anh-Mỹ, từ ví dụ nghe được (thường & chậm), cặp từ so sánh; hướng dẫn đọc phiên âm, quy tắc đọc đuôi -s/-es, -ed và bài luyện nghe phân biệt cặp âm.
 - 🎧 **Nghe & chép** (kiểu dailydictation): nghe từng câu, gõ lại, bấm *Kiểm tra*: từ đúng hiện ra, từ sai bị che `***` để nghe lại và tự sửa. Có gợi ý từng từ, hiện đáp án, đổi tốc độ, phím tắt.
@@ -61,7 +61,7 @@ src/
 2. Đăng ký trong `src/content/topics/index.ts`.
 3. Chạy `npm test`: test nội dung sẽ báo nếu đáp án không hợp lệ (vd từ trong câu sắp xếp không khớp, chỉ số đáp án sai).
 
-**Thêm một bài nghe chép:** thêm vào `src/content/dictations.ts` (truyện, hội thoại) hoặc `src/content/dictations-a1a2.ts` (theo chủ điểm). Test yêu cầu mỗi chủ điểm có ít nhất một bài nghe chép. Gắn `topicSlug` để bài nghe được tính vào tiến độ của chủ điểm.
+**Thêm một bài nghe chép:** thêm vào `src/content/dictations.ts` (truyện, hội thoại) hoặc `src/content/dictations-a1a2.ts` / `dictations-b1.ts` (theo chủ điểm). Test yêu cầu mỗi chủ điểm có ít nhất một bài nghe chép. Gắn `topicSlug` để bài nghe được tính vào tiến độ của chủ điểm.
 
 ## Quy tắc chấm Nghe & chép
 
