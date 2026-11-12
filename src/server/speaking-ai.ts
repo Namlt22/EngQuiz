@@ -1,16 +1,17 @@
 /**
  * Gọi Claude để chấm và sửa câu trả lời nói tự do (chỉ chạy ở server — khóa API không bao giờ xuống trình duyệt).
  *
- * - Structured outputs (betaZodOutputFormat) bắt Claude trả đúng dạng JSON của feedbackModelSchema.
- * - Server-side fallback ("default"): nếu bộ lọc an toàn từ chối nhầm, API tự chạy lại trên model dự phòng.
+ * - Model: Claude Haiku 5.5 — nhanh và rẻ (~$0.10 / $0.50 mỗi triệu token vào / ra), đủ tốt cho việc chấm và sửa câu ngắn.
+ *   Haiku không có server-side fallback: khi bộ lọc an toàn từ chối, trả AiRefusedError để người học nói lại.
+ * - Structured outputs (zodOutputFormat) bắt Claude trả đúng dạng JSON của feedbackModelSchema.
  * - Transcript là dữ liệu do người dùng nói ra → bọc trong thẻ và dặn model không làm theo lệnh bên trong.
  */
 import Anthropic from "@anthropic-ai/sdk";
-import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import type { SpeakingPrompt } from "@/content/speaking-prompts";
 import { feedbackModelSchema, normalizeFeedback, type CefrLevel, type SpeakingFeedback } from "@/lib/speaking-feedback";
 
-const MODEL = "claude-opus-5-5";
+const MODEL = "claude-haiku-5-5";
 /** Đủ cho JSON chấm bài (~1–1,5 nghìn token) + phần suy nghĩ ngắn ở effort "low"; chặn việc bị dùng để sinh văn bản dài. */
 const MAX_TOKENS = 4000;
 const REQUEST_TIMEOUT_MS = 60_000;
@@ -94,13 +95,11 @@ export async function getSpeakingFeedback(input: {
 
   let response;
   try {
-    response = await getClient(key).beta.messages.parse({
+    response = await getClient(key).messages.parse({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
       system: SYSTEM_PROMPT,
-      output_config: { effort: "low", format: betaZodOutputFormat(feedbackModelSchema) },
+      output_config: { effort: "low", format: zodOutputFormat(feedbackModelSchema) },
       messages: [{ role: "user", content: userMessage(input.prompt, input.transcript, input.seconds, input.level) }],
     });
   } catch (e) {

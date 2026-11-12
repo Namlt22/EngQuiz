@@ -63,7 +63,7 @@ Mở http://localhost:3000. Nếu cổng khác 3000, sửa `AUTH_URL` trong `.en
    ```
    Dùng tên biến riêng này (không phải `ANTHROPIC_API_KEY`) để EngQuiz không tiêu nhầm khóa của công cụ khác có sẵn trên máy.
 
-Mỗi lượt chấm gọi Claude Opus 5.5 một lần (khoảng 2–3 nghìn token, cỡ vài trăm đồng). Để giới hạn chi phí: phải đăng nhập mới dùng được, mỗi người tối đa 10 lượt / 10 phút và 60 lượt / ngày, chỉ chấm các đề có sẵn của lộ trình. Bỏ trống khóa thì phần **đọc theo câu mẫu** vẫn dùng bình thường (không cần AI).
+Mỗi lượt chấm gọi Claude Haiku 5.5 một lần (khoảng 2–3 nghìn token, chưa tới 50 đồng). Muốn nhận xét kỹ hơn thì đổi `MODEL` trong `src/server/speaking-ai.ts` sang `claude-opus-5-5` (chậm hơn, đắt hơn khoảng 40 lần). Để giới hạn chi phí: phải đăng nhập mới dùng được, mỗi người tối đa 10 lượt / 10 phút và 60 lượt / ngày, chỉ chấm các đề có sẵn của lộ trình. Bỏ trống khóa thì phần **đọc theo câu mẫu** vẫn dùng bình thường (không cần AI).
 
 > Nhận dạng giọng nói dùng Web Speech API: chạy trên **Chrome, Edge** (máy tính, Android) và **Safari** (iPhone/iPad); Firefox chưa hỗ trợ. Chrome/Edge gửi âm thanh lên máy chủ Google/Microsoft để nhận dạng nên cần Internet. Micro chỉ dùng được trên **HTTPS hoặc localhost**.
 
