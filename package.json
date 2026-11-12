@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "postinstall": "prisma generate",
     "setup:env": "node scripts/setup-env.mjs",
+    "setup:lan": "node scripts/setup-lan.mjs",
     "db:up": "docker compose up -d",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",

@@ -53,6 +53,23 @@ Mở http://localhost:3000. Nếu cổng khác 3000, sửa `AUTH_URL` trong `.en
    ```
 3. Khởi động lại `npm run dev`. Dịch vụ khác (Brevo, Resend SMTP, Mailgun…) dùng cùng định dạng `smtp(s)://user:pass@host:port`.
 
+### Dùng từ máy khác trong cùng mạng (Wi-Fi/LAN)
+
+1. Đặt `AUTH_URL` thành IP LAN của máy chạy server (tự tìm IP, giữ cổng đang dùng):
+   ```bash
+   npm run setup:lan
+   ```
+   Có thể chỉ định IP: `npm run setup:lan -- 192.168.1.10`; quay về chỉ dùng máy này: `npm run setup:lan -- localhost`.
+2. Khởi động lại `npm run dev`.
+3. Mở cổng trên Windows Firewall (PowerShell **Run as administrator**, làm 1 lần; đổi `3001` theo cổng của bạn):
+   ```powershell
+   New-NetFirewallRule -DisplayName "EngQuiz 3001" -Direction Inbound -Protocol TCP -LocalPort 3001 -Action Allow -Profile Private
+   ```
+   Mạng Wi-Fi phải đặt là **Private** (Settings → Network → Wi-Fi → Network profile type).
+4. Máy khác mở `http://<IP>:<cổng>` (lệnh ở bước 1 in sẵn địa chỉ).
+
+Ghi chú: link trong email đăng nhập luôn trỏ về `AUTH_URL`; nếu router đổi IP của máy (DHCP), chạy lại `npm run setup:lan`. Postgres vẫn chỉ mở cho máy chạy server; máy khác không truy cập trực tiếp database.
+
 | Lệnh | Tác dụng |
 |---|---|
 | `npm run dev` | Chạy chế độ phát triển |

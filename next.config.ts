@@ -12,8 +12,22 @@ const SECURITY_HEADERS = [
   { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=()" },
 ];
 
+/**
+ * Dev server chặn tài nguyên dev (HMR, chunk) khi trang được mở bằng hostname khác `localhost`.
+ * Cho phép thêm hostname trong AUTH_URL — vd IP LAN do `npm run setup:lan` đặt — để máy khác cùng mạng dùng được.
+ */
+function devOriginsFromAuthUrl(): string[] {
+  try {
+    const host = new URL(process.env.AUTH_URL ?? "").hostname;
+    return host && host !== "localhost" ? [host] : [];
+  } catch {
+    return [];
+  }
+}
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  allowedDevOrigins: devOriginsFromAuthUrl(),
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
   },
