@@ -29,7 +29,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   allowedDevOrigins: devOriginsFromAuthUrl(),
   async headers() {
-    return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+    const AUDIO_CACHE_SECONDS = 7 * 24 * 60 * 60;
+    return [
+      { source: "/:path*", headers: SECURITY_HEADERS },
+      // File ghi âm không đổi nội dung: cho trình duyệt giữ 7 ngày, không hỏi lại server mỗi lần bấm nghe.
+      { source: "/audio/:path*", headers: [{ key: "Cache-Control", value: `public, max-age=${AUDIO_CACHE_SECONDS}` }] },
+    ];
   },
 };
 

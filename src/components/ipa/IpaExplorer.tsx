@@ -22,7 +22,20 @@ const usePlaySound = () => useContext(PlaySoundCtx);
 
 function useSoundPlayer(speak: Speak): PlaySound {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  useEffect(() => () => audioRef.current?.pause(), []);
+  // Mỗi âm một <audio> dùng lại: tải và giải mã sẵn từ lúc mở trang (36 file ≈ 0,5 MB), bấm là phát ngay.
+  const cacheRef = useRef(new Map<string, HTMLAudioElement>());
+
+  useEffect(() => {
+    const cache = cacheRef.current;
+    for (const r of IPA_RECORDINGS) {
+      const src = ipaAudioSrc(r.id);
+      if (!src || cache.has(r.id)) continue;
+      const audio = new Audio(src);
+      audio.preload = "auto";
+      cache.set(r.id, audio);
+    }
+    return () => audioRef.current?.pause();
+  }, []);
 
   return useCallback(
     (sound: IpaSound) => {
@@ -31,8 +44,9 @@ function useSoundPlayer(speak: Speak): PlaySound {
       const src = ipaAudioSrc(sound.id);
       if (!src) return sayExample();
 
-      window.speechSynthesis?.cancel();
-      const audio = new Audio(src);
+      if (window.speechSynthesis?.speaking) window.speechSynthesis.cancel();
+      const audio = cacheRef.current.get(sound.id) ?? new Audio(src);
+      audio.currentTime = 0;
       audioRef.current = audio;
       audio.play().catch((err: unknown) => {
         // AbortError: người dùng bấm âm khác khi file này đang tải — không phải lỗi.

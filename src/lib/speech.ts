@@ -12,15 +12,21 @@ export interface VoiceOption {
   label: string;
 }
 
-function pickEnglishVoices(all: SpeechSynthesisVoice[], prefer: "en-US" | "en-GB"): SpeechSynthesisVoice[] {
+/** Đẩy mọi giọng online xuống sau mọi giọng offline (hạng ngôn ngữ chỉ chạy 0–2). */
+const ONLINE_VOICE_PENALTY = 10;
+
+export function pickEnglishVoices(all: SpeechSynthesisVoice[], prefer: "en-US" | "en-GB"): SpeechSynthesisVoice[] {
   const en = all.filter((v) => v.lang.toLowerCase().startsWith("en"));
   const first = prefer.toLowerCase();
   const second = first === "en-us" ? "en-gb" : "en-us";
-  // Ưu tiên giọng theo `prefer`, sau đó giọng Anh/Mỹ còn lại, rồi các giọng tiếng Anh khác.
+  // Giọng offline (cài trên máy) đứng trước: phát gần như tức thì. Giọng online (Google…, Microsoft …Natural trên Edge)
+  // hay hơn nhưng mỗi câu phải gửi lên server và chờ tải âm thanh về (trễ 0,3–1,5 giây) → để người dùng tự chọn.
+  // Trong mỗi nhóm: giọng theo `prefer`, rồi giọng Anh/Mỹ còn lại, rồi các giọng tiếng Anh khác; giọng chất lượng cao lên trước.
   const rank = (v: SpeechSynthesisVoice) => {
     const l = v.lang.toLowerCase().replace("_", "-");
     let r = l.startsWith(first) ? 0 : l.startsWith(second) ? 1 : 2;
     if (/google|natural|neural|premium|enhanced/i.test(v.name)) r -= 0.5;
+    if (!v.localService) r += ONLINE_VOICE_PENALTY;
     return r;
   };
   return en.sort((a, b) => rank(a) - rank(b));
@@ -79,7 +85,8 @@ export function useSpeech({ prefer = "en-US", storageKey = "engquiz:voice" }: { 
     (text: string, rate = 1) => {
       if (!supported) return;
       const synth = window.speechSynthesis;
-      synth.cancel();
+      // Chỉ hủy khi đang có câu đọc dở: gọi cancel() liền trước speak() làm Chrome khởi động lại engine, trễ thêm.
+      if (synth.speaking || synth.pending) synth.cancel();
       const u = new SpeechSynthesisUtterance(text);
       const voice = voices.find((v) => v.voiceURI === voiceId);
       if (voice) {
@@ -100,7 +107,7 @@ export function useSpeech({ prefer = "en-US", storageKey = "engquiz:voice" }: { 
 
   const voiceOptions: VoiceOption[] = voices.map((v) => ({
     id: v.voiceURI,
-    label: `${v.name.replace(/^(Microsoft|Google)\s*/i, "")} (${v.lang})`,
+    label: `${v.name.replace(/^(Microsoft|Google)\s*/i, "")} (${v.lang})${v.localService ? "" : " · online, chậm hơn"}`,
   }));
 
   return { supported, speaking, speak, stop, voiceOptions, voiceId, chooseVoice };
