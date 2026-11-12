@@ -12,6 +12,7 @@
     "postinstall": "prisma generate",
     "setup:env": "node scripts/setup-env.mjs",
     "setup:lan": "node scripts/setup-lan.mjs",
+    "dev:lan": "node scripts/dev-lan.mjs",
     "db:up": "docker compose up -d",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
@@ -19,6 +20,7 @@
     "email:check": "node scripts/check-email.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
     "@auth/prisma-adapter": "2.11.3",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
@@ -40,6 +42,7 @@
     "@types/react-dom": "19.2.3",
     "dotenv": "18.0.9",
     "prisma": "7.10.1",
+    "selfsigned": "^5.5.0",
     "tailwindcss": "4.1.18",
     "typescript": "5.9.3",
     "vitest": "4.1.12"

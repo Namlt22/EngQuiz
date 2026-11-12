@@ -32,10 +32,13 @@ function mergeDictation(a?: DictationProgress, b?: DictationProgress): Dictation
 
 export function mergeProgress(a: ProgressState, b: ProgressState): ProgressState {
   const later = (a.lastActiveDate ?? "") >= (b.lastActiveDate ?? "") ? a : b;
+  const speaking = mergeKeys(a.speaking ?? {}, b.speaking ?? {}, mergeDictation);
   return {
     version: 1,
     topics: mergeKeys(a.topics, b.topics, mergeTopic),
     dictations: mergeKeys(a.dictations, b.dictations, mergeDictation),
+    // Bỏ trường khi rỗng để bản gộp trùng khớp với bản cũ chưa có luyện nói.
+    ...(Object.keys(speaking).length ? { speaking } : {}),
     xp: Math.max(a.xp, b.xp),
     streak: later.streak,
     ...(later.lastActiveDate ? { lastActiveDate: later.lastActiveDate } : {}),

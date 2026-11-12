@@ -12,6 +12,7 @@ import { readJson, writeJson } from "./local-json";
 export * from "./progress-calc";
 
 const KEY = "engquiz:progress:v1";
+const SPEAKING_XP_PER_SENTENCE = 3;
 const EMPTY: ProgressState = { version: 1, topics: {}, dictations: {}, xp: 0, streak: 0, activity: {} };
 
 let state: ProgressState = EMPTY;
@@ -106,6 +107,25 @@ export const progressActions = {
         }));
       }
       return withXp(next, Math.round((percent / 100) * total * 3));
+    });
+  },
+
+  /**
+   * Đọc theo câu mẫu: lưu điểm trung bình cao nhất và số câu đạt nhiều nhất của bộ câu.
+   * XP chỉ cộng phần số câu đạt VƯỢT con số đã lưu — tải lại trang rồi đọc lại câu cũ không được cộng lần nữa.
+   */
+  recordSpeaking(setId: string, percent: number, passedCount: number, total: number) {
+    update((s) => {
+      const prev = s.speaking?.[setId];
+      const prevDone = prev?.done ?? 0;
+      const next: ProgressState = {
+        ...s,
+        speaking: {
+          ...s.speaking,
+          [setId]: { best: Math.max(prev?.best ?? 0, percent), done: Math.max(prevDone, passedCount), total },
+        },
+      };
+      return withXp(next, Math.max(0, passedCount - prevDone) * SPEAKING_XP_PER_SENTENCE);
     });
   },
 

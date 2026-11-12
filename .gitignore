@@ -12,3 +12,6 @@ coverage/
 
 # Prisma client sinh tự động
 /src/generated/
+
+# Chứng chỉ HTTPS tự ký cho mạng LAN (npm run setup:lan)
+/certificates/

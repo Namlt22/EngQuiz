@@ -20,6 +20,7 @@ export const LIMITS = {
   keyLength: 100,
   topics: 200,
   dictations: 500,
+  speaking: 500,
   /** Số ngày hoạt động giữ lại (~10 năm); client cắt bớt ngày cũ nhất trước khi gửi. */
   activityDays: 3660,
   logEntries: 400,
@@ -54,10 +55,15 @@ export const topicProgressSchema = z.strictObject({
   dictationBest: percent.optional(),
 });
 
+/** Điểm cao nhất của một bộ câu (nghe chép, đọc theo câu mẫu). */
+const setScoreSchema = z.strictObject({ best: percent, done: count, total: count });
+
 export const progressSchema = z.strictObject({
   version: z.literal(1),
   topics: boundedRecord(key, topicProgressSchema, LIMITS.topics),
-  dictations: boundedRecord(key, z.strictObject({ best: percent, done: count, total: count }), LIMITS.dictations),
+  dictations: boundedRecord(key, setScoreSchema, LIMITS.dictations),
+  // Tùy chọn: client và bản ghi cũ (trước khi có luyện nói) không gửi trường này.
+  speaking: boundedRecord(key, setScoreSchema, LIMITS.speaking).optional(),
   xp: z.number().int().min(0).max(LIMITS.maxXp),
   streak: z.number().int().min(0).max(100_000),
   lastActiveDate: dateKey.optional(),

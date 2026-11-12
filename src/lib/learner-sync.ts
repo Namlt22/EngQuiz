@@ -56,6 +56,7 @@ export function isBlank(d: LearnerData): boolean {
     p.xp === 0 &&
     Object.keys(p.topics).length === 0 &&
     Object.keys(p.dictations).length === 0 &&
+    Object.keys(p.speaking ?? {}).length === 0 &&
     d.roadmap === null &&
     Object.values(log).every((r) => Object.keys(r).length === 0)
   );

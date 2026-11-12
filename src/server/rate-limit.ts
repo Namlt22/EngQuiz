@@ -29,5 +29,10 @@ export function createRateLimiter({ limit, windowMs }: { limit: number; windowMs
       windows.set(key, { count: w.count + 1, resetAt: w.resetAt });
       return true;
     },
+    /** Trả lại một lượt đã tính (vd khi yêu cầu thất bại không do người dùng). */
+    refund(key: string, now = Date.now()): void {
+      const w = windows.get(key);
+      if (w && w.resetAt > now && w.count > 0) windows.set(key, { count: w.count - 1, resetAt: w.resetAt });
+    },
   };
 }

@@ -15,8 +15,8 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       aria-label="Điều hướng"
     >
-      <ul className="grid grid-cols-7">
-        {NAV_ITEMS.map(({ href, label, icon: Icon, match }) => {
+      <ul className="grid grid-cols-8">
+        {NAV_ITEMS.map(({ href, label, short, icon: Icon, match }) => {
           const active = match(pathname);
           return (
             <li key={href}>
@@ -27,7 +27,7 @@ export function BottomNav() {
                 }`}
               >
                 <Icon className="size-5" strokeWidth={active ? 2.5 : 2} />
-                {label}
+                {short ?? label}
               </Link>
             </li>
           );

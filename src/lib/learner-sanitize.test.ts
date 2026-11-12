@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sanitizeLearnerData, sanitizeProgress } from "./learner-sanitize";
-import { learnerDataSchema, learnerPutSchema } from "./learner-schema";
+import { learnerDataSchema, learnerPutSchema, progressSchema } from "./learner-schema";
+import { mergeProgress } from "./learner-merge";
 import { safeCallback } from "./safe-callback";
 import { EMPTY_LOG } from "./roadmap";
 
@@ -67,5 +68,29 @@ describe("safeCallback", () => {
     [undefined, "/roadmap"],
   ])("%s → %s", (input, expected) => {
     expect(safeCallback(input)).toBe(expected);
+  });
+});
+
+describe("tiến độ luyện nói (speaking)", () => {
+  const base = { version: 1, topics: {}, dictations: {}, xp: 0, streak: 0, activity: {} };
+
+  it("bản cũ chưa có speaking vẫn hợp lệ và không bị thêm trường rỗng", () => {
+    expect(progressSchema.safeParse(base).success).toBe(true);
+    expect(sanitizeProgress(base)).not.toHaveProperty("speaking");
+  });
+
+  it("giữ mục hợp lệ, bỏ mục sai", () => {
+    const p = sanitizeProgress({ ...base, speaking: { a: { best: 90, done: 4, total: 5 }, b: { best: 200 }, constructor: { best: 1 } } });
+    expect(p.speaking).toEqual({ a: { best: 90, done: 4, total: 5 } });
+    expect(progressSchema.safeParse({ ...base, speaking: { x: { best: 101, done: 0, total: 0 } } }).success).toBe(false);
+  });
+
+  it("gộp hai máy: lấy điểm cao nhất mỗi bộ câu", () => {
+    const merged = mergeProgress(
+      { ...base, version: 1, speaking: { a: { best: 60, done: 3, total: 5 } } },
+      { ...base, version: 1, speaking: { a: { best: 85, done: 4, total: 5 }, b: { best: 40, done: 1, total: 4 } } },
+    );
+    expect(merged.speaking).toEqual({ a: { best: 85, done: 4, total: 5 }, b: { best: 40, done: 1, total: 4 } });
+    expect(mergeProgress({ ...base, version: 1 }, { ...base, version: 1 })).not.toHaveProperty("speaking");
   });
 });

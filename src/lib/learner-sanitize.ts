@@ -51,6 +51,9 @@ export function sanitizeProgress(raw: unknown): ProgressState {
     activity: pick(r.activity, Number.MAX_SAFE_INTEGER, (v) => clampInt(v, LIMITS.maxXp), (k) => keepDays.has(k)),
   };
   if (typeof r.lastActiveDate === "string" && isDate(r.lastActiveDate)) state.lastActiveDate = r.lastActiveDate;
+  // Chỉ thêm khi có dữ liệu: bản cũ không có trường này, thêm {} sẽ làm bộ đồng bộ tưởng dữ liệu đã đổi.
+  const speaking = pick(r.speaking, LIMITS.speaking, cleanDictation);
+  if (Object.keys(speaking).length) state.speaking = speaking;
   return progressSchema.parse(state);
 }
 

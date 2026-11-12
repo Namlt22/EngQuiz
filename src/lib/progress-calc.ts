@@ -15,10 +15,15 @@ export interface DictationProgress {
   total: number;
 }
 
+/** Điểm đọc theo câu mẫu cao nhất của một bộ câu; cùng dạng với nghe chép. */
+export type SpeakingProgress = DictationProgress;
+
 export interface ProgressState {
   version: 1;
   topics: Record<string, TopicProgress>;
   dictations: Record<string, DictationProgress>;
+  /** Luyện nói — đọc theo câu mẫu, theo id bộ câu (= id bài nghe chép). Bản cũ chưa có trường này. */
+  speaking?: Record<string, SpeakingProgress>;
   xp: number;
   streak: number;
   /** yyyy-mm-dd theo giờ địa phương */

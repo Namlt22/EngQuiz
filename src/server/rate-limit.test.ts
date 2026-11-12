@@ -25,3 +25,16 @@ describe("createRateLimiter", () => {
     expect(rl.check("old-1", 200)).toBe(true);
   });
 });
+
+describe("refund", () => {
+  it("trả lại một lượt trong cửa sổ hiện tại; không âm, không ảnh hưởng cửa sổ đã hết", () => {
+    const l = createRateLimiter({ limit: 1, windowMs: 1000 });
+    expect(l.check("a", 0)).toBe(true);
+    expect(l.check("a", 1)).toBe(false);
+    l.refund("a", 2);
+    expect(l.check("a", 3)).toBe(true);
+    l.refund("b", 4);
+    l.refund("a", 5000);
+    expect(l.check("b", 6)).toBe(true);
+  });
+});

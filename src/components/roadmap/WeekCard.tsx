@@ -5,6 +5,7 @@ import { BookOpen, Check, ChevronDown, Headphones, Mic, PenLine, Repeat } from "
 import { getTopicMeta } from "@/content/catalog";
 import { getDictation } from "@/content/dictations";
 import { IPA_MAP } from "@/content/ipa";
+import { promptIdByText } from "@/content/speaking-prompts";
 import { hasDictation } from "@/lib/learn";
 import { PASS_PERCENT, topicStatus, type ProgressState } from "@/lib/progress";
 import { getQuizSet, topicSetId } from "@/lib/quiz-sets";
@@ -63,12 +64,20 @@ export function WeekCard({ week, log, progress, startDate, talkMinutes, isCurren
       <div className="space-y-5 border-t border-line p-4 md:p-5">
         <Section title="Đề tự nói">
           <ul className="space-y-1.5">
-            {week.prompts.map((p) => (
-              <li key={p} className="flex gap-2 text-sm">
-                <Mic className={`mt-0.5 size-4 shrink-0 ${style.text}`} />
-                <span lang="en">{p}</span>
-              </li>
-            ))}
+            {week.prompts.map((p) => {
+              const promptId = promptIdByText(p);
+              return (
+                <li key={p} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                  <Mic className={`size-4 shrink-0 ${style.text}`} />
+                  <span lang="en">{p}</span>
+                  {promptId && (
+                    <Link href={`/speaking?tab=talk&prompt=${promptId}`} className="text-xs font-semibold text-primary hover:underline">
+                      Luyện với AI →
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </Section>
 
