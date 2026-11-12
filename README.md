@@ -6,52 +6,88 @@ Website học **ngữ pháp** và luyện **nghe & chép chính tả** tiếng A
 - ✍️ **Quiz ngữ pháp**: 7 dạng bài (trắc nghiệm, chia động từ, điền từ, tìm lỗi sai, viết lại câu, sắp xếp từ, nối), có giải thích ngay sau mỗi câu. Có bộ đề theo chủ điểm, theo nhóm (vd tất cả câu điều kiện) và tổng hợp theo cấp.
 - 🔤 **Bảng phiên âm IPA** (`/ipa`): 44 âm (12 nguyên âm đơn, 8 nguyên âm đôi, 24 phụ âm) với hướng dẫn khẩu hình, âm tiếng Việt gần giống, lỗi hay gặp, ghi chú Anh-Mỹ, từ ví dụ nghe được (thường & chậm), cặp từ so sánh; hướng dẫn đọc phiên âm, quy tắc đọc đuôi -s/-es, -ed và bài luyện nghe phân biệt cặp âm.
 - 🎧 **Nghe & chép** (kiểu dailydictation): nghe từng câu, gõ lại, bấm *Kiểm tra*: từ đúng hiện ra, từ sai bị che `***` để nghe lại và tự sửa. Có gợi ý từng từ, hiện đáp án, đổi tốc độ, phím tắt.
+- 🧭 **Lộ trình cá nhân** (`/roadmap`): trả lời 6 câu (trình độ, mục tiêu, điểm yếu, thời gian/ngày, số tuần, ngày bắt đầu) → kế hoạch theo tuần, ghép sẵn bài lý thuyết/quiz/nghe chép/âm IPA, buổi học hôm nay, tích buổi, biểu đồ số giây nói liên tục.
+- 👤 **Tài khoản**: đăng nhập bằng link qua email hoặc Google; tiến độ và lộ trình lưu trong **PostgreSQL**, học tiếp trên mọi thiết bị.
 
 Kế hoạch chi tiết: [PLAN.md](./PLAN.md).
 
 ## Chạy trên máy local
 
-Yêu cầu: **Node.js 20+** (khuyến nghị 22).
+Yêu cầu: **Node.js 20+** (khuyến nghị 22) và **Docker Desktop** (để chạy Postgres).
 
 ```bash
 npm install
+```
+
+Tạo file `.env` (sinh sẵn mật khẩu database và `AUTH_SECRET`; không ghi đè nếu đã có):
+
+```bash
+npm run setup:env
+```
+
+Chạy Postgres rồi tạo bảng:
+
+```bash
+npm run db:up
+```
+
+```bash
+npm run db:migrate
 ```
 
 ```bash
 npm run dev
 ```
 
-Mở http://localhost:3000. Không cần database hay API key.
+Mở http://localhost:3000. Nếu cổng khác 3000, sửa `AUTH_URL` trong `.env` cho khớp.
+
+**Đăng nhập khi dev:** để trống `EMAIL_SERVER` thì link đăng nhập được **in ra terminal** chạy `npm run dev` thay vì gửi email. Muốn gửi email thật, điền `EMAIL_SERVER` (dạng `smtp://user:pass@host:587`) và `EMAIL_FROM`. Nút Google chỉ hiện khi có `AUTH_GOOGLE_ID` và `AUTH_GOOGLE_SECRET`.
 
 | Lệnh | Tác dụng |
 |---|---|
 | `npm run dev` | Chạy chế độ phát triển |
-| `npm test` | Chạy unit test (chấm điểm, chuẩn hóa văn bản, kiểm tra nội dung) |
+| `npm test` | Chạy unit test (chấm điểm, nội dung, lộ trình, đồng bộ dữ liệu) |
 | `npm run lint` | Kiểm tra kiểu TypeScript |
 | `npm run build && npm start` | Build và chạy bản production |
+| `npm run db:up` | Chạy Postgres bằng Docker (cổng 5433, chỉ mở cho máy local) |
+| `npm run db:migrate` | Tạo/cập nhật bảng theo `prisma/schema.prisma` (dev) |
+| `npm run db:deploy` | Áp dụng migration ở production |
+| `npm run db:studio` | Xem dữ liệu bằng Prisma Studio |
 
 > **Âm thanh:** giai đoạn này dùng Web Speech API có sẵn trong trình duyệt (Chrome, Edge, Safari). Chất lượng giọng phụ thuộc hệ điều hành; Edge/Chrome có giọng "Natural"/"Google" nghe tốt nhất. Có thể chọn giọng ngay trong bài nghe chép.
 >
-> **Tiến độ học** được lưu trong `localStorage` của trình duyệt (chưa có tài khoản).
+> **Dữ liệu học:** khi chưa đăng nhập, tiến độ lưu trong `localStorage` của trình duyệt. Khi đăng nhập, dữ liệu trên máy được gộp vào tài khoản (giữ điểm cao nhất, giữ mọi ô đã tích) và từ đó tự lưu vào Postgres qua `/api/learner`. Đăng xuất sẽ gửi nốt thay đổi, chờ server xác nhận rồi mới xóa bản trên máy; nếu chưa lưu được (mất mạng) sẽ hỏi lại trước khi xóa.
+>
+> **Giới hạn đã biết:** khi phải gộp hai bản (đăng nhập trên máy khác đang có dữ liệu cũ, hoặc hai tab cùng ghi), việc *bỏ tích* một ô hoặc *giảm* số giây có thể bị bản kia khôi phục lại, vì phép gộp luôn giữ thành tích cao nhất. Trong lúc học bình thường (không có xung đột) thì mọi thay đổi được lưu đúng như trên máy.
 
 ## Cấu trúc
 
 ```
+prisma/
+├── schema.prisma           # Bảng User/Account/Session (Auth.js) + LearnerState
+└── migrations/
 src/
+├── auth.ts                 # Cấu hình Auth.js (email + Google, phiên lưu trong DB)
 ├── app/                    # Các trang (Next.js App Router)
 │   ├── page.tsx            # Trang chủ
-│   ├── levels/             # Lộ trình theo cấp độ
+│   ├── roadmap/            # Lộ trình cá nhân
+│   ├── signin/             # Đăng nhập
+│   ├── api/auth/           # Route của Auth.js
+│   ├── api/learner/        # GET/PUT dữ liệu học của người đang đăng nhập
+│   ├── levels/             # Chủ điểm theo cấp độ
 │   ├── grammar/            # Thư viện & trang lý thuyết
 │   ├── quiz/               # Danh sách bộ đề & làm bài
 │   └── dictation/          # Danh sách bài nghe & làm bài
-├── components/             # Giao diện (theory, quiz, dictation, layout...)
+├── components/             # Giao diện (theory, quiz, dictation, roadmap, auth, layout...)
 ├── content/                # NỘI DUNG — sửa/thêm bài học ở đây
 │   ├── catalog.ts          # Danh mục 81 chủ điểm A1–C1
 │   ├── topics/             # Lý thuyết + câu hỏi cho từng chủ điểm
 │   ├── dictations.ts       # Bài nghe & chép
+│   ├── roadmap-units.ts    # 16 chủ đề nói dùng để dựng lộ trình cá nhân
 │   └── ipa.ts              # 44 âm IPA, hướng dẫn đọc, quy tắc đuôi -s/-ed
 ├── core/                   # Logic thuần + test: chuẩn hóa, chấm dictation, chấm quiz
-└── lib/                    # Tiến độ (localStorage), TTS, lộ trình, bộ đề
+├── lib/                    # Tiến độ, lộ trình, schema dữ liệu, gộp & đồng bộ với server, TTS, bộ đề
+└── server/                 # Chỉ chạy ở server: Prisma client, truy cập DB, gửi email, rate limit
 ```
 
 ## Thêm nội dung

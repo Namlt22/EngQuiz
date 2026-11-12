@@ -1,0 +1,81 @@
+// Schema cơ sở dữ liệu EngQuiz (PostgreSQL).
+// Bảng User / Account / Session / VerificationToken theo chuẩn của Auth.js Prisma adapter.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  learner  LearnerState?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+/// Dữ liệu học của một người dùng. Lưu dạng JSON, luôn được kiểm tra bằng Zod (src/lib/learner-schema.ts)
+/// trước khi ghi và sau khi đọc.
+model LearnerState {
+  userId     String   @id
+  /// ProgressState: lý thuyết, quiz, nghe chép, XP, streak
+  progress   Json
+  /// RoadmapProfile hoặc null nếu chưa tạo lộ trình
+  roadmap    Json?
+  /// RoadmapLog: các ô đã tích, số giây nói, ghi chú lỗi
+  roadmapLog Json
+  /// Tăng mỗi lần ghi — chống ghi đè khi mở nhiều tab/thiết bị
+  version    Int      @default(1)
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

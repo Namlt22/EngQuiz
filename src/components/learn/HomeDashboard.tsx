@@ -9,6 +9,7 @@ import { levelStats, nextTopic } from "@/lib/learn";
 import { useProgress } from "@/lib/progress";
 import { LevelBadge } from "@/components/ui/LevelBadge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { RoadmapTeaser } from "@/components/roadmap/RoadmapTeaser";
 
 export function HomeDashboard() {
   const p = useProgress();
@@ -66,6 +67,8 @@ export function HomeDashboard() {
         <Stat icon={<Star className="size-5" />} value={p.xp} label="XP" tone="text-primary bg-primary-soft" />
         <Stat icon={<Trophy className="size-5" />} value={topicsDone} label="chủ điểm xong" tone="text-success bg-success-soft" />
       </section>
+
+      <RoadmapTeaser />
 
       {/* Lộ trình theo cấp độ */}
       <section>

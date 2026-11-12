@@ -6,3 +6,9 @@ next-env.d.ts
 .env*.local
 .DS_Store
 coverage/
+
+# Biến môi trường chứa bí mật (mẫu: .env.example)
+.env
+
+# Prisma client sinh tự động
+/src/generated/

@@ -1,12 +1,14 @@
 "use client";
 
 /**
- * Lưu tiến độ học trong localStorage (giai đoạn chạy local, chưa có tài khoản).
- * Khi có backend, chỉ cần thay phần load/save — các component không đổi.
+ * Tiến độ học trên trình duyệt (localStorage). Khi đăng nhập, src/lib/learner-sync.ts
+ * đồng bộ store này với database; các component chỉ làm việc với store.
  */
 import { useSyncExternalStore } from "react";
 
 import type { ProgressState, TopicProgress } from "./progress-calc";
+import { sanitizeProgress } from "./learner-sanitize";
+import { readJson, writeJson } from "./local-json";
 export * from "./progress-calc";
 
 const KEY = "engquiz:progress:v1";
@@ -19,20 +21,11 @@ const listeners = new Set<() => void>();
 function load() {
   if (loaded || typeof window === "undefined") return;
   loaded = true;
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    if (raw) state = { ...EMPTY, ...JSON.parse(raw) };
-  } catch {
-    state = EMPTY;
-  }
+  state = readJson(KEY, sanitizeProgress, EMPTY);
 }
 
 function save() {
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(state));
-  } catch {
-    /* chế độ ẩn danh / bộ nhớ đầy: bỏ qua, tiến độ chỉ còn trong phiên */
-  }
+  writeJson(KEY, state);
 }
 
 function emit() {
@@ -125,9 +118,32 @@ export const progressActions = {
   },
 };
 
+/* ---------------- Đồng bộ với database (src/lib/learner-sync.ts) ---------------- */
+
+export function getProgressState(): ProgressState {
+  load();
+  return state;
+}
+
+/** Thay toàn bộ tiến độ (dữ liệu đã gộp từ server). */
+export function replaceProgress(next: ProgressState) {
+  update(() => next);
+}
+
+/**
+ * Chỉ nghe thay đổi xảy ra trong tab này (không nghe sự kiện `storage` từ tab khác) —
+ * dùng cho đồng bộ, để tab A đăng xuất/xóa dữ liệu không khiến tab B ghi đè tài khoản.
+ */
+export function subscribeProgressInTab(cb: () => void) {
+  listeners.add(cb);
+  return () => {
+    listeners.delete(cb);
+  };
+}
+
 /* ---------------- Hook ---------------- */
 
-function subscribe(cb: () => void) {
+export function subscribeProgress(cb: () => void) {
   listeners.add(cb);
   const onStorage = (e: StorageEvent) => {
     if (e.key === KEY) {
@@ -154,5 +170,5 @@ function getServerSnapshot() {
 }
 
 export function useProgress(): ProgressState {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useSyncExternalStore(subscribeProgress, getSnapshot, getServerSnapshot);
 }

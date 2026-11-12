@@ -15,14 +15,14 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       aria-label="Điều hướng"
     >
-      <ul className="grid grid-cols-6">
+      <ul className="grid grid-cols-7">
         {NAV_ITEMS.map(({ href, label, icon: Icon, match }) => {
           const active = match(pathname);
           return (
             <li key={href}>
               <Link
                 href={href}
-                className={`flex flex-col items-center gap-1 py-2.5 text-[10.5px] font-medium ${
+                className={`flex flex-col items-center gap-1 whitespace-nowrap py-2.5 text-[10px] font-medium ${
                   active ? "text-primary" : "text-muted"
                 }`}
               >

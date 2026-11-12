@@ -6,6 +6,7 @@ import { Flame, Star } from "lucide-react";
 import { Logo } from "./Logo";
 import { NAV_ITEMS } from "./nav-items";
 import { ThemeToggle } from "./ThemeToggle";
+import { UserMenu } from "@/components/auth/UserMenu";
 import { useProgress } from "@/lib/progress";
 
 export function Header() {
@@ -40,6 +41,7 @@ export function Header() {
             <Star className="size-3.5" /> {p.xp} XP
           </span>
           <ThemeToggle />
+          <UserMenu />
         </div>
       </div>
     </header>
