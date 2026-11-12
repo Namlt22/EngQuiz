@@ -1,12 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, CheckCircle2, Ear, Lightbulb, MousePointerClick, RefreshCw, Snail, Volume2, X, XCircle,
 } from "lucide-react";
 import {
   ENDING_RULES, IPA_CHART, IPA_GROUP_INFO, IPA_MAP, IPA_SOUNDS, READING_RULES, type IpaExample, type IpaGroup, type IpaSound,
 } from "@/content/ipa";
+import { commonsFileUrl, ipaAudioSrc, IPA_RECORDINGS, LICENSE_URL } from "@/content/ipa-audio";
 import { useSpeech } from "@/lib/speech";
 
 /* Một nguồn TTS dùng chung cho cả trang để đổi giọng một lần là áp dụng mọi nơi. */
@@ -14,8 +15,39 @@ type Speak = (text: string, rate?: number) => void;
 const SpeakCtx = createContext<Speak>(() => {});
 const useSpeak = () => useContext(SpeakCtx);
 
+/* Phát âm đứng riêng (file ghi âm); âm không có file thì đọc từ ví dụ bằng TTS. */
+type PlaySound = (sound: IpaSound) => void;
+const PlaySoundCtx = createContext<PlaySound>(() => {});
+const usePlaySound = () => useContext(PlaySoundCtx);
+
+function useSoundPlayer(speak: Speak): PlaySound {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => () => audioRef.current?.pause(), []);
+
+  return useCallback(
+    (sound: IpaSound) => {
+      const sayExample = () => speak(sound.examples[0].word, 0.8);
+      audioRef.current?.pause();
+      const src = ipaAudioSrc(sound.id);
+      if (!src) return sayExample();
+
+      window.speechSynthesis?.cancel();
+      const audio = new Audio(src);
+      audioRef.current = audio;
+      audio.play().catch((err: unknown) => {
+        // AbortError: người dùng bấm âm khác khi file này đang tải — không phải lỗi.
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        console.warn(`Không phát được ${src}, đọc từ ví dụ thay thế.`, err);
+        sayExample();
+      });
+    },
+    [speak],
+  );
+}
+
 export function IpaExplorer() {
   const speech = useSpeech({ prefer: "en-GB", storageKey: "engquiz:voice-ipa" });
+  const playSound = useSoundPlayer(speech.speak);
   const [selected, setSelected] = useState<string | null>(null);
 
   // Đọc #id trên URL để có thể chia sẻ link tới một âm cụ thể.
@@ -40,6 +72,7 @@ export function IpaExplorer() {
 
   return (
     <SpeakCtx.Provider value={speech.speak}>
+    <PlaySoundCtx.Provider value={playSound}>
       <div className="space-y-10">
         {/* Thanh công cụ: chú thích màu + chọn giọng */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -74,7 +107,7 @@ export function IpaExplorer() {
             <ChartBlock title="Nguyên âm đôi" subtitle="8 âm · trượt từ âm này sang âm kia" rows={IPA_CHART.diphthongs} cols={3} selected={selected} onSelect={select} />
             <ChartBlock title="Phụ âm" subtitle="24 âm · phần lớn đi theo cặp vô thanh – hữu thanh" rows={IPA_CHART.consonants} cols={8} selected={selected} onSelect={select} />
             <p className="flex items-center gap-2 text-sm text-muted">
-              <MousePointerClick className="size-4" /> Bấm vào một âm để xem cách đọc và nghe từ ví dụ.
+              <MousePointerClick className="size-4" /> Bấm vào một âm để nghe âm đó và xem cách đọc. Nguyên âm đôi phát qua từ ví dụ.
             </p>
           </div>
 
@@ -93,7 +126,9 @@ export function IpaExplorer() {
 
         <ReadingGuide />
         <MinimalPairPractice />
+        <AudioCredits />
       </div>
+    </PlaySoundCtx.Provider>
     </SpeakCtx.Provider>
   );
 }
@@ -149,14 +184,14 @@ function ChartBlock({
 }
 
 function Cell({ sound, active, onClick }: { sound: IpaSound; active: boolean; onClick: () => void }) {
-  const speak = useSpeak();
+  const playSound = usePlaySound();
   const info = IPA_GROUP_INFO[sound.group];
   return (
     <button
       type="button"
       onClick={() => {
         onClick();
-        speak(sound.examples[0].word, 0.8);
+        playSound(sound);
       }}
       className={`group flex flex-col items-center justify-center rounded-xl px-1 py-2.5 ring-1 transition hover:-translate-y-0.5 hover:shadow-md ${info.cell} ${
         active ? "ring-2 ring-offset-2 ring-offset-surface !ring-primary" : ""
@@ -167,6 +202,52 @@ function Cell({ sound, active, onClick }: { sound: IpaSound; active: boolean; on
       <span className="font-ipa text-2xl font-semibold leading-none md:text-[26px]">{sound.symbol}</span>
       <span className="mt-1.5 max-w-full truncate text-[11px] font-medium opacity-75">{sound.examples[0].word}</span>
     </button>
+  );
+}
+
+function PlaySoundButton({ sound }: { sound: IpaSound }) {
+  const playSound = usePlaySound();
+  const hasRecording = ipaAudioSrc(sound.id) !== undefined;
+  return (
+    <button type="button" onClick={() => playSound(sound)} className="btn-ghost mt-2 !px-3 !py-1.5 text-sm">
+      <Volume2 className="size-4" />
+      {hasRecording ? `Nghe âm /${sound.symbol}/` : `Nghe qua từ “${sound.examples[0].word}”`}
+    </button>
+  );
+}
+
+/* ---------------- Ghi nguồn file ghi âm (giấy phép CC BY-SA yêu cầu) ---------------- */
+
+function AudioCredits() {
+  return (
+    <details className="card p-4 text-sm text-muted md:p-5">
+      <summary className="cursor-pointer font-semibold text-fg">Nguồn file ghi âm</summary>
+      <p className="mt-2">
+        Âm đứng riêng lấy từ Wikimedia Commons (đã chuyển sang mp3, cắt khoảng lặng, cân bằng âm lượng). Đây là bản ghi âm IPA chuẩn quốc tế:
+        không thể hiện độ dài ngắn và âm tắc được đọc kèm nguyên âm /a/. Hãy nghe thêm từ ví dụ để biết âm trong tiếng Anh thật.
+      </p>
+      <ul className="mt-2 grid gap-x-6 gap-y-1 sm:grid-cols-2">
+        {IPA_RECORDINGS.map((r) => {
+          const licenseUrl = LICENSE_URL[r.license];
+          return (
+            <li key={r.id}>
+              <span className="font-ipa text-fg">/{IPA_MAP[r.id]?.symbol}/</span>{" "}
+              <a href={commonsFileUrl(r.file)} target="_blank" rel="noopener noreferrer" className="underline hover:text-fg">
+                {r.file}
+              </a>
+              {r.author && ` · ${r.author}`} ·{" "}
+              {licenseUrl ? (
+                <a href={licenseUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-fg">
+                  {r.license}
+                </a>
+              ) : (
+                r.license
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </details>
   );
 }
 
@@ -200,6 +281,7 @@ function SoundDetail({ sound, onClose, onSelect }: { sound: IpaSound; onClose: (
         <div className="min-w-0 flex-1">
           <span className={`chip ${info.cell} ring-0`}>{info.label}</span>
           <h3 className="mt-1 font-ipa text-2xl font-bold">/{sound.symbol}/</h3>
+          <PlaySoundButton sound={sound} />
         </div>
         <button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-xl text-muted hover:bg-surface-2 hover:text-fg lg:hidden" aria-label="Đóng">
           <X className="size-5" />
