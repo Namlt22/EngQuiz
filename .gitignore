@@ -15,3 +15,6 @@ coverage/
 
 # Chứng chỉ HTTPS tự ký cho mạng LAN (npm run setup:lan)
 /certificates/
+
+# Log của server chạy nền (scripts/windows/run-server.cmd)
+/logs/

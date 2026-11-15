@@ -38,6 +38,9 @@ export async function readBodyWithLimit(req: Request, maxBytes: number): Promise
 
 /** Lấy IP client (sau reverse proxy) để giới hạn tần suất; không dùng cho mục đích bảo mật khác. */
 export function clientIp(req: Request): string {
+  // Sau Cloudflare Tunnel: CF-Connecting-IP là IP thật của người dùng (server chỉ nghe 127.0.0.1 nên chỉ cloudflared gửi được header này).
+  const cf = req.headers.get("cf-connecting-ip")?.trim();
+  if (cf) return cf;
   const forwarded = req.headers.get("x-forwarded-for");
   return forwarded?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
 }

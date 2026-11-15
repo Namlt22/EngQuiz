@@ -42,9 +42,32 @@ npm run dev
 
 Mở http://localhost:3000. Nếu cổng khác 3000, sửa `AUTH_URL` trong `.env` cho khớp.
 
-**Đăng nhập khi dev:** để trống `EMAIL_SERVER` thì link đăng nhập được **in ra terminal** chạy `npm run dev` thay vì gửi email. Nút Google chỉ hiện khi có `AUTH_GOOGLE_ID` và `AUTH_GOOGLE_SECRET`.
+**Tài khoản:** đăng ký và đăng nhập bằng **email + mật khẩu**, giống SAP Quiz:
+- Đăng ký xong, EngQuiz gửi **mã 6 chữ số** tới email để xác thực. Mã có hiệu lực 15 phút, cho phép nhập sai tối đa 5 lần, và phải chờ 60 giây mới gửi lại được.
+- **Quên mật khẩu** (`/forgot`): nhận mã qua email rồi đặt mật khẩu mới. Thao tác này đăng xuất mọi thiết bị khác. Tài khoản cũ chỉ dùng Google hoặc link email cũng đặt được mật khẩu bằng cách này.
+- Chống dò tài khoản:
+  - đăng ký, gửi lại mã và quên mật khẩu luôn trả lời giống nhau, dù email đã có tài khoản hay chưa;
+  - đăng ký lại một email đã xác thực thì chủ email nhận thư "email này đã có tài khoản", mật khẩu cũ giữ nguyên.
+- Giới hạn tần suất:
+  - mỗi IP 30 yêu cầu / 10 phút;
+  - mỗi email 5 thư / giờ;
+  - sai mật khẩu tối đa 10 lần / 15 phút.
+- Code: API ở `src/app/api/account/[action]`, logic ở `src/server/account-service.ts`. Phiên đăng nhập ghi vào cùng bảng `Session` và dùng cùng cookie với Auth.js, nên đăng nhập Google vẫn chạy song song.
+- Khi dev: để trống `EMAIL_SERVER` thì **mã được in ra terminal** chạy `npm run dev`.
+- Nút Google chỉ hiện khi có `AUTH_GOOGLE_ID` và `AUTH_GOOGLE_SECRET`.
 
-### Gửi email đăng nhập (ví dụ Gmail)
+### Chạy nền trên Windows sau Cloudflare Tunnel (eng.quizly.io.vn)
+
+- Trong `.env`: đặt `AUTH_URL=https://eng.quizly.io.vn` và `AUTH_TRUST_HOST=true`.
+- Cài một lần (PowerShell *Run as administrator*): `powershell -ExecutionPolicy Bypass -File scripts\windows\install-service.ps1`.
+  - Lệnh tạo tác vụ **EngQuiz Server**, chạy `next start` ở `127.0.0.1:3001` khi máy khởi động. Nếu tiến trình bị tắt, nó tự chạy lại sau 10 giây.
+  - Log nằm ở `logs\server.log`.
+- Sau khi sửa code hoặc `git pull`: chạy `scripts\windows\redeploy.ps1` (quyền admin). Script này dừng server → `prisma migrate deploy` → `next build` → chạy lại server.
+- Gỡ tác vụ: chạy `scripts\windows\uninstall-service.ps1`.
+- Postgres chạy trong Docker Desktop, mà Docker Desktop chỉ bật sau khi đăng nhập Windows. Bật *Start Docker Desktop when you sign in* trong Settings của Docker Desktop.
+- Nếu `next build` báo lỗi kiểu trong `.next/dev/types` (file cũ do `npm run dev` để lại), xoá thư mục `.next\dev` rồi build lại.
+
+### Gửi email (ví dụ Gmail)
 
 1. Bật xác minh 2 bước cho tài khoản Google, rồi tạo **Mật khẩu ứng dụng** (App password) tại https://myaccount.google.com/apppasswords — được chuỗi 16 ký tự.
 2. Sửa `.env` (thay `@` trong email bằng `%40`, bỏ dấu cách trong mật khẩu ứng dụng):

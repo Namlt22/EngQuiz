@@ -16,6 +16,8 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  /// scrypt$<salt>$<hash> — null nếu tài khoản chỉ đăng nhập bằng Google / link email cũ
+  passwordHash  String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -61,6 +63,19 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/// Mã 6 chữ số gửi qua email: xác thực email khi đăng ký ("verify") hoặc đặt lại mật khẩu ("reset").
+/// Chỉ lưu HMAC của mã (khóa AUTH_SECRET); mỗi email + mục đích chỉ có một mã còn hiệu lực.
+model AuthCode {
+  email     String
+  purpose   String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@id([email, purpose])
 }
 
 /// Dữ liệu học của một người dùng. Lưu dạng JSON, luôn được kiểm tra bằng Zod (src/lib/learner-schema.ts)

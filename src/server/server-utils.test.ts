@@ -30,15 +30,11 @@ describe("isSameOrigin & clientIp", () => {
   it("clientIp lấy IP đầu tiên của x-forwarded-for", () => {
     expect(clientIp(req({ "x-forwarded-for": "1.2.3.4, 10.0.0.1" }))).toBe("1.2.3.4");
     expect(clientIp(req({}))).toBe("unknown");
+    expect(clientIp(req({ "cf-connecting-ip": "5.6.7.8", "x-forwarded-for": "1.2.3.4" }))).toBe("5.6.7.8");
   });
 });
 
-describe("sendLoginEmail", () => {
-  const params = (url = "http://localhost:3000/api/auth/callback/email?token=t") =>
-    ({ identifier: "a@b.c", url, provider: { from: "x@y.z" } }) as unknown as Parameters<
-      typeof import("./login-email").sendLoginEmail
-    >[0];
-
+describe("sendAccountMail", () => {
   beforeEach(() => {
     vi.resetModules();
   });
@@ -47,33 +43,38 @@ describe("sendLoginEmail", () => {
     vi.doUnmock("nodemailer");
   });
 
-  it("production mà thiếu EMAIL_SERVER → báo lỗi, không in link ra log", async () => {
+  it("production mà thiếu EMAIL_SERVER → báo lỗi, không in mã ra log", async () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("EMAIL_SERVER", "");
     const info = vi.spyOn(console, "info").mockImplementation(() => {});
-    const { sendLoginEmail } = await import("./login-email");
-    await expect(sendLoginEmail(params())).rejects.toThrow(/EMAIL_SERVER/);
+    const { sendAccountMail } = await import("./account-email");
+    await expect(sendAccountMail("a@b.c", "verify", "123456")).rejects.toThrow(/EMAIL_SERVER/);
     expect(info).not.toHaveBeenCalled();
   });
 
-  it("dev mà thiếu EMAIL_SERVER → in link ra terminal", async () => {
+  it("dev mà thiếu EMAIL_SERVER → in mã ra terminal", async () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("EMAIL_SERVER", "");
     const info = vi.spyOn(console, "info").mockImplementation(() => {});
-    const { sendLoginEmail } = await import("./login-email");
-    await sendLoginEmail(params());
-    expect(info).toHaveBeenCalledWith(expect.stringContaining("token=t"));
+    const { sendAccountMail } = await import("./account-email");
+    await sendAccountMail("a@b.c", "verify", "123456");
+    expect(info).toHaveBeenCalledWith(expect.stringContaining("123456"));
   });
 
-  it("có EMAIL_SERVER → gửi qua SMTP, link trong HTML được escape, báo lỗi khi bị từ chối", async () => {
+  it("có EMAIL_SERVER → gửi qua SMTP kèm mã trong tiêu đề; báo lỗi khi bị từ chối; email \"exists\" không có mã", async () => {
     vi.stubEnv("EMAIL_SERVER", "smtp://u:p@localhost:2525");
+    vi.stubEnv("AUTH_URL", "https://eng.example.com");
     const sendMail = vi.fn().mockResolvedValue({ rejected: [] });
     vi.doMock("nodemailer", () => ({ createTransport: () => ({ sendMail }) }));
-    const { sendLoginEmail } = await import("./login-email");
-    await sendLoginEmail(params('http://localhost/cb?x="><script>'));
-    expect(sendMail.mock.calls[0][0].html).not.toContain("<script>");
+    const { sendAccountMail } = await import("./account-email");
+    await sendAccountMail("a@b.c", "reset", "654321");
+    expect(sendMail.mock.calls[0][0].subject).toContain("654321");
+    expect(sendMail.mock.calls[0][0].to).toBe("a@b.c");
+
+    await sendAccountMail("a@b.c", "exists", "");
+    expect(sendMail.mock.calls[1][0].html).toContain("https://eng.example.com/signin");
 
     sendMail.mockResolvedValue({ rejected: ["a@b.c"] });
-    await expect(sendLoginEmail(params())).rejects.toThrow();
+    await expect(sendAccountMail("a@b.c", "verify", "111111")).rejects.toThrow();
   });
 });
