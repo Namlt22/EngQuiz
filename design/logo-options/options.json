@@ -1,0 +1,125 @@
+[
+  {
+    "id": 1,
+    "name": "Bong bóng Đúng",
+    "concept": "Bản tinh chỉnh logo hiện tại: bong bóng hội thoại với dấu tích – nói tiếng Anh và được AI xác nhận là đúng. Bỏ lớp highlight và chấm phụ để hình gọn, rõ hơn ở cỡ nhỏ.",
+    "pros": "Giữ nhận diện cũ, người dùng hiện tại không bỡ ngỡ; nói lên cả hội thoại lẫn chấm điểm.",
+    "cons": "Bong bóng + dấu tích là motif khá phổ biến, ít khác biệt.",
+    "colors": [
+      "#6366F1",
+      "#A855F7",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Chữ Q đậm",
+    "concept": "Monogram chữ Q (Quiz) nét dày trên ô vuông bo góc; tâm chữ có một chấm như 'điểm tập trung' – học đúng trọng tâm.",
+    "pros": "Gắn trực tiếp với tên thương hiệu, cực kỳ rõ ở favicon 16px, dễ dùng làm avatar mạng xã hội.",
+    "cons": "Không nói lên 'tiếng Anh' hay 'nói/nghe'; dạng chữ cái trong ô vuông khá trung tính.",
+    "colors": [
+      "#6366F1",
+      "#A855F7",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Sóng giọng nói",
+    "concept": "Bốn vạch sóng âm trong hình tròn – đại diện cho nghe chép chính tả và luyện nói được AI chấm điểm phát âm.",
+    "pros": "Khác biệt với đa số app quiz, nhấn mạnh tính năng nổi bật (nghe – nói – AI); hình tròn hợp làm icon app.",
+    "cons": "Gợi liên tưởng app âm nhạc/podcast; phần 'quiz' và ngữ pháp không được thể hiện.",
+    "colors": [
+      "#6366F1",
+      "#A855F7",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Bậc thang A1→C1",
+    "concept": "Ba bậc thang đi lên tượng trưng các cấp độ A1→C1 và lộ trình cá nhân; chấm tròn phía trên là người học đang tiến lên bậc cao nhất.",
+    "pros": "Kể rõ câu chuyện tiến bộ và lộ trình, cảm giác nghiêm túc, đáng tin – hợp người đi làm.",
+    "cons": "Có thể bị đọc như biểu đồ tăng trưởng/tài chính nếu không có wordmark đi kèm.",
+    "colors": [
+      "#6366F1",
+      "#A855F7",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Sách & Tia sáng",
+    "concept": "Cuốn sách mở (lý thuyết ngắn gọn) với một tia sáng màu hổ phách phía trên – khoảnh khắc 'à, hiểu rồi', đồng thời gợi chuỗi ngày học (streak) và XP.",
+    "pros": "Ấm áp, thân thiện; điểm nhấn màu hổ phách nổi bật trên nền tím và khớp màu warning/streak sẵn có trong UI.",
+    "cons": "Sách mở là hình ảnh giáo dục quen thuộc; thêm một màu nên cần kỷ luật khi dùng thương hiệu.",
+    "colors": [
+      "#6366F1",
+      "#A855F7",
+      "#FFFFFF",
+      "#F59E0B"
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Chữ E Đáp án",
+    "concept": "Chữ E được ghép từ các dòng đáp án của một bài quiz; dòng giữa ngắn hơn kèm chấm tròn như đáp án đang được chọn – E của English, nhịp của Quiz.",
+    "pros": "Gắn chặt với tên EngQuiz, hình chữ cái khối dày rất rõ ở 16px, vừa là chữ vừa là biểu tượng tính năng.",
+    "cons": "Ý nghĩa 'danh sách đáp án' cần giải thích; nhìn lướt có thể chỉ thấy chữ E.",
+    "colors": [
+      "#6366F1",
+      "#A855F7",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Bạn học Mỉm cười",
+    "concept": "Gương mặt tối giản từ hình học: hai mắt tròn và nụ cười có đầu bên phải vút lên thành dấu tích – người bạn học luôn khích lệ khi bạn trả lời đúng.",
+    "pros": "Có cá tính, dễ nhớ, dễ phát triển thành nhân vật (biểu cảm buồn/vui/ngạc nhiên cho thông báo, streak) mà không phải linh vật động vật.",
+    "cons": "Dễ bị xem như emoji mặt cười chung chung; cần giữ nét tối giản để không trở nên trẻ con.",
+    "colors": [
+      "#6366F1",
+      "#A855F7",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Bóng đèn Câu hỏi",
+    "concept": "Bóng đèn chứa dấu hỏi: mỗi câu hỏi trong quiz là một lần 'bật sáng' – đi từ thắc mắc đến hiểu bài.",
+    "pros": "Câu chuyện rõ ràng (hỏi → hiểu), dáng bóng đèn khác hẳn ô vuông/hình tròn của các app khác, nổi bật ở favicon.",
+    "cons": "Bóng đèn là ẩn dụ 'ý tưởng' khá quen; không nói trực tiếp đến tiếng Anh.",
+    "colors": [
+      "#6366F1",
+      "#A855F7",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "id": 9,
+    "name": "Huy chương Trúng đích",
+    "concept": "Huy chương có hồng tâm ở giữa và hai dải ruy băng – trả lời trúng, đạt mục tiêu cấp độ, nhận thưởng XP/streak.",
+    "pros": "Thể hiện mạnh tinh thần gamification và thành tích, cảm giác 'được công nhận' hợp người đi làm cần chứng chỉ.",
+    "cons": "Thiên về thi đua hơn là ngôn ngữ; ruy băng nhỏ có thể nhoè ở 16px (vẫn đọc được là huy chương).",
+    "colors": [
+      "#6366F1",
+      "#A855F7",
+      "#4F46E5",
+      "#7C3AED",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Thẻ từ Xanh ngọc",
+    "concept": "Chồng thẻ flashcard nghiêng với chữ A khối đậm – học từ vựng từ con chữ đầu tiên, từng thẻ một. Phương án màu thay thế: xanh ngọc → chàm.",
+    "pros": "Màu xanh ngọc (#14B8A6) tươi, gợi sự phát triển và tách biệt khỏi rừng app giáo dục màu tím; vẫn nối với indigo hiện tại nên chuyển đổi UI nhẹ nhàng.",
+    "cons": "Đổi màu thương hiệu kéo theo chỉnh lại gradient UI; flashcard dễ liên tưởng app học từ vựng thuần tuý.",
+    "colors": [
+      "#14B8A6",
+      "#4F46E5",
+      "#FFFFFF"
+    ]
+  }
+]
