@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { Cloud, CloudAlert, CloudUpload, LogIn, LogOut, UserRound } from "lucide-react";
+import { Cloud, CloudAlert, CloudUpload, LogIn, LogOut, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import type { AiEntitlement } from "@/lib/plans";
 import type { SyncStatus } from "@/lib/learner-sync";
 import { prepareSignOut, stopSyncAndClearLocal, stopSyncKeepLocal, useSyncStatus } from "./LearnerSync";
 
@@ -56,6 +57,48 @@ function SignOutButton() {
     <button type="button" role="menuitem" className="btn-ghost w-full justify-start" disabled={step === "saving"} onClick={() => void start()}>
       <LogOut className="size-4" /> {step === "saving" ? "Đang lưu…" : "Đăng xuất"}
     </button>
+  );
+}
+
+type BillingMe = AiEntitlement & { admin: boolean };
+
+/** Gói AI của tài khoản (đọc khi mở menu): còn hạn đến ngày nào / còn mấy lượt thử + nút nâng cấp. */
+function PlanStatus() {
+  const [me, setMe] = useState<BillingMe | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/billing/me", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j: { success?: boolean; data?: BillingMe }) => alive && j.success && j.data && setMe(j.data))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+  if (!me) return <div className="h-14 animate-pulse rounded-xl bg-surface-2" aria-hidden="true" />;
+
+  const until = me.premiumUntil ? new Date(me.premiumUntil).toLocaleDateString("vi-VN") : null;
+  return (
+    <div className="space-y-2">
+      <div className="rounded-xl bg-primary-soft p-3 text-xs text-primary">
+        <div className="flex items-center gap-1.5 font-semibold">
+          <Sparkles className="size-3.5" /> {me.premium ? "Gói AI đang dùng" : "Tài khoản miễn phí"}
+        </div>
+        <div className="mt-0.5">
+          {me.premium
+            ? `Đến hết ${until} · hôm nay còn ${Math.max(0, me.dailyLimit - me.usedToday)}/${me.dailyLimit} lượt AI`
+            : `Còn ${me.trialLeft} lượt AI dùng thử${until ? ` · gói cũ hết hạn ${until}` : ""}`}
+        </div>
+        <Link href="/pricing" role="menuitem" className="mt-1.5 inline-block font-semibold underline">
+          {me.premium ? "Gia hạn gói AI" : "Nâng cấp gói AI"}
+        </Link>
+      </div>
+      {me.admin && (
+        <Link href="/admin/orders" role="menuitem" className="btn-ghost w-full justify-start">
+          <ShieldCheck className="size-4" /> Duyệt đơn gói AI
+        </Link>
+      )}
+    </div>
   );
 }
 
@@ -115,6 +158,7 @@ export function UserMenu() {
               <StatusIcon status={sync} /> {STATUS_TEXT[sync]}
             </div>
           </div>
+          <PlanStatus />
           <SignOutButton />
         </div>
       )}

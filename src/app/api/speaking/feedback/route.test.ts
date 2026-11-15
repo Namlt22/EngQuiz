@@ -3,6 +3,16 @@ import { NextRequest } from "next/server";
 
 const auth = vi.fn();
 const getSpeakingFeedback = vi.fn();
+const takeAiTurn = vi.fn();
+const refundAiTurn = vi.fn();
+class BillingError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
 
 class AiNotConfiguredError extends Error {
   constructor(
@@ -17,6 +27,11 @@ class AiUnavailableError extends Error {}
 class AiBadOutputError extends Error {}
 
 vi.mock("@/auth", () => ({ auth: () => auth() }));
+vi.mock("@/server/billing", () => ({
+  takeAiTurn: (...a: unknown[]) => takeAiTurn(...a),
+  refundAiTurn: (...a: unknown[]) => refundAiTurn(...a),
+  BillingError,
+}));
 vi.mock("@/server/speaking-ai", () => ({
   getSpeakingFeedback: (...a: unknown[]) => getSpeakingFeedback(...a),
   AiNotConfiguredError,
@@ -45,6 +60,8 @@ async function loadRoute() {
 beforeEach(() => {
   auth.mockReset().mockResolvedValue({ user: { id: "user-1" } });
   getSpeakingFeedback.mockReset().mockResolvedValue({ overall: 70 });
+  takeAiTurn.mockReset().mockResolvedValue({ kind: "trial" });
+  refundAiTurn.mockReset().mockResolvedValue(undefined);
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
@@ -120,5 +137,25 @@ describe("POST /api/speaking/feedback — chặn trước khi gọi AI (tốn ph
     }
     auth.mockResolvedValueOnce({ user: { id: "user-new" } });
     expect((await POST(post(valid, { origin: ORIGIN, "x-forwarded-for": "10.0.0.9" }))).status).toBe(429);
+  });
+
+  it("hết lượt dùng thử / chưa có gói → 402, không gọi AI", async () => {
+    const { POST } = await loadRoute();
+    takeAiTurn.mockRejectedValueOnce(new BillingError(402, "Bạn đã dùng hết lượt AI dùng thử."));
+    const res = await POST(post(valid));
+    expect(res.status).toBe(402);
+    expect((await res.json()).error).toContain("dùng thử");
+    expect(getSpeakingFeedback).not.toHaveBeenCalled();
+  });
+
+  it("AI lỗi → trả lại lượt của gói / dùng thử; AI từ chối chấm → không trả", async () => {
+    const { POST } = await loadRoute();
+    getSpeakingFeedback.mockRejectedValueOnce(new AiUnavailableError("down"));
+    await POST(post(valid));
+    expect(refundAiTurn).toHaveBeenCalledWith("user-1", { kind: "trial" });
+    refundAiTurn.mockClear();
+    getSpeakingFeedback.mockRejectedValueOnce(new AiRefusedError("x"));
+    await POST(post(valid));
+    expect(refundAiTurn).not.toHaveBeenCalled();
   });
 });

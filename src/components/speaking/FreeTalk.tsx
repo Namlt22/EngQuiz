@@ -13,6 +13,7 @@ import { useRoadmapState } from "@/lib/roadmap-store";
 import { useSpeech } from "@/lib/speech";
 import { useSpeechRecognition, type ListenResult } from "@/lib/speech-recognition";
 import { FEEDBACK_LIMITS, type SpeakingFeedback } from "@/lib/speaking-feedback";
+import { AI_DAILY_LIMIT } from "@/lib/plans";
 import { FeedbackView } from "./FeedbackView";
 import { RecordButton } from "./RecordButton";
 
@@ -29,7 +30,7 @@ type Phase =
   | { kind: "recorded"; take: ListenResult }
   | { kind: "sending"; take: ListenResult }
   | { kind: "feedback"; take: ListenResult; feedback: SpeakingFeedback }
-  | { kind: "error"; take: ListenResult; message: string };
+  | { kind: "error"; take: ListenResult; message: string; needsPlan?: boolean };
 
 const firstPromptOf = (goal: RoadmapGoal) => SPEAKING_PROMPTS.find((p) => p.goal === goal)!.id;
 
@@ -39,7 +40,10 @@ function isFeedback(v: unknown): v is SpeakingFeedback {
   return !!f && typeof f.overall === "number" && !!f.scores && Array.isArray(f.corrections) && typeof f.improvedAnswer === "string";
 }
 
-async function requestFeedback(body: object, signal: AbortSignal): Promise<{ ok: true; feedback: SpeakingFeedback } | { ok: false; message: string }> {
+async function requestFeedback(
+  body: object,
+  signal: AbortSignal,
+): Promise<{ ok: true; feedback: SpeakingFeedback } | { ok: false; message: string; needsPlan?: boolean }> {
   try {
     const res = await fetch("/api/speaking/feedback", {
       method: "POST",
@@ -48,7 +52,8 @@ async function requestFeedback(body: object, signal: AbortSignal): Promise<{ ok:
       signal,
     });
     const json = (await res.json().catch(() => null)) as ApiResponse<unknown> | null;
-    if (!res.ok || !json?.success) return { ok: false, message: json?.error ?? `Lỗi máy chủ (${res.status}). Hãy thử lại.` };
+    // 402: hết lượt AI dùng thử / chưa có gói → mời mua gói thay vì nút "Thử lại".
+    if (!res.ok || !json?.success) return { ok: false, message: json?.error ?? `Lỗi máy chủ (${res.status}). Hãy thử lại.`, needsPlan: res.status === 402 };
     if (!isFeedback(json.data)) return { ok: false, message: "Kết quả chấm không hợp lệ. Hãy thử lại." };
     return { ok: true, feedback: json.data };
   } catch (e) {
@@ -129,7 +134,7 @@ export function FreeTalk({ initialPromptId, aiEnabled }: { initialPromptId?: str
       return; // bị hủy vì đổi đề / rời trang
     }
     if (run !== runRef.current) return;
-    if (!result.ok) return setPhase({ kind: "error", take, message: result.message });
+    if (!result.ok) return setPhase({ kind: "error", take, message: result.message, needsPlan: result.needsPlan });
     progressActions.addXp(FEEDBACK_XP);
     setPhase({ kind: "feedback", take, feedback: result.feedback });
   }
@@ -277,6 +282,17 @@ function AiAction({ phase, take, aiEnabled, onAsk }: { phase: Phase; take: Liste
     );
   }
   if (phase.kind === "feedback") return null;
+  if (phase.kind === "error" && phase.needsPlan) {
+    return (
+      <div className="space-y-2 rounded-xl bg-primary-soft p-4 text-sm">
+        <p className="font-semibold text-primary">{phase.message}</p>
+        <p className="text-muted">Gói AI: chấm điểm và sửa từng lỗi khi nói tự do, tối đa {AI_DAILY_LIMIT} lượt mỗi ngày.</p>
+        <Link href="/pricing" className="btn-primary">
+          <Sparkles className="size-4" /> Xem các gói AI
+        </Link>
+      </div>
+    );
+  }
   const sending = phase.kind === "sending";
   const Icon = sending ? Loader2 : phase.kind === "error" ? RotateCcw : Sparkles;
   return (

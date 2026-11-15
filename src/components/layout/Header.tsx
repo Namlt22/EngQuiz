@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Star } from "lucide-react";
+import { Flame, Sparkles, Star } from "lucide-react";
 import { Logo } from "./Logo";
 import { NAV_ITEMS } from "./nav-items";
 import { ThemeToggle } from "./ThemeToggle";
@@ -40,6 +40,14 @@ export function Header() {
           <span className="chip bg-primary-soft text-primary" title="Điểm kinh nghiệm">
             <Star className="size-3.5" /> {p.xp} XP
           </span>
+          <Link
+            href="/pricing"
+            className={`hidden items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold lg:inline-flex ${
+              pathname.startsWith("/pricing") ? "bg-primary-soft text-primary" : "text-primary hover:bg-primary-soft"
+            }`}
+          >
+            <Sparkles className="size-4" /> Gói AI
+          </Link>
           <ThemeToggle />
           <UserMenu />
         </div>

@@ -2,7 +2,8 @@
  * POST /api/speaking/feedback — AI chấm và sửa câu trả lời nói tự do.
  * Body: { promptId, transcript, seconds, level? } → ApiResponse<SpeakingFeedback>
  *
- * Mỗi lượt gọi Claude tốn phí, nên: bắt buộc đăng nhập, chỉ nhận đề có sẵn, giới hạn tần suất theo người dùng,
+ * Mỗi lượt gọi Claude tốn phí, nên: bắt buộc đăng nhập, cần gói AI (hoặc còn lượt dùng thử — src/server/billing.ts,
+ * lượt/ngày lưu trong database), chỉ nhận đề có sẵn, giới hạn tần suất theo người dùng,
  * theo IP (chặn một người tạo nhiều tài khoản) và tổng cả server mỗi ngày. Lượt lỗi do phía AI được trả lại.
  * Bộ đếm nằm trong bộ nhớ tiến trình (reset khi khởi động lại) — nên đặt thêm hạn mức chi tiêu cho khóa API ở Anthropic Console.
  */
@@ -11,6 +12,7 @@ import { auth } from "@/auth";
 import { getSpeakingPrompt } from "@/content/speaking-prompts";
 import type { ApiResponse } from "@/lib/learner-schema";
 import { FEEDBACK_LIMITS, feedbackRequestSchema, type SpeakingFeedback } from "@/lib/speaking-feedback";
+import { BillingError, refundAiTurn, takeAiTurn, type AiTurn } from "@/server/billing";
 import { createRateLimiter } from "@/server/rate-limit";
 import { BodyTooLargeError, clientIp, isSameOrigin, readBodyWithLimit } from "@/server/request";
 import { AiBadOutputError, AiNotConfiguredError, AiRefusedError, AiUnavailableError, getSpeakingFeedback } from "@/server/speaking-ai";
@@ -23,7 +25,6 @@ const ONE_DAY = 24 * 60 * 60_000;
 const GLOBAL_KEY = "all";
 
 const userBurst = createRateLimiter({ limit: 10, windowMs: TEN_MINUTES });
-const userDaily = createRateLimiter({ limit: 60, windowMs: ONE_DAY });
 const ipBurst = createRateLimiter({ limit: 20, windowMs: TEN_MINUTES });
 const globalDaily = createRateLimiter({ limit: 500, windowMs: ONE_DAY });
 
@@ -36,7 +37,6 @@ function takeQuota(userId: string, ip: string): string | null {
   const steps: [ReturnType<typeof createRateLimiter>, string, string][] = [
     [userBurst, userId, "Bạn gửi hơi nhiều, hãy nghỉ vài phút rồi thử lại."],
     [ipBurst, ip, "Mạng này gửi quá nhiều yêu cầu, hãy thử lại sau ít phút."],
-    [userDaily, userId, "Bạn đã dùng hết lượt AI chấm hôm nay. Mai luyện tiếp nhé!"],
     [globalDaily, GLOBAL_KEY, "Hôm nay hệ thống đã dùng hết lượt AI chấm. Hãy thử lại vào ngày mai."],
   ];
   for (let i = 0; i < steps.length; i++) {
@@ -52,7 +52,6 @@ function takeQuota(userId: string, ip: string): string | null {
 function refundQuota(userId: string, ip: string) {
   userBurst.refund(userId);
   ipBurst.refund(ip);
-  userDaily.refund(userId);
   globalDaily.refund(GLOBAL_KEY);
 }
 
@@ -97,13 +96,26 @@ export async function POST(req: NextRequest) {
   const quotaError = takeQuota(userId, ip);
   if (quotaError) return fail(429, quotaError);
 
+  let turn: AiTurn;
+  try {
+    turn = await takeAiTurn(userId);
+  } catch (e) {
+    refundQuota(userId, ip);
+    if (e instanceof BillingError) return fail(e.status, e.message);
+    console.error("[api/speaking/feedback] lấy lượt AI lỗi:", e);
+    return fail(500, "Có lỗi khi kiểm tra gói AI. Hãy thử lại.");
+  }
+
   try {
     const feedback = await getSpeakingFeedback({ prompt, transcript, seconds, level });
     return NextResponse.json<ApiResponse<SpeakingFeedback>>({ success: true, data: feedback, error: null });
   } catch (e) {
     // Chỉ log loại lỗi và thông điệp do EngQuiz tạo (không chứa lời nói của người học).
     console.error(`[api/speaking/feedback] ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
-    if (!(e instanceof AiRefusedError)) refundQuota(userId, ip);
+    if (!(e instanceof AiRefusedError)) {
+      refundQuota(userId, ip);
+      await refundAiTurn(userId, turn).catch((err) => console.error("[api/speaking/feedback] trả lượt AI lỗi:", err));
+    }
     return aiErrorResponse(e);
   }
 }

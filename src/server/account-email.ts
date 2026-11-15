@@ -4,10 +4,9 @@
  * - Có EMAIL_SERVER: gửi qua SMTP (nodemailer).
  * - Không có EMAIL_SERVER và đang `next dev`: in mã ra terminal.
  */
-export type AccountMailKind = "verify" | "reset" | "exists";
+import { escapeHtml, sendMail } from "./mailer";
 
-const escapeHtml = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
+export type AccountMailKind = "verify" | "reset" | "exists";
 
 const TEXT: Record<AccountMailKind, { subject: string; title: string; intro: string; outro: string }> = {
   verify: {
@@ -50,18 +49,5 @@ ${codeHtml}
 
 export async function sendAccountMail(to: string, kind: AccountMailKind, code: string): Promise<void> {
   const siteUrl = (process.env.AUTH_URL ?? "").replace(/\/+$/, "");
-  const server = process.env.EMAIL_SERVER;
-  if (!server) {
-    if (process.env.NODE_ENV !== "development") throw new Error("Chưa cấu hình EMAIL_SERVER nên không gửi được email.");
-    console.info(`\n[EngQuiz dev] Email "${kind}" cho ${to}${code ? `: mã ${code}` : ""}\n`);
-    return;
-  }
-  const { createTransport } = await import("nodemailer");
-  const result = await createTransport(server).sendMail({
-    to,
-    from: process.env.EMAIL_FROM ?? "EngQuiz <no-reply@example.com>",
-    ...buildAccountMail(kind, code, siteUrl),
-  });
-  const failed = [...(result.rejected ?? []), ...((result as { pending?: unknown[] }).pending ?? [])].filter(Boolean);
-  if (failed.length) throw new Error("Máy chủ email từ chối người nhận.");
+  await sendMail({ to, ...buildAccountMail(kind, code, siteUrl), devSummary: `"${kind}"${code ? ` — mã ${code}` : ""}` });
 }
