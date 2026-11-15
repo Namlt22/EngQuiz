@@ -11,9 +11,10 @@ export function TheoryFooter({ slug, dictationId }: { slug: string; dictationId?
   const p = useProgress();
   const read = !!p.topics[slug]?.theoryRead;
 
+  // Vẫn theo dõi khi đã đọc trước đó: lần đọc này có thể là một bài trong lộ trình (markTheoryRead chỉ cộng XP lần đầu).
   useEffect(() => {
     const el = ref.current;
-    if (!el || read) return;
+    if (!el) return;
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) progressActions.markTheoryRead(slug);
@@ -22,7 +23,7 @@ export function TheoryFooter({ slug, dictationId }: { slug: string; dictationId?
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [slug, read]);
+  }, [slug]);
 
   return (
     <div ref={ref} className="card p-5 md:p-6">

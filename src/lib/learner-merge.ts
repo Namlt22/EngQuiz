@@ -50,6 +50,7 @@ export function mergeRoadmapLog(a: RoadmapLog, b: RoadmapLog): RoadmapLog {
   const or = (x?: boolean, y?: boolean) => !!(x || y);
   return {
     sessions: mergeKeys(a.sessions, b.sessions, or),
+    tasks: mergeKeys(a.tasks, b.tasks, or),
     talks: mergeKeys(a.talks, b.talks, or),
     milestones: mergeKeys(a.milestones, b.milestones, or),
     seconds: mergeKeys(a.seconds, b.seconds, (x = 0, y = 0) => Math.max(x, y)),

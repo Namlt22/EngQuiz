@@ -204,8 +204,9 @@ function QuizResult({
       progressActions.recordQuiz(byTopic[0][0], percent, correct);
     } else {
       progressActions.addXp(correct * 2);
+      progressActions.recordQuizSet(set.id, percent);
     }
-  }, [isRetryRound, set.kind, byTopic, percent, correct]);
+  }, [isRetryRound, set.kind, set.id, byTopic, percent, correct]);
 
   const passed = percent >= PASS_PERCENT;
   const topicSlug = set.kind === "topic" ? byTopic[0][0] : undefined;

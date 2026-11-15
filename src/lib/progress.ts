@@ -6,7 +6,9 @@
  */
 import { useSyncExternalStore } from "react";
 
-import type { ProgressState, TopicProgress } from "./progress-calc";
+import { PASS_PERCENT, type ProgressState, type TopicProgress } from "./progress-calc";
+import { resourceKey, type TaskKind } from "./roadmap-days";
+import { roadmapActions } from "./roadmap-store";
 import { sanitizeProgress } from "./learner-sanitize";
 import { readJson, writeJson } from "./local-json";
 export * from "./progress-calc";
@@ -76,8 +78,12 @@ function patchTopic(s: ProgressState, slug: string, patch: (t: TopicProgress) =>
 
 /* ---------------- Hành động ---------------- */
 
+/** Báo cho lộ trình: hoạt động này đã xong (tự tích bài tương ứng trong ngày học). */
+const done = (kind: TaskKind, ref: string) => roadmapActions.completeResource(resourceKey(kind, ref));
+
 export const progressActions = {
   markTheoryRead(slug: string) {
+    done("theory", slug);
     update((s) => {
       if (s.topics[slug]?.theoryRead) return s;
       return withXp(patchTopic(s, slug, (t) => ({ ...t, theoryRead: true })), 5);
@@ -85,6 +91,7 @@ export const progressActions = {
   },
 
   recordQuiz(slug: string, percent: number, correct: number) {
+    if (percent >= PASS_PERCENT) done("quiz", slug);
     update((s) =>
       withXp(
         patchTopic(s, slug, (t) => ({ ...t, quizBest: Math.max(t.quizBest ?? 0, percent) })),
@@ -93,12 +100,13 @@ export const progressActions = {
     );
   },
 
-  recordDictation(id: string, topicSlug: string | undefined, percent: number, done: number, total: number) {
+  recordDictation(id: string, topicSlug: string | undefined, percent: number, doneCount: number, total: number) {
+    if (percent >= PASS_PERCENT) done("dictation", id);
     update((s) => {
       const prev = s.dictations[id];
       let next: ProgressState = {
         ...s,
-        dictations: { ...s.dictations, [id]: { best: Math.max(prev?.best ?? 0, percent), done, total } },
+        dictations: { ...s.dictations, [id]: { best: Math.max(prev?.best ?? 0, percent), done: doneCount, total } },
       };
       if (topicSlug) {
         next = patchTopic(next, topicSlug, (t) => ({
@@ -115,6 +123,8 @@ export const progressActions = {
    * XP chỉ cộng phần số câu đạt VƯỢT con số đã lưu — tải lại trang rồi đọc lại câu cũ không được cộng lần nữa.
    */
   recordSpeaking(setId: string, percent: number, passedCount: number, total: number) {
+    // Tính xong khi đã đọc hết bộ câu và điểm trung bình đạt.
+    if (passedCount >= total && percent >= PASS_PERCENT) done("read", setId);
     update((s) => {
       const prev = s.speaking?.[setId];
       const prevDone = prev?.done ?? 0;
@@ -127,6 +137,21 @@ export const progressActions = {
       };
       return withXp(next, Math.max(0, passedCount - prevDone) * SPEAKING_XP_PER_SENTENCE);
     });
+  },
+
+  /** Làm xong quiz tổng hợp (không thuộc một chủ điểm). */
+  recordQuizSet(setId: string, percent: number) {
+    if (percent >= PASS_PERCENT) done("quizset", setId);
+  },
+
+  /** Đã nghe một âm IPA (trang Phát âm). */
+  markSound(soundId: string) {
+    done("sound", soundId);
+  },
+
+  /** Đã ghi âm một câu trả lời nói tự do cho đề này. */
+  markTalk(promptId: string) {
+    done("talk", promptId);
   },
 
   addXp(xp: number) {

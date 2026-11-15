@@ -81,6 +81,8 @@ export const roadmapProfileSchema = z.strictObject({
 
 export const roadmapLogSchema = z.strictObject({
   sessions: boundedRecord(key, z.boolean(), LIMITS.logEntries),
+  /** Bản cũ chưa có trường này → {} */
+  tasks: boundedRecord(key, z.boolean(), LIMITS.logEntries).default({}),
   talks: boundedRecord(key, z.boolean(), LIMITS.logEntries),
   milestones: boundedRecord(key, z.boolean(), LIMITS.logEntries),
   seconds: boundedRecord(key, z.number().min(0).max(LIMITS.maxSeconds), LIMITS.logEntries),

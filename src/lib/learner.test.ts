@@ -65,10 +65,11 @@ describe("mergeProgress", () => {
 
 describe("mergeRoadmapLog & mergeLearnerData", () => {
   it("ô đã tích ở bên nào cũng giữ, số giây lấy max", () => {
-    const a = { ...EMPTY_LOG, sessions: { "1-1": true }, seconds: { "1": 30 } };
-    const b = { ...EMPTY_LOG, sessions: { "1-2": true }, seconds: { "1": 45 }, notes: { "1": "quên -s" } };
+    const a = { ...EMPTY_LOG, sessions: { "1-1": true }, tasks: { "1-1-1": true }, seconds: { "1": 30 } };
+    const b = { ...EMPTY_LOG, sessions: { "1-2": true }, tasks: { "1-1-2": true }, seconds: { "1": 45 }, notes: { "1": "quên -s" } };
     expect(mergeRoadmapLog(a, b)).toEqual({
       sessions: { "1-1": true, "1-2": true },
+      tasks: { "1-1-1": true, "1-1-2": true },
       talks: {},
       milestones: {},
       seconds: { "1": 45 },

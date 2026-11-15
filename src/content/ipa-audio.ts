@@ -3,7 +3,11 @@
  *
  * Nguồn: Wikimedia Commons, chuyển từ .ogg sang .mp3 (mono, cắt khoảng lặng đầu, cân bằng âm lượng).
  * Đây là bản ghi âm IPA chuẩn quốc tế, không riêng giọng Anh: không thể hiện độ dài (/iː/ và /ɪ/ dài bằng nhau),
- * âm tắc (/p/, /t/, /k/…) được đọc kèm nguyên âm /a/. 8 nguyên âm đôi không có bản ghi → trang đọc từ ví dụ.
+ * âm tắc (/p/, /t/, /k/…) được đọc kèm nguyên âm /a/.
+ *
+ * 8 nguyên âm đôi: Commons không có bản ghi đứng riêng → tạo bằng giọng Windows "Microsoft David" (Anh-Mỹ, SAPI 5,
+ * đọc trực tiếp âm vị), cắt khoảng lặng & cân âm lượng giống các file trên — scripts/windows/generate-diphthongs.ps1.
+ * Theo giọng Mỹ, ba nguyên âm đôi "hướng tâm" có âm r: /ɪə/ ≈ "here" /hɪr/, /eə/ ≈ "hair", /ʊə/ ≈ "tour".
  */
 
 export type AudioLicense = "CC BY-SA 3.0" | "Public domain";
@@ -66,11 +70,15 @@ export const IPA_RECORDINGS: readonly IpaRecording[] = [
   rec("j", "Palatal approximant.ogg"),
 ];
 
-const BY_ID: Readonly<Record<string, IpaRecording>> = Object.fromEntries(IPA_RECORDINGS.map((r) => [r.id, r]));
+/** Nguyên âm đôi có file tạo bằng giọng đọc máy (Anh-Mỹ). */
+export const SYNTHESIZED_DIPHTHONGS: readonly string[] = ["ia", "ei", "ua", "oi", "ou", "ea", "ai", "au"];
+export const SYNTHESIZED_VOICE = "Microsoft David (Windows, giọng Anh-Mỹ)";
 
-/** Đường dẫn file mp3 của âm, hoặc `undefined` nếu âm này không có bản ghi đứng riêng. */
+const HAS_AUDIO = new Set([...IPA_RECORDINGS.map((r) => r.id), ...SYNTHESIZED_DIPHTHONGS]);
+
+/** Đường dẫn file mp3 của âm, hoặc `undefined` nếu âm này không có file đứng riêng. */
 export function ipaAudioSrc(id: string): string | undefined {
-  return BY_ID[id] ? `/audio/ipa/${id}.mp3` : undefined;
+  return HAS_AUDIO.has(id) ? `/audio/ipa/${id}.mp3` : undefined;
 }
 
 export function commonsFileUrl(file: string): string {

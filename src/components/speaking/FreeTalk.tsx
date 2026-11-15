@@ -115,7 +115,11 @@ export function FreeTalk({ initialPromptId, aiEnabled }: { initialPromptId?: str
     setPhase({ kind: "idle" });
     const take = await recognition.listen({ continuous: true });
     if (run !== runRef.current) return;
-    if (take) setPhase({ kind: "recorded", take });
+    if (take) {
+      setPhase({ kind: "recorded", take });
+      // Bài "Nói tự do" trong lộ trình tính xong khi đã ghi âm được một câu trả lời đủ dài (không bắt buộc dùng AI).
+      if (take.transcript.split(/\s+/).filter(Boolean).length >= FEEDBACK_LIMITS.minWords) progressActions.markTalk(promptId);
+    }
     else setNotice(NO_SPEECH);
   }
 

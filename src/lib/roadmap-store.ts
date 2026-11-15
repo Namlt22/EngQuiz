@@ -5,7 +5,8 @@
  * Lộ trình chi tiết không được lưu: luôn dựng lại từ hồ sơ bằng buildRoadmap().
  */
 import { useSyncExternalStore } from "react";
-import { EMPTY_LOG, parseLog, parseProfile, type RoadmapLog, type RoadmapProfile } from "./roadmap";
+import { EMPTY_LOG, buildRoadmap, parseLog, parseProfile, type RoadmapLog, type RoadmapProfile } from "./roadmap";
+import { buildDays, completeResource } from "./roadmap-days";
 import { readJson, writeJson } from "./local-json";
 
 const KEY = "engquiz:roadmap:v1";
@@ -53,7 +54,27 @@ function patchLog<K extends keyof RoadmapLog>(key: K, id: string, value: Roadmap
   });
 }
 
+/**
+ * Khóa đã tính trong lần mở trang hiện tại. Một số hoạt động báo "xong" nhiều lần trong một lượt
+ * (đọc theo mẫu lưu điểm sau mỗi câu, lý thuyết cuộn qua lại) — chỉ tính một bài cho mỗi lượt mở trang,
+ * để bài ôn tập ở ngày sau không bị tích theo luôn. Xoá khi chuyển trang (RoadmapVisitScope).
+ */
+const completedThisVisit = new Set<string>();
+export function startNewVisit() {
+  completedThisVisit.clear();
+}
+
 export const roadmapActions = {
+  /** Người học vừa xong một hoạt động → tích bài tương ứng sớm nhất còn dở trong lộ trình (nếu có lộ trình). */
+  completeResource(key: string) {
+    load();
+    if (!state.profile || completedThisVisit.has(key)) return;
+    const days = buildDays(buildRoadmap(state.profile));
+    const next = completeResource(days, state.log, key);
+    if (next === state.log) return;
+    completedThisVisit.add(key);
+    update((s) => ({ ...s, log: next }));
+  },
   /** Lưu hồ sơ mới. Nhật ký giữ nguyên (khóa theo số tuần), để đổi lịch không mất tiến độ. */
   saveProfile(profile: RoadmapProfile) {
     update((s) => ({ ...s, profile }));

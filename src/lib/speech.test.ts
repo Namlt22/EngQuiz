@@ -5,29 +5,20 @@ const voice = (name: string, lang: string, localService: boolean) =>
   ({ name, lang, localService, voiceURI: name, default: false }) as SpeechSynthesisVoice;
 
 describe("pickEnglishVoices", () => {
-  it("giọng offline đứng trước giọng online (online phải chờ mạng mỗi câu)", () => {
-    const list = pickEnglishVoices(
-      [
-        voice("Google UK English Female", "en-GB", false),
-        voice("Microsoft Sonia Online (Natural)", "en-GB", false),
-        voice("Microsoft David", "en-US", true),
-        voice("Microsoft Hazel", "en-GB", true),
-      ],
-      "en-GB",
-    );
-    expect(list.map((v) => v.name)).toEqual([
-      "Microsoft Hazel",
-      "Microsoft David",
-      "Google UK English Female",
-      "Microsoft Sonia Online (Natural)",
+  it("chỉ dùng giọng Anh-Mỹ khi máy có; giọng offline trước giọng online", () => {
+    const list = pickEnglishVoices([
+      voice("Google UK English Female", "en-GB", false),
+      voice("Google US English", "en-US", false),
+      voice("Microsoft Zira", "en-US", true),
+      voice("Microsoft Hazel", "en-GB", true),
+      voice("Microsoft David", "en_US", true),
     ]);
+    expect(list.map((v) => v.name)).toEqual(["Microsoft Zira", "Microsoft David", "Google US English"]);
   });
 
-  it("bỏ giọng không phải tiếng Anh; trong cùng nhóm, giọng chất lượng cao lên trước", () => {
-    const list = pickEnglishVoices(
-      [voice("Microsoft An", "vi-VN", true), voice("Zira", "en-US", true), voice("Ava (Enhanced)", "en-US", true)],
-      "en-US",
-    );
+  it("không có giọng Mỹ → dùng giọng tiếng Anh khác; bỏ giọng không phải tiếng Anh; giọng chất lượng cao lên trước", () => {
+    expect(pickEnglishVoices([voice("Microsoft An", "vi-VN", true), voice("Hazel", "en-GB", true)]).map((v) => v.name)).toEqual(["Hazel"]);
+    const list = pickEnglishVoices([voice("Zira", "en-US", true), voice("Ava (Enhanced)", "en-US", true)]);
     expect(list.map((v) => v.name)).toEqual(["Ava (Enhanced)", "Zira"]);
   });
 });

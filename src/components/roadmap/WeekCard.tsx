@@ -1,41 +1,35 @@
 "use client";
 
-import Link from "next/link";
-import { BookOpen, Check, ChevronDown, Headphones, Mic, PenLine, Repeat } from "lucide-react";
-import { getTopicMeta } from "@/content/catalog";
-import { getDictation } from "@/content/dictations";
-import { IPA_MAP } from "@/content/ipa";
-import { promptIdByText } from "@/content/speaking-prompts";
-import { hasDictation } from "@/lib/learn";
-import { PASS_PERCENT, topicStatus, type ProgressState } from "@/lib/progress";
-import { getQuizSet, topicSetId } from "@/lib/quiz-sets";
-import {
-  SESSIONS_PER_WEEK,
-  sessionKey,
-  weekDateRange,
-  weekProgress,
-  type RoadmapLog,
-  type RoadmapWeek,
-} from "@/lib/roadmap";
+/**
+ * Một tuần của lộ trình: 7 ngày (Day n) — 6 ngày học với danh sách bài cụ thể (tự hoàn thành khi học xong)
+ * và ngày 7 nói chuyện thật (tự tích) — cùng cột mốc, số giây nói, ghi chú lỗi của tuần.
+ */
+import { Check, ChevronDown, MessagesSquare, Repeat } from "lucide-react";
+import { weekDateRange, type RoadmapLog, type RoadmapWeek } from "@/lib/roadmap";
+import { dayDone, dayTasksDone, type RoadmapDay } from "@/lib/roadmap-days";
 import { roadmapActions } from "@/lib/roadmap-store";
+import { DayTasks, dayMinutes } from "./DayTasks";
 import { PHASE_STYLES, formatSeconds } from "./labels";
 
 interface Props {
   week: RoadmapWeek;
+  days: RoadmapDay[];
   log: RoadmapLog;
-  progress: ProgressState;
   startDate: string;
   talkMinutes: number;
   isCurrent: boolean;
+  /** Day đang học tiếp theo (để mở sẵn ngày đó) */
+  nextDayN?: number;
 }
 
-export function WeekCard({ week, log, progress, startDate, talkMinutes, isCurrent }: Props) {
+export function WeekCard({ week, days, log, startDate, talkMinutes, isCurrent, nextDayN }: Props) {
   const style = PHASE_STYLES[week.phase - 1];
-  const wp = weekProgress(week, log, progress);
-  const complete = wp.sessionsDone === SESSIONS_PER_WEEK && wp.talkDone && wp.milestoneDone;
+  const doneDays = days.filter((d) => dayDone(log, d)).length;
+  const complete = doneDays === days.length && !!log.milestones[week.n];
+  const containsNext = days.some((d) => d.n === nextDayN);
 
   return (
-    <details open={isCurrent} className={`card group overflow-hidden ${isCurrent ? `ring-2 ${style.ring}` : ""}`}>
+    <details open={isCurrent || containsNext} className={`card group overflow-hidden ${isCurrent ? `ring-2 ${style.ring}` : ""}`}>
       <summary className="flex cursor-pointer list-none items-center gap-3 p-4 md:p-5 [&::-webkit-details-marker]:hidden">
         <span className={`grid size-10 shrink-0 place-items-center rounded-xl font-mono text-sm font-bold ${style.soft} ${style.text}`}>
           {complete ? <Check className="size-5" /> : week.n}
@@ -51,95 +45,26 @@ export function WeekCard({ week, log, progress, startDate, talkMinutes, isCurren
             )}
           </div>
           <div className="text-xs text-muted">
-            Tuần {week.n} · {weekDateRange(startDate, week.n)}
+            Tuần {week.n} · Day {days[0].n}–{days[days.length - 1].n} · {weekDateRange(startDate, week.n)}
           </div>
         </div>
         <span className="hidden text-right text-xs font-semibold text-muted sm:block">
-          {wp.sessionsDone}/{SESSIONS_PER_WEEK} buổi
-          {wp.talkDone && <span className="block text-success">đã nói thật</span>}
+          {doneDays}/{days.length} ngày
         </span>
         <ChevronDown className="size-5 shrink-0 text-muted transition group-open:rotate-180" />
       </summary>
 
-      <div className="space-y-5 border-t border-line p-4 md:p-5">
-        <Section title="Đề tự nói">
-          <ul className="space-y-1.5">
-            {week.prompts.map((p) => {
-              const promptId = promptIdByText(p);
-              return (
-                <li key={p} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                  <Mic className={`size-4 shrink-0 ${style.text}`} />
-                  <span lang="en">{p}</span>
-                  {promptId && (
-                    <Link href={`/speaking?tab=talk&prompt=${promptId}`} className="text-xs font-semibold text-primary hover:underline">
-                      Luyện với AI →
-                    </Link>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </Section>
-
-        <Section title="Bài trong EngQuiz (tự đánh dấu khi bạn học xong)">
-          <div className="flex flex-wrap gap-2">
-            {week.grammar.map((slug) => (
-              <GrammarChip key={slug} slug={slug} progress={progress} />
-            ))}
-            {week.quizSets.map((id) => (
-              <ResourceChip key={id} href={`/quiz/${id}`} icon={<PenLine className="size-3.5" />} label={getQuizSet(id)?.title ?? id} />
-            ))}
-            {week.dictations.map((id) => {
-              const best = progress.dictations[id]?.best;
-              return (
-                <ResourceChip
-                  key={id}
-                  href={`/dictation/${id}`}
-                  icon={<Headphones className="size-3.5" />}
-                  label={getDictation(id)?.title ?? id}
-                  done={(best ?? 0) >= PASS_PERCENT}
-                  extra={best !== undefined ? `${best}%` : undefined}
-                />
-              );
-            })}
-            {week.sounds.map((id) => (
-              <ResourceChip key={id} href={`/ipa#${id}`} label={`/${IPA_MAP[id]?.symbol ?? id}/`} mono />
-            ))}
-          </div>
-        </Section>
-
-        <Section title="Tích khi xong buổi">
-          <div className="flex flex-wrap gap-2">
-            {Array.from({ length: SESSIONS_PER_WEEK }, (_, i) => {
-              const key = sessionKey(week.n, i + 1);
-              return (
-                <Toggle
-                  key={key}
-                  id={`s-${key}`}
-                  label={`Buổi ${i + 1}`}
-                  checked={!!log.sessions[key]}
-                  onChange={(v) => roadmapActions.toggle("sessions", key, v)}
-                  activeClass={`${style.bg} border-transparent text-white`}
-                />
-              );
-            })}
-            <Toggle
-              id={`t-${week.n}`}
-              label={`Nói thật ${talkMinutes} phút`}
-              checked={wp.talkDone}
-              onChange={(v) => roadmapActions.toggle("talks", String(week.n), v)}
-              activeClass="bg-success border-transparent text-white dark:text-bg"
-              dashed
-            />
-          </div>
-        </Section>
+      <div className="space-y-3 border-t border-line p-4 md:p-5">
+        {days.map((day) => (
+          <DayRow key={day.n} day={day} log={log} talkMinutes={talkMinutes} isNext={day.n === nextDayN} />
+        ))}
 
         <label htmlFor={`m-${week.n}`} className="flex cursor-pointer items-start gap-3 rounded-xl bg-surface-2 p-3 text-sm">
           <input
             id={`m-${week.n}`}
             type="checkbox"
             className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]"
-            checked={wp.milestoneDone}
+            checked={!!log.milestones[week.n]}
             onChange={(e) => roadmapActions.toggle("milestones", String(week.n), e.target.checked)}
           />
           <span>
@@ -185,88 +110,63 @@ export function WeekCard({ week, log, progress, startDate, talkMinutes, isCurren
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted">{title}</h4>
-      {children}
-    </div>
-  );
-}
+function DayRow({ day, log, talkMinutes, isNext }: { day: RoadmapDay; log: RoadmapLog; talkMinutes: number; isNext: boolean }) {
+  const done = dayDone(log, day);
 
-function GrammarChip({ slug, progress }: { slug: string; progress: ProgressState }) {
-  const meta = getTopicMeta(slug);
-  const status = topicStatus(progress.topics[slug], hasDictation(slug));
-  return (
-    <span className="inline-flex overflow-hidden rounded-full border border-line text-xs font-semibold">
-      <Link
-        href={`/grammar/${slug}`}
-        className={`inline-flex items-center gap-1 px-2.5 py-1 hover:bg-surface-2 ${status === "done" ? "text-success" : ""}`}
+  if (day.kind === "talk") {
+    return (
+      <label
+        htmlFor={`talk-${day.week}`}
+        className={`flex cursor-pointer items-center gap-3 rounded-xl border border-dashed p-3 ${done ? "border-success/40 bg-success/10" : "border-line"}`}
       >
-        {status === "done" ? <Check className="size-3.5" /> : <BookOpen className="size-3.5" />}
-        {meta?.title ?? slug}
-      </Link>
-      <Link href={`/quiz/${topicSetId(slug)}`} className="border-l border-line px-2 py-1 text-muted hover:bg-surface-2 hover:text-fg" title="Làm quiz">
-        Quiz
-      </Link>
-    </span>
+        <DayBadge n={day.n} done={done} />
+        <span className="min-w-0 flex-1 text-sm">
+          <b>Nói chuyện thật {talkMinutes} phút</b>
+          <span className="block text-xs text-muted">
+            <MessagesSquare className="mr-1 inline size-3.5" />
+            Với bạn bè, gia sư hoặc người nước ngoài — dùng 20 câu cứu nguy. Nói xong thì tự tích.
+          </span>
+        </span>
+        <input
+          id={`talk-${day.week}`}
+          type="checkbox"
+          className="size-5 shrink-0 accent-[var(--primary)]"
+          checked={done}
+          onChange={(e) => roadmapActions.toggle("talks", String(day.week), e.target.checked)}
+        />
+      </label>
+    );
+  }
+
+  const count = dayTasksDone(log, day);
+  return (
+    <details open={isNext} className={`group/day rounded-xl border ${isNext ? "border-primary/40" : "border-line"}`}>
+      <summary className="flex cursor-pointer list-none items-center gap-3 p-3 [&::-webkit-details-marker]:hidden">
+        <DayBadge n={day.n} done={done} />
+        <span className="min-w-0 flex-1">
+          <span className="text-sm font-bold">Day {day.n}</span>
+          {isNext && <span className="chip ml-2 bg-primary-soft text-primary">Học tiếp</span>}
+          <span className="block text-xs text-muted">
+            {done ? "Hoàn thành" : `${count}/${day.tasks.length} bài`} · ~{dayMinutes(day)} phút
+          </span>
+        </span>
+        <ChevronDown className="size-4 shrink-0 text-muted transition group-open/day:rotate-180" />
+      </summary>
+      <div className="px-3 pb-3">
+        <DayTasks day={day} log={log} />
+      </div>
+    </details>
   );
 }
 
-function ResourceChip({
-  href,
-  label,
-  icon,
-  done,
-  extra,
-  mono,
-}: {
-  href: string;
-  label: string;
-  icon?: React.ReactNode;
-  done?: boolean;
-  extra?: string;
-  mono?: boolean;
-}) {
+function DayBadge({ n, done }: { n: number; done: boolean }) {
   return (
-    <Link
-      href={href}
-      className={`inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-1 text-xs font-semibold hover:bg-surface-2 ${
-        done ? "text-success" : ""
-      } ${mono ? "font-ipa text-sm" : ""}`}
-    >
-      {done ? <Check className="size-3.5" /> : icon}
-      {label}
-      {extra && <span className="text-muted">· {extra}</span>}
-    </Link>
-  );
-}
-
-function Toggle({
-  id,
-  label,
-  checked,
-  onChange,
-  activeClass,
-  dashed,
-}: {
-  id: string;
-  label: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  activeClass: string;
-  dashed?: boolean;
-}) {
-  return (
-    <label
-      htmlFor={id}
-      className={`inline-flex h-9 cursor-pointer select-none items-center rounded-lg border px-3 text-xs font-semibold transition has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary ${
-        checked ? activeClass : `border-line bg-surface text-muted hover:text-fg ${dashed ? "border-dashed" : ""}`
+    <span
+      className={`grid size-9 shrink-0 place-items-center rounded-lg font-mono text-xs font-bold ${
+        done ? "bg-success text-white dark:text-bg" : "bg-surface-2 text-muted"
       }`}
     >
-      <input id={id} type="checkbox" className="sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      {checked && <Check className="mr-1 size-3.5" />}
-      {label}
-    </label>
+      {done ? <Check className="size-5" /> : n}
+    </span>
   );
 }

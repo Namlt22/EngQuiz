@@ -4,9 +4,30 @@
  * Đọc theo câu mẫu: trình nhận dạng giọng nói (Web Speech API) trả về vài bản đoán (alternatives) cho cùng một lần nói.
  * So từng bản với câu mẫu bằng cùng bộ chấm của Nghe & chép (căn chỉnh từng từ, chấp nhận don't = do not, 5 = five…)
  * rồi lấy bản khớp nhất: nếu máy nghe ra đúng câu ở bất kỳ bản đoán nào thì người học nhiều khả năng đã nói đúng.
- * Đây là chấm theo từ máy nghe được, không phải chấm từng âm.
+ * Đây là chấm theo từ máy nghe được, không phải chấm từng âm. Tên riêng Việt Nam trong câu không bị chấm (xem forgiveVietnameseNames).
  */
+import { VI_NAMES } from "@/lib/vi-names";
 import { checkDictation, type DictationCheck } from "./dictation";
+
+/** Từng chữ của tên riêng Việt Nam (Huế, Linh, Đà Nẵng…): máy nhận giọng tiếng Anh không nghe ra được → không chấm. */
+const VI_NAME_WORDS = new Set(VI_NAMES.flatMap((n) => n.match.toLowerCase().split(" ")));
+const bare = (w: string) => w.toLowerCase().replace(/'s$/, "").replace(/[^\p{L}]/gu, "");
+/** Mỗi chữ của tên có thể bị nghe thành tới 2 từ tiếng Anh ("Huế" → "who a") — tha bấy nhiêu từ thừa. */
+const EXTRAS_FORGIVEN_PER_NAME_WORD = 2;
+
+/** Coi các chữ là tên riêng Việt Nam là đúng, tha từ thừa do máy nghe nhầm tên, tính lại độ chính xác. */
+function forgiveVietnameseNames(check: DictationCheck): DictationCheck {
+  const nameWords = check.words.filter((w) => VI_NAME_WORDS.has(bare(w.display)));
+  if (!nameWords.length) return check;
+  const gained = nameWords.reduce((sum, w) => sum + (w.status === "correct" ? 0 : w.status === "near" ? 0.5 : 1), 0);
+  const extras = check.extras.slice(Math.min(check.extras.length, nameWords.length * EXTRAS_FORGIVEN_PER_NAME_WORD));
+  const words = check.words.map((w) => (VI_NAME_WORDS.has(bare(w.display)) ? { ...w, status: "correct" as const } : w));
+  const raw = check.totalTokens
+    ? (check.correctTokens + 0.5 * check.nearTokens + gained - 0.5 * extras.length) / check.totalTokens
+    : 0;
+  const accuracy = Math.max(0, Math.min(1, raw));
+  return { ...check, words, extras, accuracy, passed: extras.length === 0 && words.every((w) => w.status === "correct" || w.status === "near") };
+}
 
 /** Đạt khi máy nghe đúng ít nhất 80% câu (giống ngưỡng qua bài của quiz/nghe chép). */
 export const READ_ALOUD_PASS = 80;
@@ -29,9 +50,9 @@ export function scoreReadAloud(target: string, alternatives: readonly string[]):
     .slice(0, MAX_ALTERNATIVES);
   const heardList = candidates.length ? candidates : [""];
 
-  let best = { heard: heardList[0], check: checkDictation(target, heardList[0]) };
+  let best = { heard: heardList[0], check: forgiveVietnameseNames(checkDictation(target, heardList[0])) };
   for (const heard of heardList.slice(1)) {
-    const check = checkDictation(target, heard);
+    const check = forgiveVietnameseNames(checkDictation(target, heard));
     if (check.accuracy > best.check.accuracy) best = { heard, check };
   }
   const score = Math.round(best.check.accuracy * 100);

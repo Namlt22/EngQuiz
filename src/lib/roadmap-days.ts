@@ -1,0 +1,194 @@
+/**
+ * Chia mỗi tuần của lộ trình thành 7 ngày học cụ thể (Day 1, Day 2, …):
+ *  - ngày 1–6: danh sách bài trong EngQuiz (lý thuyết, quiz, nghe chép, đọc theo mẫu, phát âm, nói tự do),
+ *    mỗi bài có link học ngay và TỰ HOÀN THÀNH khi người học làm xong hoạt động tương ứng;
+ *  - ngày 7: nói chuyện thật với người khác (ngoài app → người học tự tích).
+ * Một ngày hoàn thành khi mọi bài trong ngày đã xong. Hàm thuần — kiểm thử được.
+ */
+import { getTopicMeta } from "@/content/catalog";
+import { getDictation } from "@/content/dictations";
+import { IPA_MAP } from "@/content/ipa";
+import { promptIdByText } from "@/content/speaking-prompts";
+import { getQuizSet, topicSetId } from "./quiz-sets";
+import { SESSIONS_PER_WEEK, sessionKey, type Roadmap, type RoadmapLog, type RoadmapWeek } from "./roadmap";
+
+export type TaskKind = "theory" | "quiz" | "dictation" | "read" | "sound" | "talk" | "quizset";
+
+export interface RoadmapTask {
+  /** Duy nhất trong lộ trình: "tuần-ngày-thứ tự" */
+  id: string;
+  kind: TaskKind;
+  /** Khóa tài nguyên — hoạt động nào xong thì báo khóa này (xem resourceKey) */
+  key: string;
+  title: string;
+  /** Mô tả ngắn: làm gì thì được tính là xong */
+  hint: string;
+  href: string;
+  minutes: number;
+  /** Bài lặp lại để ôn */
+  review?: boolean;
+}
+
+export interface RoadmapDay {
+  week: number;
+  /** 1–7 trong tuần */
+  day: number;
+  /** Số thứ tự ngày trong cả lộ trình: Day 1, Day 2, … */
+  n: number;
+  kind: "study" | "talk";
+  tasks: RoadmapTask[];
+}
+
+export const DAYS_PER_WEEK = SESSIONS_PER_WEEK + 1;
+export const resourceKey = (kind: TaskKind, ref: string) => `${kind}:${ref}`;
+
+const MIN_TASKS_PER_DAY = 2;
+const MINUTES: Record<TaskKind, number> = { theory: 10, quiz: 8, dictation: 12, read: 10, sound: 5, talk: 8, quizset: 15 };
+
+type Draft = Omit<RoadmapTask, "id">;
+
+function draft(kind: TaskKind, ref: string, review = false): Draft | null {
+  const base = { kind, key: resourceKey(kind, ref), minutes: MINUTES[kind], ...(review ? { review: true } : {}) };
+  switch (kind) {
+    case "theory": {
+      const t = getTopicMeta(ref)?.title ?? ref;
+      return { ...base, title: `Lý thuyết: ${t}`, hint: "Đọc hết bài đến cuối trang", href: `/grammar/${ref}` };
+    }
+    case "quiz": {
+      const t = getTopicMeta(ref)?.title ?? ref;
+      return { ...base, title: `${review ? "Ôn quiz" : "Quiz"}: ${t}`, hint: "Đạt từ 80% trở lên", href: `/quiz/${topicSetId(ref)}` };
+    }
+    case "dictation":
+      return { ...base, title: `${review ? "Nghe chép lại" : "Nghe chép"}: ${getDictation(ref)?.title ?? ref}`, hint: "Đạt từ 80% trở lên", href: `/dictation/${ref}` };
+    case "read":
+      return {
+        ...base,
+        title: `Đọc theo mẫu: ${getDictation(ref)?.title ?? ref}`,
+        hint: "Nghe rồi đọc to từng câu, đạt từ 80%",
+        href: `/speaking?set=${encodeURIComponent(ref)}`,
+      };
+    case "sound": {
+      const s = IPA_MAP[ref];
+      return { ...base, title: `Phát âm /${s?.symbol ?? ref}/`, hint: "Bấm nghe âm và đọc theo các từ ví dụ", href: `/ipa#${ref}` };
+    }
+    case "talk": {
+      const id = promptIdByText(ref);
+      if (!id) return null;
+      return {
+        ...base,
+        key: resourceKey("talk", id),
+        title: `${review ? "Nói lại, dài hơn" : "Nói tự do"}: “${ref}”`,
+        hint: "Ghi âm câu trả lời (có thể nhờ AI chấm & sửa)",
+        href: `/speaking?tab=talk&prompt=${id}`,
+      };
+    }
+    case "quizset":
+      return { ...base, title: `Quiz tổng hợp: ${getQuizSet(ref)?.title ?? ref}`, hint: "Đạt từ 80% trở lên", href: `/quiz/${ref}` };
+  }
+}
+
+
+/** Chia tài nguyên của một tuần cho 6 ngày học: 5 ngày học mới + ngày 6 ôn tập. */
+export function weekStudyDays(week: RoadmapWeek): Draft[][] {
+  const NEW_DAYS = SESSIONS_PER_WEEK - 1;
+  const days: (Draft | null)[][] = Array.from({ length: SESSIONS_PER_WEEK }, () => []);
+
+  const load = Array.from({ length: SESSIONS_PER_WEEK }, () => 0);
+  const put = (d: number, ...tasks: (Draft | null)[]) => {
+    days[d].push(...tasks);
+    load[d] += tasks.reduce((sum, t) => sum + (t?.minutes ?? 0), 0);
+  };
+  /** Ngày nhẹ nhất (ít phút nhất) trong khoảng [from, to]; bằng nhau thì lấy ngày sớm hơn. */
+  const lightest = (from: number, to: number) => {
+    let best = from;
+    for (let d = from + 1; d <= to; d++) if (load[d] < load[best]) best = d;
+    return best;
+  };
+
+  // Phát âm: một âm mỗi ngày, xoay vòng — bài khởi động ngắn.
+  if (week.sounds.length) for (let d = 0; d < NEW_DAYS; d++) put(d, draft("sound", week.sounds[d % week.sounds.length], d >= week.sounds.length));
+
+  // Ngữ pháp: lý thuyết + quiz cùng ngày, các chủ điểm trải đều 5 ngày theo đúng thứ tự (vd 3 chủ điểm → ngày 1, 3, 5).
+  week.grammar.forEach((slug, k) => put(Math.min(NEW_DAYS - 1, Math.floor(((k + 0.5) * NEW_DAYS) / week.grammar.length)), draft("theory", slug), draft("quiz", slug)));
+
+  // Các bài còn lại xếp lần lượt vào ngày nhẹ nhất (ít phút nhất), vẫn giữ thứ tự học:
+  //  - nghe chép trước, đọc theo mẫu cùng bộ câu vào một ngày sau đó (nghe trước, nói sau);
+  //  - nói tự do từ ngày 2, khi đã có ngữ pháp & mẫu câu.
+  let lastDictation = 0;
+  let lastTalk = 1;
+  const rounds = Math.max(week.dictations.length, week.prompts.length);
+  for (let k = 0; k < rounds; k++) {
+    const id = week.dictations[k];
+    if (id) {
+      const d = (lastDictation = lightest(lastDictation, NEW_DAYS - 2));
+      put(d, draft("dictation", id));
+      put(lightest(d + 1, NEW_DAYS - 1), draft("read", id));
+    }
+    const prompt = week.prompts[k];
+    if (prompt) put((lastTalk = lightest(lastTalk, NEW_DAYS - 1)), draft("talk", prompt));
+  }
+
+  // Ngày 6 — ôn tập: quiz tổng hợp (nếu có), làm lại quiz từng chủ điểm, nói lại đề đầu tiên dài hơn.
+  const review = days[SESSIONS_PER_WEEK - 1];
+  week.quizSets.forEach((id) => review.push(draft("quizset", id)));
+  week.grammar.forEach((slug) => review.push(draft("quiz", slug, true)));
+  if (week.prompts[0]) review.push(draft("talk", week.prompts[0], true));
+
+  // Ngày ít bài (tuần có ít tài nguyên) → thêm bài ôn: nghe chép lại, rồi nói lại đề của tuần.
+  const fillers = [
+    ...week.dictations.map((id) => draft("dictation", id, true)),
+    ...week.prompts.map((p) => draft("talk", p, true)),
+  ].filter((t): t is Draft => t !== null);
+  let next = 0;
+  return days.map((raw) => {
+    const list = raw.filter((t): t is Draft => t !== null);
+    while (list.length < MIN_TASKS_PER_DAY && fillers.length) list.push(fillers[next++ % fillers.length]);
+    return list;
+  });
+}
+
+/** Toàn bộ ngày học của lộ trình (7 ngày mỗi tuần). */
+export function buildDays(roadmap: Roadmap): RoadmapDay[] {
+  return roadmap.weeks.flatMap((week) => {
+    const study = weekStudyDays(week).map(
+      (drafts, i): RoadmapDay => ({
+        week: week.n,
+        day: i + 1,
+        n: (week.n - 1) * DAYS_PER_WEEK + i + 1,
+        kind: "study",
+        tasks: drafts.map((t, j) => ({ ...t, id: `${week.n}-${i + 1}-${j + 1}` })),
+      }),
+    );
+    const talk: RoadmapDay = { week: week.n, day: DAYS_PER_WEEK, n: week.n * DAYS_PER_WEEK, kind: "talk", tasks: [] };
+    return [...study, talk];
+  });
+}
+
+/* ---------------- Trạng thái hoàn thành ---------------- */
+
+export const taskDone = (log: RoadmapLog, task: RoadmapTask) => !!log.tasks[task.id];
+
+/** Ngày xong khi mọi bài đã xong (ngày nói thật: khi người học tự tích). Tích tay "Buổi n" ở bản cũ vẫn được tính. */
+export function dayDone(log: RoadmapLog, day: RoadmapDay): boolean {
+  if (day.kind === "talk") return !!log.talks[day.week];
+  if (log.sessions[sessionKey(day.week, day.day)]) return true;
+  return day.tasks.length > 0 && day.tasks.every((t) => taskDone(log, t));
+}
+
+export const dayTasksDone = (log: RoadmapLog, day: RoadmapDay) => day.tasks.filter((t) => taskDone(log, t)).length;
+
+/** Ngày học tiếp theo: ngày đầu tiên chưa xong (theo thứ tự Day 1, 2, …). */
+export const nextOpenDay = (days: RoadmapDay[], log: RoadmapLog) => days.find((d) => !dayDone(log, d));
+
+/**
+ * Người học vừa làm xong một hoạt động (khóa `key`) → đánh dấu bài CHƯA XONG SỚM NHẤT có khóa đó.
+ * Bài lặp lại (ôn tập) vì vậy chỉ được tính khi làm lại lần nữa. Trả về nhật ký mới, hoặc chính `log` nếu không có gì đổi.
+ */
+export function completeResource(days: RoadmapDay[], log: RoadmapLog, key: string): RoadmapLog {
+  for (const day of days) {
+    if (day.kind !== "study" || log.sessions[sessionKey(day.week, day.day)]) continue;
+    const task = day.tasks.find((t) => t.key === key && !taskDone(log, t));
+    if (task) return { ...log, tasks: { ...log.tasks, [task.id]: true } };
+  }
+  return log;
+}

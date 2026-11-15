@@ -35,16 +35,19 @@ export interface RoadmapProfile {
   startDate: string;
 }
 
-/** Nhật ký người học tự tích. Khóa là số tuần ("3") hoặc tuần-buổi ("3-2"). */
+/** Nhật ký lộ trình. Khóa là số tuần ("3"), tuần-buổi ("3-2") hoặc id bài trong ngày ("3-2-1"). */
 export interface RoadmapLog {
+  /** Bản cũ: người học tự tích "Buổi n" (vẫn được tính là ngày đã xong) */
   sessions: Record<string, boolean>;
+  /** Bài trong ngày đã xong — tự đánh dấu khi hoàn thành hoạt động (src/lib/roadmap-days.ts) */
+  tasks: Record<string, boolean>;
   talks: Record<string, boolean>;
   milestones: Record<string, boolean>;
   seconds: Record<string, number>;
   notes: Record<string, string>;
 }
 
-export const EMPTY_LOG: RoadmapLog = { sessions: {}, talks: {}, milestones: {}, seconds: {}, notes: {} };
+export const EMPTY_LOG: RoadmapLog = { sessions: {}, tasks: {}, talks: {}, milestones: {}, seconds: {}, notes: {} };
 
 /* ---------------- Phân bổ thời gian mỗi buổi ---------------- */
 
@@ -259,6 +262,7 @@ export function parseLog(raw: unknown): RoadmapLog {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   return {
     sessions: pickRecord(r.sessions, isBool),
+    tasks: pickRecord(r.tasks, isBool),
     talks: pickRecord(r.talks, isBool),
     milestones: pickRecord(r.milestones, isBool),
     seconds: pickRecord(r.seconds, isSeconds),

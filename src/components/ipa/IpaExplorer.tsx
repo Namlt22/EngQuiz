@@ -7,8 +7,9 @@ import {
 import {
   ENDING_RULES, IPA_CHART, IPA_GROUP_INFO, IPA_MAP, IPA_SOUNDS, READING_RULES, type IpaExample, type IpaGroup, type IpaSound,
 } from "@/content/ipa";
-import { commonsFileUrl, ipaAudioSrc, IPA_RECORDINGS, LICENSE_URL } from "@/content/ipa-audio";
+import { commonsFileUrl, ipaAudioSrc, IPA_RECORDINGS, LICENSE_URL, SYNTHESIZED_DIPHTHONGS, SYNTHESIZED_VOICE } from "@/content/ipa-audio";
 import { useSpeech } from "@/lib/speech";
+import { progressActions } from "@/lib/progress";
 
 /* Một nguồn TTS dùng chung cho cả trang để đổi giọng một lần là áp dụng mọi nơi. */
 type Speak = (text: string, rate?: number) => void;
@@ -22,23 +23,24 @@ const usePlaySound = () => useContext(PlaySoundCtx);
 
 function useSoundPlayer(speak: Speak): PlaySound {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  // Mỗi âm một <audio> dùng lại: tải và giải mã sẵn từ lúc mở trang (36 file ≈ 0,5 MB), bấm là phát ngay.
+  // Mỗi âm một <audio> dùng lại: tải và giải mã sẵn từ lúc mở trang (44 file ≈ 0,6 MB), bấm là phát ngay.
   const cacheRef = useRef(new Map<string, HTMLAudioElement>());
 
   useEffect(() => {
     const cache = cacheRef.current;
-    for (const r of IPA_RECORDINGS) {
-      const src = ipaAudioSrc(r.id);
-      if (!src || cache.has(r.id)) continue;
+    for (const s of IPA_SOUNDS) {
+      const src = ipaAudioSrc(s.id);
+      if (!src || cache.has(s.id)) continue;
       const audio = new Audio(src);
       audio.preload = "auto";
-      cache.set(r.id, audio);
+      cache.set(s.id, audio);
     }
     return () => audioRef.current?.pause();
   }, []);
 
   return useCallback(
     (sound: IpaSound) => {
+      progressActions.markSound(sound.id);
       const sayExample = () => speak(sound.examples[0].word, 0.8);
       audioRef.current?.pause();
       const src = ipaAudioSrc(sound.id);
@@ -60,7 +62,7 @@ function useSoundPlayer(speak: Speak): PlaySound {
 }
 
 export function IpaExplorer() {
-  const speech = useSpeech({ prefer: "en-GB", storageKey: "engquiz:voice-ipa" });
+  const speech = useSpeech({ storageKey: "engquiz:voice-ipa-us" });
   const playSound = useSoundPlayer(speech.speak);
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -121,7 +123,7 @@ export function IpaExplorer() {
             <ChartBlock title="Nguyên âm đôi" subtitle="8 âm · trượt từ âm này sang âm kia" rows={IPA_CHART.diphthongs} cols={3} selected={selected} onSelect={select} />
             <ChartBlock title="Phụ âm" subtitle="24 âm · phần lớn đi theo cặp vô thanh – hữu thanh" rows={IPA_CHART.consonants} cols={8} selected={selected} onSelect={select} />
             <p className="flex items-center gap-2 text-sm text-muted">
-              <MousePointerClick className="size-4" /> Bấm vào một âm để nghe âm đó và xem cách đọc. Nguyên âm đôi phát qua từ ví dụ.
+              <MousePointerClick className="size-4" /> Bấm vào một âm để nghe âm đó và xem cách đọc. Từ ví dụ được đọc bằng giọng Anh-Mỹ.
             </p>
           </div>
 
@@ -239,6 +241,10 @@ function AudioCredits() {
       <p className="mt-2">
         Âm đứng riêng lấy từ Wikimedia Commons (đã chuyển sang mp3, cắt khoảng lặng, cân bằng âm lượng). Đây là bản ghi âm IPA chuẩn quốc tế:
         không thể hiện độ dài ngắn và âm tắc được đọc kèm nguyên âm /a/. Hãy nghe thêm từ ví dụ để biết âm trong tiếng Anh thật.
+      </p>
+      <p className="mt-2">
+        8 nguyên âm đôi ({SYNTHESIZED_DIPHTHONGS.map((id) => `/${IPA_MAP[id]?.symbol}/`).join(" ")}) không có bản ghi đứng riêng trên Commons nên
+        được tạo bằng giọng đọc máy {SYNTHESIZED_VOICE}. Theo giọng Mỹ, /ɪə/, /eə/, /ʊə/ có thêm âm r (như here, hair, tour).
       </p>
       <ul className="mt-2 grid gap-x-6 gap-y-1 sm:grid-cols-2">
         {IPA_RECORDINGS.map((r) => {

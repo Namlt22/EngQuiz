@@ -49,3 +49,16 @@ describe("speechStats", () => {
     expect(speechStats("hello", 0).wordsPerMinute).toBe(0);
   });
 });
+
+describe("tên riêng Việt Nam khi đọc theo mẫu", () => {
+  it("máy nghe tên Việt thành từ tiếng Anh khác → không bị trừ điểm", () => {
+    const r = scoreReadAloud("I live in a small house in Hue.", ["I live in a small house in way"]);
+    expect(r.score).toBe(100);
+    expect(r.passed).toBe(true);
+  });
+
+  it("tên hai chữ bị nghe thành nhiều từ thừa vẫn đạt; từ tiếng Anh sai vẫn bị trừ", () => {
+    expect(scoreReadAloud("We're flying to Da Nang on Friday.", ["we're flying to the non go on friday"]).passed).toBe(true);
+    expect(scoreReadAloud("My name is Linh.", ["my game is lin"]).score).toBeLessThan(100);
+  });
+});

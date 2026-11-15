@@ -1,27 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { AlertTriangle, ArrowRight, CalendarDays, Pencil, RotateCcw } from "lucide-react";
-import { useProgress, todayKey, PASS_PERCENT, topicStatus, type ProgressState } from "@/lib/progress";
-import { hasDictation } from "@/lib/learn";
-import { getDictation } from "@/content/dictations";
-import { getTopicMeta } from "@/content/catalog";
-import { IPA_MAP } from "@/content/ipa";
-import {
-  BLOCK_ORDER,
-  buildRoadmap,
-  currentWeekNumber,
-  roadmapSummary,
-  type BlockKey,
-  type Roadmap,
-  type RoadmapProfile,
-  type RoadmapWeek,
-} from "@/lib/roadmap";
+import { AlertTriangle, CalendarDays, PartyPopper, Pencil, RotateCcw } from "lucide-react";
+import { todayKey } from "@/lib/progress";
+import { buildRoadmap, currentWeekNumber, type Roadmap, type RoadmapLog, type RoadmapProfile } from "@/lib/roadmap";
+import { buildDays, dayDone, dayTasksDone, nextOpenDay, type RoadmapDay } from "@/lib/roadmap-days";
 import { roadmapActions, useHydrated, useRoadmapState } from "@/lib/roadmap-store";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SaveToAccountHint } from "@/components/auth/SaveToAccountHint";
-import { BLOCK_LABELS, FOCUS_LABELS, GOAL_LABELS, PHASE_GOALS, PHASE_STYLES, RESCUE_PHRASES } from "./labels";
+import { DayTasks, dayMinutes } from "./DayTasks";
+import { FOCUS_LABELS, GOAL_LABELS, PHASE_GOALS, PHASE_STYLES, RESCUE_PHRASES } from "./labels";
 import { RoadmapSetup } from "./RoadmapSetup";
 import { SpeakingChart } from "./SpeakingChart";
 import { WeekCard } from "./WeekCard";
@@ -29,7 +17,6 @@ import { WeekCard } from "./WeekCard";
 export function RoadmapApp() {
   const hydrated = useHydrated();
   const { profile, log } = useRoadmapState();
-  const progress = useProgress();
   const [editing, setEditing] = useState(false);
 
   if (!hydrated) return <div className="card h-64 animate-pulse" aria-busy="true" />;
@@ -44,15 +31,16 @@ export function RoadmapApp() {
   if (editing) return <RoadmapSetup initial={profile} onDone={() => setEditing(false)} />;
 
   const roadmap = buildRoadmap(profile);
+  const days = buildDays(roadmap);
+  const next = nextOpenDay(days, log);
   const current = currentWeekNumber(profile.startDate, todayKey(), profile.weeks);
-  const currentWeek = roadmap.weeks[current - 1];
 
   return (
     <div className="space-y-8">
       <SaveToAccountHint />
-      <Overview profile={profile} roadmap={roadmap} current={current} onEdit={() => setEditing(true)} />
-      {currentWeek && <TodayPlan week={currentWeek} roadmap={roadmap} progress={progress} />}
-      {current === 1 && <RescuePhrases />}
+      <Overview profile={profile} roadmap={roadmap} days={days} log={log} current={current} onEdit={() => setEditing(true)} />
+      <NextDayCard day={next} log={log} talkMinutes={roadmap.talkMinutes} />
+      {(!next || next.week === 1) && <RescuePhrases />}
 
       <section className="card space-y-3 p-5">
         <div className="flex flex-wrap items-end justify-between gap-2">
@@ -78,8 +66,9 @@ export function RoadmapApp() {
                 <WeekCard
                   key={w.n}
                   week={w}
+                  days={days.filter((d) => d.week === w.n)}
                   log={log}
-                  progress={progress}
+                  nextDayN={next?.n}
                   startDate={profile.startDate}
                   talkMinutes={roadmap.talkMinutes}
                   isCurrent={w.n === current}
@@ -95,9 +84,24 @@ export function RoadmapApp() {
   );
 }
 
-function Overview({ profile, roadmap, current, onEdit }: { profile: RoadmapProfile; roadmap: Roadmap; current: number; onEdit: () => void }) {
-  const { log } = useRoadmapState();
-  const s = roadmapSummary(roadmap, log);
+function Overview({
+  profile,
+  roadmap,
+  days,
+  log,
+  current,
+  onEdit,
+}: {
+  profile: RoadmapProfile;
+  roadmap: Roadmap;
+  days: RoadmapDay[];
+  log: RoadmapLog;
+  current: number;
+  onEdit: () => void;
+}) {
+  const daysDone = days.filter((d) => dayDone(log, d)).length;
+  const talks = roadmap.weeks.filter((w) => log.talks[w.n]).length;
+  const milestones = roadmap.weeks.filter((w) => log.milestones[w.n]).length;
   const status =
     current === 0
       ? `Bắt đầu ngày ${profile.startDate.split("-").reverse().join("/")}`
@@ -134,9 +138,9 @@ function Overview({ profile, roadmap, current, onEdit }: { profile: RoadmapProfi
       ))}
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <OverviewStat value={s.sessions} total={s.sessionsTotal} label="buổi học" />
-        <OverviewStat value={s.talks} total={s.weeks} label="buổi nói chuyện thật" />
-        <OverviewStat value={s.milestones} total={s.weeks} label="cột mốc đã đạt" />
+        <OverviewStat value={daysDone} total={days.length} label="ngày đã hoàn thành" />
+        <OverviewStat value={talks} total={roadmap.weeks.length} label="buổi nói chuyện thật" />
+        <OverviewStat value={milestones} total={roadmap.weeks.length} label="cột mốc đã đạt" />
       </div>
     </section>
   );
@@ -155,54 +159,45 @@ function OverviewStat({ value, total, label }: { value: number; total: number; l
   );
 }
 
-/** Chọn bài chưa xong đầu tiên trong tuần cho từng khối của buổi hôm nay. */
-function todayLinks(week: RoadmapWeek, progress: ProgressState): Record<BlockKey, { href: string; label: string } | undefined> {
-  const dict = week.dictations.find((id) => (progress.dictations[id]?.best ?? 0) < PASS_PERCENT) ?? week.dictations[0];
-  const topic = week.grammar.find((slug) => topicStatus(progress.topics[slug], hasDictation(slug)) !== "done") ?? week.grammar[0];
-  const sound = week.sounds[0];
-  const dictLink = dict ? { href: `/dictation/${dict}`, label: getDictation(dict)?.title ?? dict } : undefined;
-  return {
-    ipa: sound ? { href: `/ipa#${sound}`, label: week.sounds.map((id) => `/${IPA_MAP[id]?.symbol ?? id}/`).join(" ") } : undefined,
-    dictation: dictLink,
-    shadowing: dictLink,
-    speaking: undefined,
-    grammar: topic ? { href: `/grammar/${topic}`, label: getTopicMeta(topic)?.title ?? topic } : undefined,
-  };
-}
-
-function TodayPlan({ week, roadmap, progress }: { week: RoadmapWeek; roadmap: Roadmap; progress: ProgressState }) {
-  const links = todayLinks(week, progress);
-  return (
-    <section className="space-y-3">
-      <div>
-        <h2 className="text-xl font-bold">Buổi học hôm nay</h2>
+/** Thẻ lớn đầu trang: ngày học tiếp theo (Day n) với danh sách bài — chỉ cần bấm "Học" lần lượt. */
+function NextDayCard({ day, log, talkMinutes }: { day?: RoadmapDay; log: RoadmapLog; talkMinutes: number }) {
+  if (!day) {
+    return (
+      <section className="card flex flex-col items-center gap-2 p-8 text-center">
+        <PartyPopper className="size-10 text-primary" />
+        <h2 className="text-xl font-bold">Bạn đã hoàn thành toàn bộ lộ trình!</h2>
+        <p className="text-sm text-muted">Tạo lộ trình mới ở cấp độ cao hơn để học tiếp.</p>
+      </section>
+    );
+  }
+  if (day.kind === "talk") {
+    return (
+      <section className="card space-y-3 p-5 md:p-6">
+        <div className="text-xs font-semibold uppercase tracking-wide text-primary">Học tiếp · Day {day.n} · Tuần {day.week}</div>
+        <h2 className="text-xl font-bold">Nói chuyện thật {talkMinutes} phút</h2>
         <p className="text-sm text-muted">
-          Tuần {week.n}: {week.title}
+          Ngày cuối tuần: nói chuyện bằng tiếng Anh với bạn bè, gia sư hoặc người nước ngoài. Xong thì tích ô “Nói chuyện thật” ở Day {day.n} bên dưới.
         </p>
+      </section>
+    );
+  }
+  const count = dayTasksDone(log, day);
+  return (
+    <section className="card space-y-4 p-5 md:p-6">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-primary">Học tiếp · Tuần {day.week}</div>
+          <h2 className="text-2xl font-extrabold">Day {day.n}</h2>
+          <p className="text-sm text-muted">
+            {day.tasks.length} bài · khoảng {dayMinutes(day)} phút. Bấm “Học” lần lượt — học xong bài nào, bài đó tự được tích; đủ bài là xong Day {day.n}.
+          </p>
+        </div>
+        <span className="font-mono text-sm font-bold text-primary">
+          {count}/{day.tasks.length}
+        </span>
       </div>
-      <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {BLOCK_ORDER.map((key) => {
-          const link = links[key];
-          return (
-            <li key={key} className="card flex flex-col gap-1 p-4">
-              <span className="font-mono text-sm font-bold text-primary">{roadmap.minutes[key]} phút</span>
-              <span className="font-bold">{BLOCK_LABELS[key].title}</span>
-              <span className="flex-1 text-xs text-muted">{BLOCK_LABELS[key].how}</span>
-              {key === "speaking" ? (
-                <span lang="en" className="mt-2 text-sm font-medium">
-                  “{week.prompts[0]}”
-                </span>
-              ) : (
-                link && (
-                  <Link href={link.href} className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-                    {link.label} <ArrowRight className="size-3.5" />
-                  </Link>
-                )
-              )}
-            </li>
-          );
-        })}
-      </ol>
+      <ProgressBar value={(count / day.tasks.length) * 100} label={`Tiến độ Day ${day.n}`} />
+      <DayTasks day={day} log={log} />
     </section>
   );
 }
