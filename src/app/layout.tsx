@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 import { themeInitScript } from "@/components/layout/ThemeToggle";
 import { Providers } from "@/components/auth/Providers";
 
@@ -34,7 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh">
         <Providers>
           <Header />
-          <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 md:pb-16">{children}</main>
+          <main className="mx-auto max-w-6xl px-4 pb-12 pt-6 md:pb-16">{children}</main>
+          <SiteFooter />
           <BottomNav />
         </Providers>
       </body>

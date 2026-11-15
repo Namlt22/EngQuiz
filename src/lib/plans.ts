@@ -7,6 +7,8 @@
 export const GUEST_TRIAL_ITEMS = 5;
 export const AI_TRIAL_TURNS = 3;
 export const AI_DAILY_LIMIT = 30;
+/** Đơn chờ chuyển khoản hết hiệu lực sau số ngày này. */
+export const ORDER_EXPIRES_DAYS = 3;
 
 export type PlanId = "1m" | "3m" | "6m" | "12m";
 

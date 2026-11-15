@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { createAccountService, type AccountRepo, type AccountUser, type CodePurpose, type StoredCode } from "./account-service";
+import { LEGAL_VERSION } from "@/lib/legal-policy";
+import { createAccountService, TERMS_REQUIRED, type AccountRepo, type AccountUser, type CodePurpose, type StoredCode } from "./account-service";
 import { hashPassword, verifyPassword } from "./password";
 
 /** Repo trong bộ nhớ + hộp thư giả: ghi lại mã đã gửi để test nhập lại. */
@@ -15,7 +16,7 @@ function setup() {
       return [...users.values()].find((u) => u.email?.toLowerCase() === email) ?? null;
     },
     async createUser(d) {
-      const u = { id: `u${users.size + 1}`, email: d.email, name: d.name, emailVerified: null, passwordHash: d.passwordHash };
+      const u = { id: `u${users.size + 1}`, email: d.email, name: d.name, emailVerified: null, passwordHash: d.passwordHash, termsAcceptedAt: d.termsAcceptedAt, termsVersion: d.termsVersion };
       users.set(u.id, u);
       return u;
     },
@@ -57,10 +58,29 @@ function setup() {
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
+describe("đồng ý điều khoản khi đăng ký", () => {
+  it("không tick đồng ý → 400, không tạo tài khoản, không gửi mail", async () => {
+    const { svc, users, inbox } = setup();
+    for (const acceptTerms of [undefined, false, "true", 1]) {
+      const r = await svc.run("register", { email: "k@mail.com", password: "matkhau123", acceptTerms });
+      expect(r).toMatchObject({ status: 400, error: TERMS_REQUIRED });
+    }
+    await flush();
+    expect(users.size).toBe(0);
+    expect(inbox).toHaveLength(0);
+  });
+
+  it("lưu thời điểm và phiên bản điều khoản đã đồng ý", async () => {
+    const { svc, users } = setup();
+    await svc.run("register", { acceptTerms: true, email: "l@mail.com", password: "matkhau123" });
+    expect([...users.values()][0]).toMatchObject({ termsAcceptedAt: new Date(1_000_000), termsVersion: LEGAL_VERSION });
+  });
+});
+
 describe("đăng ký → xác thực email → đăng nhập", () => {
   it("tạo tài khoản chưa xác thực, gửi mã; nhập đúng mã + mật khẩu → đăng nhập", async () => {
     const { svc, users, sessions, lastCode } = setup();
-    const r = await svc.run("register", { email: " An@Mail.com ", password: "matkhau123", name: "An" });
+    const r = await svc.run("register", { acceptTerms: true, email: " An@Mail.com ", password: "matkhau123", name: "An" });
     expect(r).toMatchObject({ status: 202, data: { email: "an@mail.com" } });
     await flush();
     expect([...users.values()][0]).toMatchObject({ email: "an@mail.com", name: "An", emailVerified: null });
@@ -78,7 +98,7 @@ describe("đăng ký → xác thực email → đăng nhập", () => {
 
   it("mã sai 5 lần thì khoá mã đó, mã dùng một lần", async () => {
     const { svc, lastCode } = setup();
-    await svc.run("register", { email: "b@mail.com", password: "matkhau123" });
+    await svc.run("register", { acceptTerms: true, email: "b@mail.com", password: "matkhau123" });
     await flush();
     const code = lastCode();
     const wrong = code === "000000" ? "111111" : "000000";
@@ -88,7 +108,7 @@ describe("đăng ký → xác thực email → đăng nhập", () => {
 
   it("mã hết hạn sau 15 phút", async () => {
     const { svc, lastCode, tick } = setup();
-    await svc.run("register", { email: "c@mail.com", password: "matkhau123" });
+    await svc.run("register", { acceptTerms: true, email: "c@mail.com", password: "matkhau123" });
     await flush();
     tick(15 * 60_000 + 1);
     expect((await svc.run("verify-email", { email: "c@mail.com", password: "matkhau123", code: lastCode() })).status).toBe(400);
@@ -97,7 +117,7 @@ describe("đăng ký → xác thực email → đăng nhập", () => {
   it("email đã có tài khoản: trả lời giống hệt nhưng gửi email \"exists\", không đổi mật khẩu cũ", async () => {
     const { svc, users, inbox } = setup();
     users.set("u9", { id: "u9", email: "d@mail.com", name: "D", emailVerified: new Date(1), passwordHash: await hashPassword("cumatkhau1") });
-    const r = await svc.run("register", { email: "d@mail.com", password: "matkhaumoi1" });
+    const r = await svc.run("register", { acceptTerms: true, email: "d@mail.com", password: "matkhaumoi1" });
     expect(r).toMatchObject({ status: 202, data: { email: "d@mail.com" } });
     await flush();
     expect(inbox.at(-1)).toMatchObject({ kind: "exists", code: "" });
@@ -106,14 +126,14 @@ describe("đăng ký → xác thực email → đăng nhập", () => {
 
   it("kiểm tra dữ liệu: email sai, mật khẩu ngắn, mật khẩu trùng email", async () => {
     const { svc } = setup();
-    expect((await svc.run("register", { email: "x", password: "matkhau123" })).status).toBe(400);
-    expect((await svc.run("register", { email: "e@mail.com", password: "ngan" })).status).toBe(400);
-    expect((await svc.run("register", { email: "e@mail.com", password: "E@mail.com" })).status).toBe(400);
+    expect((await svc.run("register", { acceptTerms: true, email: "x", password: "matkhau123" })).status).toBe(400);
+    expect((await svc.run("register", { acceptTerms: true, email: "e@mail.com", password: "ngan" })).status).toBe(400);
+    expect((await svc.run("register", { acceptTerms: true, email: "e@mail.com", password: "E@mail.com" })).status).toBe(400);
   });
 
   it("gửi lại mã phải chờ 60 giây", async () => {
     const { svc, inbox, tick } = setup();
-    await svc.run("register", { email: "f@mail.com", password: "matkhau123" });
+    await svc.run("register", { acceptTerms: true, email: "f@mail.com", password: "matkhau123" });
     await svc.run("resend-code", { email: "f@mail.com" });
     await flush();
     expect(inbox).toHaveLength(1);

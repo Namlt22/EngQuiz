@@ -306,7 +306,21 @@ function AiAction({ phase, take, aiEnabled, onAsk }: { phase: Phase; take: Liste
         <Icon className={`size-4 ${sending ? "animate-spin" : ""}`} />
         {sending ? "AI đang chấm…" : phase.kind === "error" ? "Thử lại" : "AI chấm & sửa lỗi"}
       </button>
+      <AiDataNotice />
     </div>
+  );
+}
+
+/** Báo trước khi gửi: dữ liệu nào đi tới AI ở nước ngoài, và nhắc không nói thông tin nhạy cảm (Luật 91/2025). */
+function AiDataNotice() {
+  return (
+    <p className="text-xs text-muted">
+      Bấm nút này, phần chữ ở trên cùng đề nói sẽ được gửi tới AI Claude (Anthropic, Hoa Kỳ) để chấm. EngQuiz không lưu lại nội dung này. Đừng nói thông tin
+      cá nhân nhạy cảm như số giấy tờ, sức khoẻ, tài khoản ngân hàng.{" "}
+      <Link href="/legal/ai" className="font-semibold text-primary hover:underline">
+        Điều khoản AI
+      </Link>
+    </p>
   );
 }
 

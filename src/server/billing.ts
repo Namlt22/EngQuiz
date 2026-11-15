@@ -5,11 +5,14 @@
  */
 import { randomInt } from "node:crypto";
 import { prisma } from "./db";
-import { AI_DAILY_LIMIT, AI_TRIAL_TURNS, extendPremium, getPlan, vnDay, type AiEntitlement } from "@/lib/plans";
+import { AI_DAILY_LIMIT, AI_TRIAL_TURNS, extendPremium, getPlan, ORDER_EXPIRES_DAYS, vnDay, type AiEntitlement } from "@/lib/plans";
+
+import { vnYearRange, type PaidOrder } from "@/lib/revenue";
+
+export { ORDER_EXPIRES_DAYS };
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // bỏ 0/O/1/I dễ đọc nhầm
 const MAX_PENDING_ORDERS = 5;
-export const ORDER_EXPIRES_DAYS = 3;
 
 export class BillingError extends Error {
   constructor(
@@ -176,4 +179,20 @@ export function bankInfo(): BankInfo | null {
 export function vietQrUrl(info: BankInfo, amount: number, content: string): string {
   const q = new URLSearchParams({ amount: String(amount), addInfo: content, accountName: info.accountName });
   return `https://img.vietqr.io/image/${encodeURIComponent(info.bank)}-${encodeURIComponent(info.accountNo)}-compact2.png?${q}`;
+}
+
+// ── Sổ doanh thu ────────────────────────────────────────────────
+/** Đơn đã thanh toán trong năm (giờ Việt Nam) + thời điểm có đơn thanh toán đầu tiên — dữ liệu cho src/lib/revenue.ts. */
+export async function listPaidOrders(year: number): Promise<{ orders: PaidOrder[]; startedAt: Date | null }> {
+  const { from, to } = vnYearRange(year);
+  const [rows, first] = await Promise.all([
+    prisma.order.findMany({
+      where: { status: "paid", paidAt: { gte: from, lt: to } },
+      orderBy: { paidAt: "asc" },
+      select: { code: true, plan: true, months: true, amount: true, paidAt: true },
+    }),
+    prisma.order.findFirst({ where: { status: "paid", paidAt: { not: null } }, orderBy: { paidAt: "asc" }, select: { paidAt: true } }),
+  ]);
+  const orders = rows.flatMap((o) => (o.paidAt ? [{ ...o, paidAt: o.paidAt }] : []));
+  return { orders, startedAt: first?.paidAt ?? null };
 }

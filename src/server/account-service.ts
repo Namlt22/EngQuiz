@@ -11,6 +11,7 @@ import { BusyError, hashPassword, passwordProblem, verifyPassword } from "./pass
 import { createRateLimiter } from "./rate-limit";
 import { newSessionToken, SESSION_MAX_AGE_SECONDS } from "./session";
 import type { AccountMailKind } from "./account-email";
+import { LEGAL_VERSION } from "@/lib/legal-policy";
 
 export type CodePurpose = "verify" | "reset";
 
@@ -22,6 +23,14 @@ export interface AccountUser {
   passwordHash: string | null;
 }
 
+/** Bằng chứng người dùng đã đồng ý điều khoản: lúc nào, bản nào. */
+export interface TermsConsent {
+  termsAcceptedAt: Date;
+  termsVersion: string;
+}
+
+export const TERMS_REQUIRED = "Bạn cần đồng ý Điều khoản sử dụng và Chính sách bảo mật để tạo tài khoản.";
+
 export interface StoredCode {
   codeHash: string;
   expiresAt: Date;
@@ -31,8 +40,8 @@ export interface StoredCode {
 
 export interface AccountRepo {
   findUserByEmail(email: string): Promise<AccountUser | null>;
-  createUser(data: { email: string; name: string | null; passwordHash: string }): Promise<AccountUser>;
-  updateUser(id: string, data: Partial<Pick<AccountUser, "name" | "emailVerified" | "passwordHash">>): Promise<AccountUser>;
+  createUser(data: { email: string; name: string | null; passwordHash: string } & TermsConsent): Promise<AccountUser>;
+  updateUser(id: string, data: Partial<Pick<AccountUser, "name" | "emailVerified" | "passwordHash"> & TermsConsent>): Promise<AccountUser>;
   saveCode(email: string, purpose: CodePurpose, codeHash: string, expiresAt: Date): Promise<void>;
   getCode(email: string, purpose: CodePurpose): Promise<StoredCode | null>;
   bumpCodeAttempts(email: string, purpose: CodePurpose): Promise<void>;
@@ -138,7 +147,9 @@ export function createAccountService({
     const name = str(body.name).trim();
     const problem = emailProblem(email) || passwordProblem(password, email) || (name.length > NAME_MAX ? `Tên hiển thị tối đa ${NAME_MAX} ký tự` : "");
     if (problem) return bad(problem);
+    if (body.acceptTerms !== true) return bad(TERMS_REQUIRED);
 
+    const consent: TermsConsent = { termsAcceptedAt: new Date(now()), termsVersion: LEGAL_VERSION };
     const passwordHash = await hashPassword(password); // băm trước mọi nhánh → thời gian như nhau
     const user = await repo.findUserByEmail(email);
     if (user?.emailVerified) {
@@ -146,8 +157,8 @@ export function createAccountService({
       return sent(email);
     }
     // Chưa ai xác thực email này: người đăng ký sau cùng giữ mật khẩu, nhưng chỉ chủ hộp thư mới nhận được mã.
-    if (user) await repo.updateUser(user.id, { passwordHash, name: name || user.name });
-    else await repo.createUser({ email, name: name || null, passwordHash });
+    if (user) await repo.updateUser(user.id, { passwordHash, name: name || user.name, ...consent });
+    else await repo.createUser({ email, name: name || null, passwordHash, ...consent });
     await sendCode(email, "verify");
     return sent(email);
   }

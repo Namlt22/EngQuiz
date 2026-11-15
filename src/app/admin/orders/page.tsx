@@ -32,9 +32,14 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
             Đối chiếu sao kê ngân hàng: đúng <b>số tiền</b> và <b>nội dung = mã đơn</b> thì bấm “Đã nhận tiền”.
           </p>
         </div>
-        <a href={showAll ? "/admin/orders" : "/admin/orders?all=1"} className="btn-ghost">
-          {showAll ? "Chỉ đơn đang chờ" : "Xem tất cả đơn"}
-        </a>
+        <div className="flex flex-wrap gap-2">
+          <a href={showAll ? "/admin/orders" : "/admin/orders?all=1"} className="btn-ghost">
+            {showAll ? "Chỉ đơn đang chờ" : "Xem tất cả đơn"}
+          </a>
+          <a href="/admin/revenue" className="btn-ghost">
+            Sổ doanh thu
+          </a>
+        </div>
       </header>
 
       {orders.length === 0 ? (

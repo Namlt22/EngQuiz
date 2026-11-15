@@ -129,6 +129,13 @@ Ghi chú: link trong email đăng nhập luôn trỏ về `AUTH_URL`; nếu rout
 >
 > **Giới hạn đã biết:** khi phải gộp hai bản (đăng nhập trên máy khác đang có dữ liệu cũ, hoặc hai tab cùng ghi), việc *bỏ tích* một ô hoặc *giảm* số giây có thể bị bản kia khôi phục lại, vì phép gộp luôn giữ thành tích cao nhất. Trong lúc học bình thường (không có xung đột) thì mọi thay đổi được lưu đúng như trên máy.
 
+## Pháp lý khi bán gói AI
+
+- Văn bản công khai: `/legal` (thông tin người bán, Điều khoản sử dụng, Chính sách bảo mật, Điều khoản AI, Thanh toán–gia hạn–hoàn tiền). Nội dung ở `src/content/legal/`, các con số chính sách ở `src/lib/legal-policy.ts`, giá lấy từ `src/lib/plans.ts`.
+- Thông tin người bán: các biến `ENGQUIZ_BUSINESS_*` trong `.env` (xem `.env.example`).
+- Sổ doanh thu và CSV S1a-HKD cho admin: `/admin/revenue`.
+- Việc cần làm và danh mục dữ liệu cá nhân: [docs/legal/compliance-checklist.md](docs/legal/compliance-checklist.md). Hồ sơ tự phân loại rủi ro AI: [docs/legal/ai-risk-assessment.md](docs/legal/ai-risk-assessment.md).
+
 ## Cấu trúc
 
 ```

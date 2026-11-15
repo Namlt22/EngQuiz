@@ -2,6 +2,7 @@
 
 /** Chọn gói AI → tạo đơn → chuyển sang trang thanh toán QR. Chưa đăng nhập thì chuyển tới đăng nhập rồi quay lại. */
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Check, Loader2 } from "lucide-react";
@@ -75,6 +76,17 @@ export function PlanPicker() {
           );
         })}
       </div>
+      <p className="text-center text-sm text-muted">
+        Gói <b className="text-fg">không tự động gia hạn</b>, không tự trừ tiền. Chọn gói nghĩa là bạn đồng ý{" "}
+        <Link href="/legal/terms" className="font-semibold text-primary hover:underline">
+          Điều khoản sử dụng
+        </Link>{" "}
+        và{" "}
+        <Link href="/legal/payment" className="font-semibold text-primary hover:underline">
+          Chính sách thanh toán, gia hạn & hoàn tiền
+        </Link>
+        .
+      </p>
     </div>
   );
 }
