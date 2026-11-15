@@ -2,7 +2,7 @@
 import { prisma } from "./db";
 import type { AccountRepo, AccountUser } from "./account-service";
 
-const USER_FIELDS = { id: true, email: true, name: true, emailVerified: true, passwordHash: true } as const;
+const USER_FIELDS = { id: true, email: true, name: true, emailVerified: true, passwordHash: true, disabled: true, accessUntil: true } as const;
 
 export const prismaAccountRepo: AccountRepo = {
   async findUserByEmail(email) {

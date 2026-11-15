@@ -5,7 +5,8 @@ import { auth } from "@/auth";
 import { missingBusinessFields, readBusinessInfo } from "@/lib/business";
 import { formatVnd } from "@/lib/plans";
 import { currentVnYear, parseYear, summarizeRevenue, TAX_FREE_REVENUE_THRESHOLD, type RevenueSummary } from "@/lib/revenue";
-import { isAdminEmail, listPaidOrders } from "@/server/billing";
+import { isAdminEmail, listPaidOrders, salesOpen } from "@/server/billing";
+import { ComingSoon } from "@/components/ui/ComingSoon";
 
 export const metadata: Metadata = { title: "Sổ doanh thu", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -25,6 +26,9 @@ const STATUS: Record<RevenueSummary["status"], { cls: string; text: (s: RevenueS
 export default async function AdminRevenuePage({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
   const session = await auth();
   if (!session?.user?.id || !isAdminEmail(session.user.email)) notFound();
+  if (!salesOpen()) {
+    return <ComingSoon title="Sổ doanh thu — sắp ra mắt" description="Đang tạm dừng bán gói AI nên chưa có doanh thu. Sổ doanh thu sẽ hiện lại khi mở bán (ENGQUIZ_SALES_OPEN=1)." />;
+  }
   const year = parseYear((await searchParams).year);
   const { orders, startedAt } = await listPaidOrders(year);
   const s = summarizeRevenue(orders, year, startedAt);

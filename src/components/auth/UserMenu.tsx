@@ -61,6 +61,8 @@ function SignOutButton() {
 }
 
 type BillingMe = AiEntitlement & { admin: boolean };
+/** Quyền AI "không thời hạn" được lưu bằng một ngày rất xa (PERMANENT_UNTIL ở src/server/access.ts). */
+const PERMANENT_YEAR = 2099;
 
 /** Gói AI của tài khoản (đọc khi mở menu): còn hạn đến ngày nào / còn mấy lượt thử + nút nâng cấp. */
 function PlanStatus() {
@@ -77,25 +79,29 @@ function PlanStatus() {
   }, []);
   if (!me) return <div className="h-14 animate-pulse rounded-xl bg-surface-2" aria-hidden="true" />;
 
-  const until = me.premiumUntil ? new Date(me.premiumUntil).toLocaleDateString("vi-VN") : null;
+  const untilDate = me.premiumUntil ? new Date(me.premiumUntil) : null;
+  const permanent = !!untilDate && untilDate.getFullYear() >= PERMANENT_YEAR;
+  const until = untilDate?.toLocaleDateString("vi-VN") ?? null;
   return (
     <div className="space-y-2">
       <div className="rounded-xl bg-primary-soft p-3 text-xs text-primary">
         <div className="flex items-center gap-1.5 font-semibold">
-          <Sparkles className="size-3.5" /> {me.premium ? "Gói AI đang dùng" : "Tài khoản miễn phí"}
+          <Sparkles className="size-3.5" /> {me.premium ? "Đầy đủ tính năng AI" : "Tài khoản miễn phí"}
         </div>
         <div className="mt-0.5">
           {me.premium
-            ? `Đến hết ${until} · hôm nay còn ${Math.max(0, me.dailyLimit - me.usedToday)}/${me.dailyLimit} lượt AI`
-            : `Còn ${me.trialLeft} lượt AI dùng thử${until ? ` · gói cũ hết hạn ${until}` : ""}`}
+            ? `${permanent ? "Không thời hạn" : `Đến hết ${until}`} · hôm nay còn ${Math.max(0, me.dailyLimit - me.usedToday)}/${me.dailyLimit} lượt AI`
+            : `Còn ${me.trialLeft} lượt AI dùng thử${until ? ` · quyền AI đã hết hạn ${until}` : ""}`}
         </div>
-        <Link href="/pricing" role="menuitem" className="mt-1.5 inline-block font-semibold underline">
-          {me.premium ? "Gia hạn gói AI" : "Nâng cấp gói AI"}
-        </Link>
+        {!permanent && (
+          <Link href="/pricing#referral" role="menuitem" className="mt-1.5 inline-block font-semibold underline">
+            Nhập mã giới thiệu
+          </Link>
+        )}
       </div>
       {me.admin && (
-        <Link href="/admin/orders" role="menuitem" className="btn-ghost w-full justify-start">
-          <ShieldCheck className="size-4" /> Duyệt đơn gói AI
+        <Link href="/admin/users" role="menuitem" className="btn-ghost w-full justify-start">
+          <ShieldCheck className="size-4" /> Quản trị
         </Link>
       )}
     </div>

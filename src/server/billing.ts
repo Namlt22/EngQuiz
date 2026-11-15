@@ -57,7 +57,12 @@ export async function takeAiTurn(userId: string, now = new Date()): Promise<AiTu
   }
   const trial = await prisma.user.updateMany({ where: { id: userId, aiTrialUsed: { lt: AI_TRIAL_TURNS } }, data: { aiTrialUsed: { increment: 1 } } });
   if (trial.count === 1) return { kind: "trial" };
-  throw new BillingError(402, "Bạn đã dùng hết lượt AI dùng thử. Mua gói AI để tiếp tục được chấm và sửa lỗi.");
+  throw new BillingError(
+    402,
+    salesOpen()
+      ? "Bạn đã dùng hết lượt AI dùng thử. Mua gói AI hoặc nhập mã giới thiệu để tiếp tục được chấm và sửa lỗi."
+      : "Bạn đã dùng hết lượt AI dùng thử. Nhập mã giới thiệu để tiếp tục được chấm và sửa lỗi.",
+  );
 }
 
 export async function refundAiTurn(userId: string, turn: AiTurn): Promise<void> {
@@ -95,8 +100,15 @@ export const toOrderView = (o: OrderRow, now = new Date()): OrderView => ({
   expired: o.status === "pending" && now.getTime() - o.createdAt.getTime() > ORDER_EXPIRES_DAYS * 24 * 60 * 60_000,
 });
 
+/**
+ * Đang mở bán gói AI không. Tắt mặc định: chỉ bật khi ENGQUIZ_SALES_OPEN=1 trong .env.
+ * Khi tắt, quyền dùng AI đầy đủ có được qua mã giới thiệu hoặc admin cấp (src/server/access.ts).
+ */
+export const salesOpen = () => process.env.ENGQUIZ_SALES_OPEN === "1";
+
 /** Tạo đơn (hoặc dùng lại đơn đang chờ cùng gói, chưa quá hạn) — tránh tạo hàng loạt đơn khi bấm nhiều lần. */
 export async function createOrder(userId: string, planId: unknown, now = new Date()): Promise<{ order: OrderView; created: boolean }> {
+  if (!salesOpen()) throw new BillingError(403, "EngQuiz đang tạm dừng bán gói AI. Bạn có thể dùng mã giới thiệu để mở đầy đủ tính năng.");
   const plan = getPlan(planId);
   if (!plan) throw new BillingError(400, "Gói không hợp lệ.");
   const since = new Date(now.getTime() - ORDER_EXPIRES_DAYS * 24 * 60 * 60_000);

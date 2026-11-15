@@ -26,6 +26,10 @@ model User {
   termsAcceptedAt DateTime?
   /// Phiên bản bộ điều khoản đã đồng ý (LEGAL_VERSION trong src/lib/legal-policy.ts)
   termsVersion    String?
+  /// Admin khoá tài khoản: không đăng nhập được, phiên đang mở bị đăng xuất
+  disabled        Boolean   @default(false)
+  /// Admin đặt hạn dùng tài khoản: sau thời điểm này không đăng nhập được (null = không giới hạn)
+  accessUntil     DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -34,6 +38,7 @@ model User {
   learner  LearnerState?
   orders   Order[]
   aiUsage  AiUsage[]
+  referralRedemptions ReferralRedemption[]
 }
 
 model Account {
@@ -137,4 +142,36 @@ model AiUsage {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, day])
+}
+
+/// Mã giới thiệu do admin tạo: người dùng nhập mã → được dùng đầy đủ tính năng AI trong grantDays ngày.
+model ReferralCode {
+  /// Viết HOA, chữ + số + gạch ngang (vd ENGQUIZ-VIP)
+  code      String    @id
+  note      String?
+  /// Số ngày được dùng gói AI kể từ lúc nhập mã (null = không thời hạn)
+  grantDays Int?
+  /// Số người được dùng tối đa (null = không giới hạn)
+  maxUses   Int?
+  usedCount Int       @default(0)
+  /// Sau thời điểm này không nhập được mã nữa (null = không hết hạn)
+  expiresAt DateTime?
+  active    Boolean   @default(true)
+  createdBy String
+  createdAt DateTime  @default(now())
+
+  redemptions ReferralRedemption[]
+}
+
+model ReferralRedemption {
+  id         String   @id @default(cuid())
+  code       String
+  userId     String
+  redeemedAt DateTime @default(now())
+
+  referral ReferralCode @relation(fields: [code], references: [code], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([code, userId])
+  @@index([userId])
 }

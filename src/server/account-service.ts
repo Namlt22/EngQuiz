@@ -12,6 +12,7 @@ import { createRateLimiter } from "./rate-limit";
 import { newSessionToken, SESSION_MAX_AGE_SECONDS } from "./session";
 import type { AccountMailKind } from "./account-email";
 import { LEGAL_VERSION } from "@/lib/legal-policy";
+import { accountBlockReason } from "@/lib/account-access";
 
 export type CodePurpose = "verify" | "reset";
 
@@ -21,6 +22,9 @@ export interface AccountUser {
   name: string | null;
   emailVerified: Date | null;
   passwordHash: string | null;
+  /** Admin khoá / đặt hạn tài khoản (src/server/access.ts) */
+  disabled?: boolean;
+  accessUntil?: Date | null;
 }
 
 /** Bằng chứng người dùng đã đồng ý điều khoản: lúc nào, bản nào. */
@@ -132,10 +136,12 @@ export function createAccountService({
     return true;
   }
 
-  async function startSession(userId: string): Promise<AccountResult> {
+  async function startSession(user: AccountUser): Promise<AccountResult> {
+    const blocked = accountBlockReason(user, new Date(now()));
+    if (blocked) return bad(blocked, 403);
     const token = newSessionToken();
     const expires = new Date(now() + SESSION_MAX_AGE_SECONDS * 1000);
-    await repo.createSession(userId, token, expires);
+    await repo.createSession(user.id, token, expires);
     return { status: 200, data: { signedIn: true }, session: { token, expires } };
   }
 
@@ -170,7 +176,7 @@ export function createAccountService({
     if (!(await consumeCode(email, "verify", str(body.code).trim()))) return bad(BAD_CODE);
     if (!(await verifyPassword(str(body.password), user.passwordHash))) return bad("Mật khẩu không đúng với mật khẩu đã đăng ký.");
     await repo.updateUser(user.id, { emailVerified: new Date(now()) });
-    return startSession(user.id);
+    return startSession(user);
   }
 
   async function resendCode(body: Record<string, unknown>): Promise<AccountResult> {
@@ -194,7 +200,7 @@ export function createAccountService({
       await sendCode(email, "verify");
       return { status: 403, error: "Email chưa được xác thực. Nhập mã vừa gửi tới hộp thư của bạn.", data: { unverified: true, email, retryAfter: RESEND_AFTER_SECONDS } };
     }
-    return startSession(user.id);
+    return startSession(user);
   }
 
   async function forgotPassword(body: Record<string, unknown>): Promise<AccountResult> {
@@ -213,7 +219,7 @@ export function createAccountService({
     if (!user || !(await consumeCode(email, "reset", str(body.code).trim()))) return bad(BAD_CODE);
     await repo.updateUser(user.id, { passwordHash: await hashPassword(password), emailVerified: user.emailVerified ?? new Date(now()) });
     await repo.deleteSessions(user.id); // đăng xuất mọi thiết bị khác
-    return startSession(user.id);
+    return startSession(user);
   }
 
   const actions = { register, "verify-email": verifyEmail, "resend-code": resendCode, login, "forgot-password": forgotPassword, "reset-password": resetPassword };

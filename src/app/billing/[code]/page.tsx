@@ -4,12 +4,22 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { CopyValue, OrderStatus } from "@/components/billing/OrderStatus";
 import { formatVnd, getPlan } from "@/lib/plans";
-import { bankInfo, getOwnOrder, ORDER_EXPIRES_DAYS, toOrderView, vietQrUrl } from "@/server/billing";
+import { bankInfo, getOwnOrder, ORDER_EXPIRES_DAYS, salesOpen, toOrderView, vietQrUrl } from "@/server/billing";
+import { ComingSoon } from "@/components/ui/ComingSoon";
 
 export const metadata: Metadata = { title: "Thanh toán gói AI", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 export default async function BillingPage({ params }: { params: Promise<{ code: string }> }) {
+  if (!salesOpen()) {
+    return (
+      <ComingSoon title="Thanh toán gói AI sắp ra mắt" description="EngQuiz đang tạm dừng bán gói AI. Nếu có mã giới thiệu, bạn có thể nhập ở trang Gói AI để mở đầy đủ tính năng.">
+        <Link href="/pricing#referral" className="btn-primary">
+          Nhập mã giới thiệu
+        </Link>
+      </ComingSoon>
+    );
+  }
   const { code } = await params;
   const session = await auth();
   if (!session?.user?.id) redirect(`/signin?callbackUrl=${encodeURIComponent(`/billing/${code}`)}`);

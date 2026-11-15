@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { OrderActions } from "@/components/billing/OrderActions";
 import { formatVnd, getPlan } from "@/lib/plans";
-import { isAdminEmail, listOrders, toOrderView } from "@/server/billing";
+import { isAdminEmail, listOrders, salesOpen, toOrderView } from "@/server/billing";
+import { ComingSoon } from "@/components/ui/ComingSoon";
 
 export const metadata: Metadata = { title: "Quản trị đơn hàng", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -20,6 +21,9 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   const session = await auth();
   // Không phải admin → 404 (không để lộ là trang quản trị tồn tại).
   if (!session?.user?.id || !isAdminEmail(session.user.email)) notFound();
+  if (!salesOpen()) {
+    return <ComingSoon title="Đơn hàng — sắp ra mắt" description="Đang tạm dừng bán gói AI (ENGQUIZ_SALES_OPEN tắt). Đặt ENGQUIZ_SALES_OPEN=1 trong .env rồi deploy lại để mở bán và quản lý đơn." />;
+  }
   const showAll = (await searchParams).all === "1";
   const orders = await listOrders(showAll ? "all" : "pending");
 

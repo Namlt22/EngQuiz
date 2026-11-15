@@ -10,6 +10,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/server/db";
 import { SESSION_MAX_AGE_SECONDS } from "@/server/session";
 import { LEGAL_VERSION } from "@/lib/legal-policy";
+import { accountBlockReason, type AccessFields } from "@/lib/account-access";
 
 export const googleEnabled = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
 
@@ -30,7 +31,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   callbacks: {
-    session({ session, user }) {
+    /** Đăng nhập Google: tài khoản đã có nhưng bị khoá / hết hạn → từ chối (trang đăng nhập báo AccessDenied). */
+    async signIn({ user }) {
+      if (!user.email) return true;
+      const existing = await prisma.user.findFirst({
+        where: { email: { equals: user.email, mode: "insensitive" } },
+        select: { disabled: true, accessUntil: true },
+      });
+      return !accountBlockReason(existing);
+    },
+    /** Mỗi lần đọc phiên: tài khoản bị khoá / hết hạn giữa chừng → xoá mọi phiên của tài khoản, coi như chưa đăng nhập. */
+    async session({ session, user }) {
+      if (accountBlockReason(user as AccessFields)) {
+        await prisma.session.deleteMany({ where: { userId: user.id } }).catch(() => {});
+        return { ...session, user: undefined as unknown as typeof session.user };
+      }
       return { ...session, user: { ...session.user, id: user.id } };
     },
   },

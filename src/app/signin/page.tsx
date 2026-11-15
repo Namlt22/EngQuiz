@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Đăng nhập" };
 /** Lỗi do Auth.js (đăng nhập Google) chuyển về qua ?error=… */
 const ERROR_MESSAGES: Record<string, string> = {
   OAuthAccountNotLinked: "Email này đã có tài khoản. Hãy đăng nhập bằng email và mật khẩu (hoặc dùng “Quên mật khẩu” để đặt mật khẩu).",
-  AccessDenied: "Bạn đã từ chối quyền truy cập.",
+  AccessDenied: "Không đăng nhập được: tài khoản đã bị khoá hoặc hết thời hạn sử dụng (hoặc bạn đã từ chối quyền truy cập Google).",
   Verification: "Link đăng nhập cũ đã hết hạn. Hãy đăng nhập bằng email và mật khẩu.",
 };
 

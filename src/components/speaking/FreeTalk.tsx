@@ -290,9 +290,9 @@ function AiAction({ phase, take, aiEnabled, onAsk }: { phase: Phase; take: Liste
     return (
       <div className="space-y-2 rounded-xl bg-primary-soft p-4 text-sm">
         <p className="font-semibold text-primary">{phase.message}</p>
-        <p className="text-muted">Gói AI: chấm điểm và sửa từng lỗi khi nói tự do, tối đa {AI_DAILY_LIMIT} lượt mỗi ngày.</p>
-        <Link href="/pricing" className="btn-primary">
-          <Sparkles className="size-4" /> Xem các gói AI
+        <p className="text-muted">Đầy đủ tính năng AI: chấm điểm và sửa từng lỗi khi nói tự do, tối đa {AI_DAILY_LIMIT} lượt mỗi ngày.</p>
+        <Link href="/pricing#referral" className="btn-primary">
+          <Sparkles className="size-4" /> Nhập mã giới thiệu
         </Link>
       </div>
     );

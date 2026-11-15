@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, Minus, Sparkles } from "lucide-react";
 import { PlanPicker } from "@/components/billing/PlanPicker";
+import { ReferralBox } from "@/components/billing/ReferralBox";
+import { ComingSoon } from "@/components/ui/ComingSoon";
+import { salesOpen } from "@/server/billing";
 import { AI_DAILY_LIMIT, AI_TRIAL_TURNS, formatVnd, GUEST_TRIAL_ITEMS, perMonth, PLANS } from "@/lib/plans";
 import { REFUND_MAX_AI_TURNS, REFUND_WINDOW_DAYS } from "@/lib/legal-policy";
 
@@ -9,6 +12,8 @@ export const metadata: Metadata = {
   title: "Bảng giá gói AI",
   description: "Học miễn phí toàn bộ lý thuyết, quiz, nghe chép. Mua gói AI để được chấm và sửa bài nói tiếng Anh.",
 };
+// Đọc ENGQUIZ_SALES_OPEN lúc chạy (không đóng băng lúc build).
+export const dynamic = "force-dynamic";
 
 type Cell = boolean | string;
 const ROWS: { label: string; guest: Cell; free: Cell; ai: Cell }[] = [
@@ -58,6 +63,22 @@ const FAQ: { q: string; a: string }[] = [
 
 export default function PricingPage() {
   const cheapest = Math.min(...PLANS.map(perMonth));
+  const open = salesOpen();
+  if (!open) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6">
+        <ComingSoon
+          title="Gói AI sắp ra mắt"
+          description={`Các gói AI đang được hoàn thiện và sẽ mở bán sớm. Trong lúc chờ, tài khoản miễn phí vẫn học được toàn bộ bài và có ${AI_TRIAL_TURNS} lượt AI chấm & sửa bài nói dùng thử.`}
+        >
+          <Link href="/register" className="btn-ghost">
+            Tạo tài khoản miễn phí
+          </Link>
+        </ComingSoon>
+        <ReferralBox />
+      </div>
+    );
+  }
   return (
     <div className="mx-auto max-w-5xl space-y-10">
       <header className="space-y-3 text-center">
@@ -70,6 +91,8 @@ export default function PricingPage() {
           <b className="text-fg">{formatVnd(cheapest)}/tháng</b>.
         </p>
       </header>
+
+      <ReferralBox />
 
       <section className="card overflow-x-auto">
         <table className="w-full min-w-[560px] text-left">
@@ -107,7 +130,7 @@ export default function PricingPage() {
 
       <section className="space-y-4">
         <h2 className="text-xl font-bold">Chọn thời hạn gói AI</h2>
-        <PlanPicker />
+        <PlanPicker salesOpen={open} />
       </section>
 
       <section className="space-y-3">

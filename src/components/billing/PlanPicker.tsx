@@ -8,7 +8,8 @@ import { useSession } from "next-auth/react";
 import { Check, Loader2 } from "lucide-react";
 import { formatVnd, perMonth, PLANS, savingPercent, type PlanId } from "@/lib/plans";
 
-export function PlanPicker() {
+/** salesOpen=false: hiện giá để tham khảo nhưng nút bị khoá (tạm dừng bán; dùng mã giới thiệu thay thế). */
+export function PlanPicker({ salesOpen = true }: { salesOpen?: boolean }) {
   const router = useRouter();
   const { status } = useSession();
   const [busy, setBusy] = useState<PlanId | null>(null);
@@ -68,9 +69,9 @@ export function PlanPicker() {
                   <Check className="mt-0.5 size-4 shrink-0 text-success" /> Dùng trong {p.months} tháng, mua thêm thì cộng dồn
                 </li>
               </ul>
-              <button type="button" className={highlight ? "btn-primary w-full" : "btn-ghost w-full"} disabled={busy !== null} onClick={() => void choose(p.id)}>
+              <button type="button" className={highlight ? "btn-primary w-full" : "btn-ghost w-full"} disabled={busy !== null || !salesOpen} onClick={() => void choose(p.id)}>
                 {busy === p.id ? <Loader2 className="size-4 animate-spin" /> : null}
-                {busy === p.id ? "Đang tạo đơn…" : "Chọn gói"}
+                {!salesOpen ? "Tạm dừng bán" : busy === p.id ? "Đang tạo đơn…" : "Chọn gói"}
               </button>
             </div>
           );

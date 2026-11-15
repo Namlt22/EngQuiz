@@ -183,3 +183,20 @@ it("chức năng không tồn tại → 404; AUTH_SECRET ngắn → lỗi khởi
   expect((await svc.run("xoa-het", {})).status).toBe(404);
   expect(() => createAccountService({ repo: {} as AccountRepo, mail: async () => {}, secret: "ngan" })).toThrow();
 });
+
+describe("tài khoản bị admin khoá / hết hạn", () => {
+  it("đúng mật khẩu nhưng tài khoản bị khoá → 403, không tạo phiên", async () => {
+    const { svc, users, sessions } = setup();
+    users.set("u1", { id: "u1", email: "k@mail.com", name: null, emailVerified: new Date(1), passwordHash: await hashPassword("dungmatkhau"), disabled: true });
+    const r = await svc.run("login", { email: "k@mail.com", password: "dungmatkhau" });
+    expect(r.status).toBe(403);
+    expect(r.error).toMatch(/khoá/);
+    expect(sessions).toHaveLength(0);
+  });
+
+  it("hết hạn tài khoản → không đăng nhập được", async () => {
+    const { svc, users } = setup();
+    users.set("u1", { id: "u1", email: "h@mail.com", name: null, emailVerified: new Date(1), passwordHash: await hashPassword("dungmatkhau"), accessUntil: new Date(1) });
+    expect((await svc.run("login", { email: "h@mail.com", password: "dungmatkhau" })).status).toBe(403);
+  });
+});
