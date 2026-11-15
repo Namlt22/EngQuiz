@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Check, Minus, Sparkles } from "lucide-react";
 import { PlanPicker } from "@/components/billing/PlanPicker";
 import { AI_DAILY_LIMIT, AI_TRIAL_TURNS, formatVnd, GUEST_TRIAL_ITEMS, perMonth, PLANS } from "@/lib/plans";
+import { REFUND_MAX_AI_TURNS, REFUND_WINDOW_DAYS } from "@/lib/legal-policy";
 
 export const metadata: Metadata = {
   title: "Bảng giá gói AI",
@@ -40,6 +41,14 @@ const FAQ: { q: string; a: string }[] = [
   {
     q: `Vì sao giới hạn ${AI_DAILY_LIMIT} lượt AI mỗi ngày?`,
     a: `Mỗi lượt AI chấm tốn chi phí thật. ${AI_DAILY_LIMIT} lượt/ngày là thoải mái cho việc luyện nói đều đặn; lượt mới có lại lúc 0 giờ.`,
+  },
+  {
+    q: "Gói có tự gia hạn không?",
+    a: "Không. EngQuiz không lưu thẻ và không tự trừ tiền. Hết hạn thì gói tự dừng, muốn dùng tiếp bạn mua gói mới.",
+  },
+  {
+    q: "Có được hoàn tiền không?",
+    a: `Được hoàn 100% nếu bạn yêu cầu trong ${REFUND_WINDOW_DAYS} ngày kể từ khi kích hoạt và chưa dùng quá ${REFUND_MAX_AI_TURNS} lượt AI. Chi tiết ở trang Thanh toán, gia hạn & hoàn tiền.`,
   },
   {
     q: "Hết hạn gói thì dữ liệu học có mất không?",

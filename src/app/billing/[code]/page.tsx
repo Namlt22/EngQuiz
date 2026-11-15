@@ -70,6 +70,13 @@ export default async function BillingPage({ params }: { params: Promise<{ code: 
             </li>
             <li>Đơn có hiệu lực {ORDER_EXPIRES_DAYS} ngày. Gói được kích hoạt sau khi đối soát, bạn sẽ nhận email xác nhận.</li>
             <li>Đang còn hạn gói? Thời gian mới được cộng dồn vào ngày hết hạn hiện tại.</li>
+            <li>
+              Gói không tự gia hạn. Điều kiện hoàn tiền xem tại{" "}
+              <Link href="/legal/payment" className="font-semibold text-primary hover:underline">
+                Thanh toán, gia hạn & hoàn tiền
+              </Link>
+              .
+            </li>
           </ul>
         )}
       </div>

@@ -9,8 +9,8 @@ export const prismaAccountRepo: AccountRepo = {
     // Tài khoản cũ (Google / link email) có thể lưu email khác chữ hoa/thường.
     return prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } }, select: USER_FIELDS }) as Promise<AccountUser | null>;
   },
-  async createUser({ email, name, passwordHash }) {
-    return prisma.user.create({ data: { email, name, passwordHash }, select: USER_FIELDS });
+  async createUser({ email, name, passwordHash, termsAcceptedAt, termsVersion }) {
+    return prisma.user.create({ data: { email, name, passwordHash, termsAcceptedAt, termsVersion }, select: USER_FIELDS });
   },
   async updateUser(id, data) {
     return prisma.user.update({ where: { id }, data, select: USER_FIELDS });

@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, Lightbulb, MessageCircleQuestion, Volume2 } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Bot, CheckCircle2, Lightbulb, MessageCircleQuestion, Volume2 } from "lucide-react";
 import { CORRECTION_LABELS, type SpeakingFeedback } from "@/lib/speaking-feedback";
 import { ScoreBadge, scoreTone } from "./ScoreBadge";
 
@@ -26,6 +27,16 @@ export function FeedbackView({
         <ScoreBadge score={feedback.overall} label="Điểm tổng" />
         <span className="chip bg-surface-2">Ước lượng trình độ: {feedback.estimatedLevel}</span>
       </div>
+      {/* Luật Trí tuệ nhân tạo: người dùng phải biết nội dung này do AI tạo. */}
+      <p className="flex items-start gap-2 rounded-xl bg-surface-2 p-3 text-sm text-muted">
+        <Bot className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+        <span>
+          <b className="text-fg">Do AI tạo</b> (Claude của Anthropic). Điểm và câu sửa có thể sai, chỉ để tham khảo khi tự luyện, không phải điểm thi chính thức.{" "}
+          <Link href="/legal/ai" className="font-semibold text-primary hover:underline">
+            Điều khoản AI
+          </Link>
+        </span>
+      </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
         {(Object.keys(SCORE_LABELS) as (keyof SpeakingFeedback["scores"])[]).map((k) => {

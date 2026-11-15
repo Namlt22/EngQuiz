@@ -11,19 +11,23 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
+  id              String    @id @default(cuid())
+  name            String?
+  email           String?   @unique
+  emailVerified   DateTime?
+  image           String?
   /// scrypt$<salt>$<hash> — null nếu tài khoản chỉ đăng nhập bằng Google / link email cũ
-  passwordHash  String?
+  passwordHash    String?
   /// Gói AI còn hạn đến thời điểm này (null = chưa từng mua)
-  premiumUntil  DateTime?
+  premiumUntil    DateTime?
   /// Số lượt AI dùng thử đã dùng (tặng mỗi tài khoản một số lượt cố định)
-  aiTrialUsed   Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  aiTrialUsed     Int       @default(0)
+  /// Lúc đồng ý Điều khoản & Chính sách bảo mật (Luật 91/2025: phải chứng minh được sự đồng ý)
+  termsAcceptedAt DateTime?
+  /// Phiên bản bộ điều khoản đã đồng ý (LEGAL_VERSION trong src/lib/legal-policy.ts)
+  termsVersion    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   accounts Account[]
   sessions Session[]

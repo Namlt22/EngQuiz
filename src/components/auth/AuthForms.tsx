@@ -22,7 +22,7 @@ interface ApiReply {
   error: string | null;
 }
 
-async function callAccount(action: string, body: Record<string, string>): Promise<ApiReply> {
+async function callAccount(action: string, body: Record<string, string | boolean>): Promise<ApiReply> {
   try {
     const res = await fetch(`/api/account/${action}`, {
       method: "POST",
@@ -158,6 +158,9 @@ function GoogleButton({ callbackUrl, disabled }: { callbackUrl: string; disabled
         </svg>
         Tiếp tục với Google
       </button>
+      <p className="text-center text-xs text-muted">
+        Tiếp tục với Google nghĩa là bạn đồng ý <LegalLinks />.
+      </p>
       <div className="flex items-center gap-3 text-xs text-muted">
         <span className="h-px flex-1 bg-line" /> hoặc dùng email <span className="h-px flex-1 bg-line" />
       </div>
@@ -282,9 +285,25 @@ export function SignInForm({ googleEnabled, callbackUrl, errorMessage }: { googl
   );
 }
 
+/** Liên kết tới Điều khoản sử dụng và Chính sách bảo mật (mở tab mới để không mất dữ liệu đang nhập). */
+function LegalLinks() {
+  return (
+    <>
+      <Link href="/legal/terms" target="_blank" className="font-semibold text-primary hover:underline">
+        Điều khoản sử dụng
+      </Link>{" "}
+      và{" "}
+      <Link href="/legal/privacy" target="_blank" className="font-semibold text-primary hover:underline">
+        Chính sách bảo mật
+      </Link>
+    </>
+  );
+}
+
 // ── Tạo tài khoản ───────────────────────────────────────────────
 export function RegisterForm({ googleEnabled, callbackUrl }: { googleEnabled: boolean; callbackUrl: string }) {
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [alert, setAlert] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -300,12 +319,13 @@ export function RegisterForm({ googleEnabled, callbackUrl }: { googleEnabled: bo
       email: emailError(form.email),
       password: newPasswordError(form.password, form.email),
       confirm: form.confirm !== form.password ? "Mật khẩu nhập lại không khớp" : "",
+      terms: acceptTerms ? "" : "Hãy đọc và đồng ý Điều khoản sử dụng và Chính sách bảo mật",
     };
     setErrors(next);
     if (hasErrors(next)) return;
     setBusy(true);
     setAlert(undefined);
-    const r = await callAccount("register", { name: form.name.trim(), email: form.email.trim(), password: form.password });
+    const r = await callAccount("register", { name: form.name.trim(), email: form.email.trim(), password: form.password, acceptTerms });
     setBusy(false);
     if (r.ok) return setVerify({ email: String(r.data?.email ?? form.email.trim().toLowerCase()), retryAfter: Number(r.data?.retryAfter) || 60 });
     setAlert(r.error ?? "Chưa tạo được tài khoản.");
@@ -333,6 +353,28 @@ export function RegisterForm({ googleEnabled, callbackUrl }: { googleEnabled: bo
         <Field id="email" label="Email" hint="nhận mã xác thực" type="email" autoComplete="email" inputMode="email" maxLength={254} placeholder="ban@gmail.com" value={form.email} onChange={set("email")} error={errors.email} />
         <Field id="password" label="Mật khẩu" hint={`tối thiểu ${PASSWORD_MIN} ký tự`} type="password" autoComplete="new-password" maxLength={128} value={form.password} onChange={set("password")} error={errors.password} />
         <Field id="confirm" label="Nhập lại mật khẩu" type="password" autoComplete="new-password" maxLength={128} value={form.confirm} onChange={set("confirm")} error={errors.confirm} />
+        <div className="space-y-1.5">
+          <label htmlFor="terms" className="flex items-start gap-2 text-sm">
+            <input
+              id="terms"
+              name="terms"
+              type="checkbox"
+              className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]"
+              checked={acceptTerms}
+              onChange={(e) => setAcceptTerms(e.target.checked)}
+              aria-invalid={Boolean(errors.terms)}
+              aria-describedby={errors.terms ? "terms-error" : undefined}
+            />
+            <span>
+              Tôi đã đọc và đồng ý <LegalLinks />, bao gồm việc xử lý dữ liệu cá nhân như mô tả trong chính sách.
+            </span>
+          </label>
+          {errors.terms && (
+            <p id="terms-error" className="text-xs text-danger">
+              {errors.terms}
+            </p>
+          )}
+        </div>
         <button type="submit" className="btn-primary w-full" disabled={busy}>
           {busy ? "Đang tạo…" : "Tạo tài khoản"}
         </button>
