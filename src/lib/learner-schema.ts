@@ -14,6 +14,7 @@ import {
   type RoadmapLevel,
   type RoadmapWeeks,
 } from "./roadmap";
+import { SRS_MAX_CHARS, isValidSrs } from "@/core/srs";
 
 /** Giới hạn để một request không thể làm phình database. */
 export const LIMITS = {
@@ -76,6 +77,7 @@ export const progressSchema = z.strictObject({
     .regex(/^\p{Script=Han}*$/u, { message: "Chỉ gồm chữ Hán" })
     .refine((s) => [...s].length <= LIMITS.hanziChars, { message: `Tối đa ${LIMITS.hanziChars} chữ` })
     .optional(),
+  srs: z.string().max(SRS_MAX_CHARS).refine(isValidSrs, { message: "Dữ liệu ôn từ vựng không hợp lệ" }).optional(),
   xp: z.number().int().min(0).max(LIMITS.maxXp),
   streak: z.number().int().min(0).max(100_000),
   lastActiveDate: dateKey.optional(),

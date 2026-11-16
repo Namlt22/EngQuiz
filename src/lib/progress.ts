@@ -10,6 +10,7 @@ import { PASS_PERCENT, type ProgressState, type TopicProgress } from "./progress
 import { resourceKey, type TaskKind } from "./roadmap-days";
 import { roadmapActions } from "./roadmap-store";
 import { cleanHanzi, sanitizeProgress } from "./learner-sanitize";
+import { dayNumber, decodeSrs, encodeSrs, isMastered, review, type Grade } from "@/core/srs";
 import { readJson, writeJson } from "./local-json";
 import { COURSE_CODES, courseStorageKey, currentCourse, type CourseCode } from "./course";
 import { useCourse } from "./course-client";
@@ -173,7 +174,7 @@ export const progressActions = {
    * Hoàn thành một bài của khoá tiếng Trung (pinyin, Hán tự…). Lưu như chủ điểm "<prefix>-<id>" trong tiến độ của khoá:
    * theoryRead = đã xong bài, quizBest = điểm cao nhất. XP chỉ cộng lần đầu xong bài.
    */
-  recordZhLesson(prefix: "pinyin" | "hanzi", id: string, percent: number, xp: number) {
+  recordZhLesson(prefix: "pinyin" | "hanzi" | "grammar", id: string, percent: number, xp: number) {
     const key = `${prefix}-${id}`;
     done("sound", key);
     update((s) => {
@@ -188,6 +189,21 @@ export const progressActions = {
     update((s) => {
       if ((s.hanzi ?? "").includes(ch)) return s;
       return withXp({ ...s, hanzi: cleanHanzi((s.hanzi ?? "") + ch) }, xp);
+    });
+  },
+
+  /**
+   * Chấm một thẻ từ vựng (khoá tiếng Trung). XP: +1 mỗi thẻ nhớ được; +3 khi từ vừa lên mức "đã thuộc" lần đầu.
+   */
+  reviewWord(word: string, grade: Grade) {
+    update((s) => {
+      const map = decodeSrs(s.srs);
+      const before = map.get(word);
+      const after = review(before, grade, dayNumber());
+      map.set(word, after);
+      const xp = (grade === "again" ? 0 : 1) + (!isMastered(before) && isMastered(after) ? 3 : 0);
+      const next = { ...s, srs: encodeSrs(map) };
+      return xp ? withXp(next, xp) : next;
     });
   },
 

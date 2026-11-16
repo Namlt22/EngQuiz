@@ -35,7 +35,8 @@ export function Logo({ className = "" }: { className?: string }) {
   return (
     <Link href={home} className={`group inline-flex shrink-0 items-center gap-2 ${className}`} aria-label="EngQuiz — Trang chủ">
       <LogoMark className="size-9 drop-shadow-[0_4px_10px_rgba(99,102,241,0.35)] transition group-hover:-rotate-6" />
-      <span className="text-xl font-extrabold tracking-tight">
+      {/* Cỡ máy tính bảng (md): menu chính đã chiếm chỗ, chỉ giữ biểu tượng */}
+      <span className="text-xl font-extrabold tracking-tight md:hidden lg:inline">
         Eng<span className="bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent">Quiz</span>
       </span>
     </Link>

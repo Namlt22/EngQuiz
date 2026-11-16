@@ -8,6 +8,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, CheckCircle2, Volume2 } from "lucide-react";
 import { charCode, charsAtLevel, type HanziChar } from "@/content/zh/hanzi-chars";
 import { applySandhi } from "@/core/pinyin";
+import { vocabVi } from "@/content/zh/vocab-vi";
 import { progressActions, useProgress } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
 import { StrokeWriter } from "./StrokeWriter";
@@ -74,6 +75,7 @@ export function HanziCharView({ info }: { info: HanziChar }) {
                       </span>
                       <span className="font-semibold">{w.pinyin}</span>
                       {spoken !== w.pinyin && <span className="text-xs text-primary">đọc là {spoken}</span>}
+                      {vocabVi(w.hanzi) && <span className="min-w-0 truncate text-sm text-muted">{vocabVi(w.hanzi)![1]}</span>}
                       <span className="ml-auto text-xs text-muted">HSK {w.level}</span>
                     </button>
                   </li>
@@ -81,7 +83,7 @@ export function HanziCharView({ info }: { info: HanziChar }) {
               })}
             </ul>
             {info.words.length > MAX_WORDS && <p className="mt-1 text-xs text-muted">và {info.words.length - MAX_WORDS} từ khác.</p>}
-            <p className="mt-2 text-xs text-muted">Nghĩa tiếng Việt và âm Hán-Việt sẽ có ở phần Từ vựng.</p>
+            {!vocabVi(info.words[0]?.hanzi ?? "") && <p className="mt-2 text-xs text-muted">Nghĩa tiếng Việt của từ HSK {info.level} sẽ có khi tới chặng này trong lộ trình.</p>}
           </div>
         </section>
       </div>

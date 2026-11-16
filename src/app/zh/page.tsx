@@ -6,8 +6,8 @@ import { HSK_INFO, HSK_LEVELS, ZH_INTRO_STAGE } from "@/content/zh/hsk-levels";
 const MODULES: { icon: typeof AudioLines; title: string; hint: string; href?: string }[] = [
   { icon: AudioLines, title: "Pinyin & thanh điệu", hint: "Thanh mẫu, vận mẫu, 4 thanh, biến điệu 3-3, 不, 一", href: "/zh/pinyin" },
   { icon: Brush, title: "Hán tự", hint: "Nét, quy tắc thứ tự nét, bộ thủ; tập viết 1 096 chữ HSK 1–4 có hoạt hình nét", href: "/zh/hanzi" },
-  { icon: Layers, title: "Từ vựng HSK", hint: "Thẻ ghi nhớ ôn lặp lại ngắt quãng, theo từng cấp" },
-  { icon: BookOpen, title: "Ngữ pháp", hint: "Theo danh mục điểm ngữ pháp của chuẩn HSK 3.0" },
+  { icon: Layers, title: "Từ vựng HSK", hint: "Thẻ ghi nhớ ôn lặp lại ngắt quãng; HSK 1 có nghĩa tiếng Việt và âm Hán-Việt", href: "/zh/vocab" },
+  { icon: BookOpen, title: "Ngữ pháp", hint: "Theo danh mục điểm ngữ pháp của chuẩn HSK 3.0; HSK 1 có 12 bài kèm bài tập", href: "/zh/grammar" },
   { icon: PenLine, title: "Quiz & thi thử", hint: "Sắp xếp câu, chọn thanh, chọn chữ, mô phỏng cấu trúc đề" },
   { icon: Headphones, title: "Nghe chép", hint: "Gõ pinyin (HSK 1–2) hoặc chữ Hán, chấm theo từng chữ" },
   { icon: MessagesSquare, title: "Đọc & hội thoại", hint: "Bật/tắt pinyin, chạm từ để xem nghĩa, nhập vai" },

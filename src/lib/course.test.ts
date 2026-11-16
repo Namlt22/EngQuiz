@@ -93,3 +93,19 @@ describe("chuỗi chữ Hán đã viết", () => {
     expect(sanitizeLearnerData({ ...course(), progress: { ...progress(), hanzi: "我x我你" } }).progress.hanzi).toBe("我你");
   });
 });
+
+describe("dữ liệu ôn từ vựng (srs)", () => {
+  it("schema nhận chuỗi hợp lệ, từ chối chuỗi sai", () => {
+    expect(learnerPutSchema.safeParse({ ...course({ srs: "爱,2,20000" }), baseVersion: null }).success).toBe(true);
+    expect(learnerPutSchema.safeParse({ ...course({ srs: "爱,9,20000" }), baseVersion: null }).success).toBe(false);
+  });
+
+  it("gộp hai máy giữ hộp cao hơn", () => {
+    const merged = mergeLearnerData({ ...course({ srs: "爱,1,5" }) }, { ...course({ srs: "爱,3,9" }) });
+    expect(merged.progress.srs).toBe("爱,3,9");
+  });
+
+  it("sanitize bỏ mục hỏng", () => {
+    expect(sanitizeLearnerData({ ...course(), progress: { ...progress(), srs: "爱,2,1;xx,1,1" } }).progress.srs).toBe("爱,2,1");
+  });
+});

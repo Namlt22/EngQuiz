@@ -18,7 +18,7 @@ import { RoadmapReturnBar } from "@/components/roadmap/RoadmapReturnBar";
 import { useProgress } from "@/lib/progress";
 
 const itemClass = (active: boolean) =>
-  `inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${
+  `inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2 py-2 text-sm font-semibold transition lg:gap-1.5 lg:px-3 ${
     active ? "bg-primary-soft text-primary" : "text-muted hover:bg-surface-2 hover:text-fg"
   }`;
 
@@ -103,7 +103,7 @@ export function Header() {
         <Logo />
         <CourseSwitcher />
 
-        <nav className="ml-2 hidden items-center gap-1 md:flex" aria-label="Điều hướng chính">
+        <nav className="hidden items-center gap-0.5 md:flex lg:ml-2 lg:gap-1" aria-label="Điều hướng chính">
           {nav.map((entry) =>
             entry.kind === "link" ? (
               <Link key={entry.href} href={entry.href} className={itemClass(isEntryActive(entry, pathname))}>
@@ -127,7 +127,8 @@ export function Header() {
           >
             <Sparkles className="size-4" /> Gói AI
           </Link>
-          <span className="hidden sm:block">
+          {/* Cỡ máy tính bảng (md) header chật: ẩn nút giao diện, vẫn có ở điện thoại ngang và máy tính */}
+          <span className="hidden sm:block md:hidden lg:block">
             <ThemeToggle />
           </span>
           <UserMenu />

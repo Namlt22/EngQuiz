@@ -30,6 +30,8 @@ export interface ProgressState {
   dialogues?: Record<string, DictationProgress>;
   /** Khoá tiếng Trung: các chữ Hán đã tự viết đúng ở bài tô chữ, nối thành một chuỗi (gọn hơn một record mỗi chữ). */
   hanzi?: string;
+  /** Khoá tiếng Trung: trạng thái ôn từ vựng (hộp Leitner), dạng chuỗi gọn — xem src/core/srs.ts. */
+  srs?: string;
   xp: number;
   streak: number;
   /** yyyy-mm-dd theo giờ địa phương */

@@ -54,8 +54,17 @@ export const NAV_EN: NavEntry[] = [
  */
 export const NAV_ZH: NavEntry[] = [
   { kind: "link", href: "/zh", label: "Trang chủ", icon: House },
-  { kind: "link", href: "/zh/pinyin", label: "Pinyin", icon: AudioLines },
-  { kind: "link", href: "/zh/hanzi", label: "Hán tự", icon: PenLine },
+  {
+    kind: "group",
+    label: "Học",
+    icon: BookOpen,
+    items: [
+      { href: "/zh/pinyin", label: "Pinyin & thanh điệu", hint: "Thanh mẫu, vận mẫu, 4 thanh, biến điệu", icon: AudioLines },
+      { href: "/zh/hanzi", label: "Hán tự", hint: "Nét, bộ thủ, tập viết có hoạt hình", icon: PenLine },
+      { href: "/zh/vocab", label: "Từ vựng HSK", hint: "Thẻ ôn lặp lại ngắt quãng", icon: Layers },
+      { href: "/zh/grammar", label: "Ngữ pháp", hint: "Theo danh mục chuẩn HSK 3.0", icon: BookOpenText },
+    ],
+  },
 ];
 
 export const NAV_BY_COURSE: Record<CourseCode, NavEntry[]> = { en: NAV_EN, zh: NAV_ZH };

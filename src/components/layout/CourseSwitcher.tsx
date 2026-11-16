@@ -47,7 +47,7 @@ export function CourseSwitcher() {
         onClick={() => setOpen((o) => !o)}
       >
         <CourseMark course={course} className="size-6 text-[10px]" />
-        <span className="hidden lg:inline">{current.name}</span>
+        <span className="hidden xl:inline">{current.name}</span>
         <ChevronDown className={`hidden size-4 text-muted transition sm:block ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (

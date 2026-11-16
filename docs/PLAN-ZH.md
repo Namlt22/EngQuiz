@@ -351,3 +351,15 @@ Nội dung nằm trong `src/content/zh/…`, viết bằng TypeScript như hiệ
   - Thư viện `hanzi-writer` 3.7.3 (MIT). Dữ liệu nét lấy từ `hanzi-writer-data` 2.0.1 (Arphic Public License), chép sang `public/hanzi` bằng `npm run build:hanzi`, giữ nguyên file `ARPHICPL.TXT`.
   - Chữ đã viết được lưu gọn thành một chuỗi `progress.hanzi` (có schema, gộp hợp giữa các máy, đồng bộ cùng tài khoản).
 - **Còn thiếu: bảng chữ chính thức (汉字表).** Hiện danh sách chữ rút từ từ vựng; có bảng chính thức thì thay nguồn trong `src/content/zh/hanzi-chars.ts`.
+
+### Bước 3 — HSK 1 (đang làm)
+- **Đã xong: từ vựng HSK 1** (`/zh/vocab`).
+  - 300 từ có từ loại, nghĩa tiếng Việt và âm Hán-Việt (`src/content/zh/vocab-vi/hsk1.ts`, do EngQuiz tự soạn).
+  - Test kiểm tra: đủ đúng danh sách, số âm Hán-Việt khớp số chữ, cùng một chữ thì cùng âm Hán-Việt ở mọi từ.
+  - Ôn thẻ theo hệ hộp Leitner (`src/core/srs.ts`): 6 hộp, khoảng cách 0/1/2/4/8/16 ngày, tối đa 10 từ mới mỗi lượt.
+  - Trạng thái ôn lưu gọn thành chuỗi `progress.srs`, đồng bộ theo tài khoản; khi gộp hai máy thì giữ hộp cao hơn.
+- **Đã xong: ngữ pháp HSK 1** (`/zh/grammar`): 12 bài phủ các điểm ngữ pháp cấp 1 của GF 0025-2021.
+  - Các bài: câu chữ 是; câu hỏi 吗 / chính phản / 呢; đại từ và 的; câu tính từ; đại từ nghi vấn; số và lượng từ; thời gian; câu chữ 有 và phương vị; 在; động từ năng nguyện; phó từ 都 / 也 / 还 / 再 / 只 và 不 / 没有; 了 / 正在…呢 / 吧 / câu cầu khiến.
+  - Câu tiếng Trung soạn ở dạng tách từ: pinyin lấy tự động từ danh mục HSK, và test chặn mọi từ vượt cấp (`src/core/zh-sentence.ts`).
+  - Bài tập có trắc nghiệm và sắp xếp câu; đạt từ 80% thì tự ghi nhận bài.
+- **Còn lại của HSK 1:** nghe chép, bài đọc, hội thoại, lộ trình tuần 3–10, bài thi thử.

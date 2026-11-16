@@ -6,6 +6,7 @@ import { LIMITS, progressSchema, topicProgressSchema, type CourseData, type Cour
 import { EXTRA_COURSES } from "./course";
 import type { DictationProgress, ProgressState, TopicProgress } from "./progress-calc";
 import { parseLog, parseProfile } from "./roadmap";
+import { decodeSrs, encodeSrs } from "@/core/srs";
 
 /** Khóa không được dùng làm tên mục (chống prototype pollution khi gộp object). */
 export const RESERVED_KEYS = new Set(["__proto__", "constructor", "prototype"]);
@@ -67,6 +68,8 @@ export function sanitizeProgress(raw: unknown): ProgressState {
   if (Object.keys(dialogues).length) state.dialogues = dialogues;
   const hanzi = cleanHanzi(r.hanzi);
   if (hanzi) state.hanzi = hanzi;
+  const srs = typeof r.srs === "string" ? encodeSrs(decodeSrs(r.srs)) : "";
+  if (srs) state.srs = srs;
   return progressSchema.parse(state);
 }
 
