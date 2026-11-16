@@ -50,6 +50,20 @@ export function RoadmapPath({
   const [openDay, setOpenDay] = useState<number | null>(null);
   const selected = openDay === null ? undefined : days.find((d) => d.n === openDay);
 
+  // Quay về từ một bài (link /roadmap#day-n): cuộn tới trạm và mở lại bảng của ngày đó.
+  useEffect(() => {
+    const n = Number(/^#day-(\d+)$/.exec(window.location.hash)?.[1]);
+    if (!n || !days.some((d) => d.n === n)) return;
+    document.getElementById(`day-${n}`)?.scrollIntoView({ block: "center" });
+    setOpenDay(n);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ đọc hash một lần khi mở trang
+  }, []);
+
+  function close() {
+    setOpenDay(null);
+    if (window.location.hash) history.replaceState(null, "", window.location.pathname);
+  }
+
   return (
     <div className="space-y-10">
       {PHASE_STYLES.map((style, p) => {
@@ -79,7 +93,7 @@ export function RoadmapPath({
           </section>
         );
       })}
-      {selected && <DaySheet day={selected} week={weeks[selected.week - 1]} log={log} onClose={() => setOpenDay(null)} />}
+      {selected && <DaySheet day={selected} week={weeks[selected.week - 1]} log={log} onClose={close} />}
     </div>
   );
 }
@@ -170,6 +184,7 @@ function DayNode({ day, log, status, x, y, onOpen }: { day: RoadmapDay; log: Roa
 
   return (
     <button
+      id={`day-${day.n}`}
       type="button"
       onClick={onOpen}
       className={`absolute flex items-center gap-2.5 rounded-2xl border px-2.5 py-2 text-left transition hover:-translate-y-0.5 ${pill}`}

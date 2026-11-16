@@ -73,7 +73,7 @@ function draft(kind: TaskKind, ref: string, review = false): Draft | null {
       };
     case "sound": {
       const s = IPA_MAP[ref];
-      return { ...base, title: `Phát âm /${s?.symbol ?? ref}/`, hint: "Bấm nghe âm và đọc theo các từ ví dụ", href: `/ipa#${ref}` };
+      return { ...base, title: `Phát âm /${s?.symbol ?? ref}/`, hint: "Nghe âm, đọc theo từ ví dụ, đạt bài nghe phân biệt", href: `/ipa/${ref}` };
     }
     case "talk": {
       const id = promptIdByText(ref);

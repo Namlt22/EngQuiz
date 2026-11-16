@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, CheckCircle2, Ear, Lightbulb, MousePointerClick, RefreshCw, Snail, Volume2, X, XCircle,
 } from "lucide-react";
@@ -9,61 +10,21 @@ import {
 } from "@/content/ipa";
 import { commonsFileUrl, ipaAudioSrc, IPA_RECORDINGS, LICENSE_URL, SYNTHESIZED_DIPHTHONGS, SYNTHESIZED_VOICE } from "@/content/ipa-audio";
 import { useSpeech } from "@/lib/speech";
-import { progressActions } from "@/lib/progress";
+import { useIpaSoundPlayer } from "@/lib/ipa-player";
 
 /* Một nguồn TTS dùng chung cho cả trang để đổi giọng một lần là áp dụng mọi nơi. */
 type Speak = (text: string, rate?: number) => void;
 const SpeakCtx = createContext<Speak>(() => {});
 const useSpeak = () => useContext(SpeakCtx);
 
-/* Phát âm đứng riêng (file ghi âm); âm không có file thì đọc từ ví dụ bằng TTS. */
+/* Phát âm đứng riêng — dùng useIpaSoundPlayer (src/lib/ipa-player.ts). */
 type PlaySound = (sound: IpaSound) => void;
 const PlaySoundCtx = createContext<PlaySound>(() => {});
 const usePlaySound = () => useContext(PlaySoundCtx);
 
-function useSoundPlayer(speak: Speak): PlaySound {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  // Mỗi âm một <audio> dùng lại: tải và giải mã sẵn từ lúc mở trang (44 file ≈ 0,6 MB), bấm là phát ngay.
-  const cacheRef = useRef(new Map<string, HTMLAudioElement>());
-
-  useEffect(() => {
-    const cache = cacheRef.current;
-    for (const s of IPA_SOUNDS) {
-      const src = ipaAudioSrc(s.id);
-      if (!src || cache.has(s.id)) continue;
-      const audio = new Audio(src);
-      audio.preload = "auto";
-      cache.set(s.id, audio);
-    }
-    return () => audioRef.current?.pause();
-  }, []);
-
-  return useCallback(
-    (sound: IpaSound) => {
-      progressActions.markSound(sound.id);
-      const sayExample = () => speak(sound.examples[0].word, 0.8);
-      audioRef.current?.pause();
-      const src = ipaAudioSrc(sound.id);
-      if (!src) return sayExample();
-
-      if (window.speechSynthesis?.speaking) window.speechSynthesis.cancel();
-      const audio = cacheRef.current.get(sound.id) ?? new Audio(src);
-      audio.currentTime = 0;
-      audioRef.current = audio;
-      audio.play().catch((err: unknown) => {
-        // AbortError: người dùng bấm âm khác khi file này đang tải — không phải lỗi.
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        console.warn(`Không phát được ${src}, đọc từ ví dụ thay thế.`, err);
-        sayExample();
-      });
-    },
-    [speak],
-  );
-}
-
 export function IpaExplorer() {
   const speech = useSpeech({ storageKey: "engquiz:voice-ipa-us" });
-  const playSound = useSoundPlayer(speech.speak);
+  const playSound = useIpaSoundPlayer(speech.speak);
   const [selected, setSelected] = useState<string | null>(null);
 
   // Đọc #id trên URL để có thể chia sẻ link tới một âm cụ thể.
@@ -307,6 +268,10 @@ function SoundDetail({ sound, onClose, onSelect }: { sound: IpaSound; onClose: (
           <X className="size-5" />
         </button>
       </div>
+
+      <Link href={`/ipa/${sound.id}`} className="btn-primary w-full">
+        Học bài phát âm /{sound.symbol}/ — 3 bước, có chấm điểm
+      </Link>
 
       <section>
         <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">Từ ví dụ</h4>

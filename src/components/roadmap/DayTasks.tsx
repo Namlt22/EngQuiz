@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AudioLines, BookOpen, BookOpenText, Check, Headphones, Layers, MessagesSquare, Mic, PenLine, Repeat, Volume2 } from "lucide-react";
 import type { RoadmapLog } from "@/lib/roadmap";
 import { taskDone, type RoadmapDay, type TaskKind } from "@/lib/roadmap-days";
+import { saveReturnTarget } from "@/lib/roadmap-return";
 
 export const TASK_ICONS: Record<TaskKind, typeof BookOpen> = {
   theory: BookOpen,
@@ -62,6 +63,7 @@ export function DayTasks({ day, log, compact = false }: { day: RoadmapDay; log: 
             </div>
             <Link
               href={task.href}
+              onClick={() => saveReturnTarget({ day: day.n, taskId: task.id, title: task.title })}
               className={`shrink-0 px-3 py-1.5 text-xs ${done ? "btn-ghost" : isNext ? "btn-primary" : "btn-ghost"}`}
               aria-label={`${done ? "Học lại" : "Học"}: ${task.title}`}
             >

@@ -12,6 +12,7 @@ import { Logo } from "./Logo";
 import { NAV, isActive, isEntryActive, type NavGroup } from "./nav-items";
 import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { RoadmapReturnBar } from "@/components/roadmap/RoadmapReturnBar";
 import { useProgress } from "@/lib/progress";
 
 const itemClass = (active: boolean) =>
@@ -128,6 +129,8 @@ export function Header() {
           <UserMenu />
         </div>
       </div>
+      {/* Đang học một bài mở từ lộ trình → thanh "Về lộ trình" dính cùng header */}
+      <RoadmapReturnBar />
     </header>
   );
 }
