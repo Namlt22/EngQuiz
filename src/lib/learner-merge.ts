@@ -5,6 +5,7 @@
  */
 import type { CourseData, CoursesData, LearnerData } from "./learner-schema";
 import { EXTRA_COURSES } from "./course";
+import { cleanHanzi } from "./learner-sanitize";
 import type { DictationProgress, ProgressState, TopicProgress } from "./progress-calc";
 import { buildRoadmap, type RoadmapLog } from "./roadmap";
 import { buildDays, remapTasks } from "./roadmap-days";
@@ -47,6 +48,7 @@ export function mergeProgress(a: ProgressState, b: ProgressState): ProgressState
     ...(Object.keys(speaking).length ? { speaking } : {}),
     ...(Object.keys(reading).length ? { reading } : {}),
     ...(Object.keys(dialogues).length ? { dialogues } : {}),
+    ...(a.hanzi || b.hanzi ? { hanzi: cleanHanzi((a.hanzi ?? "") + (b.hanzi ?? "")) } : {}),
     xp: Math.max(a.xp, b.xp),
     streak: later.streak,
     ...(later.lastActiveDate ? { lastActiveDate: later.lastActiveDate } : {}),

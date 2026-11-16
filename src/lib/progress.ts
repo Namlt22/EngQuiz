@@ -9,7 +9,7 @@ import { useSyncExternalStore } from "react";
 import { PASS_PERCENT, type ProgressState, type TopicProgress } from "./progress-calc";
 import { resourceKey, type TaskKind } from "./roadmap-days";
 import { roadmapActions } from "./roadmap-store";
-import { sanitizeProgress } from "./learner-sanitize";
+import { cleanHanzi, sanitizeProgress } from "./learner-sanitize";
 import { readJson, writeJson } from "./local-json";
 import { COURSE_CODES, courseStorageKey, currentCourse, type CourseCode } from "./course";
 import { useCourse } from "./course-client";
@@ -170,16 +170,24 @@ export const progressActions = {
   },
 
   /**
-   * Hoàn thành một bài pinyin (khoá tiếng Trung). Lưu như một chủ điểm "pinyin-<id>" trong tiến độ của khoá:
-   * theoryRead = đã xong bài, quizBest = điểm bước nghe phân biệt cao nhất. XP chỉ cộng lần đầu xong bài.
+   * Hoàn thành một bài của khoá tiếng Trung (pinyin, Hán tự…). Lưu như chủ điểm "<prefix>-<id>" trong tiến độ của khoá:
+   * theoryRead = đã xong bài, quizBest = điểm cao nhất. XP chỉ cộng lần đầu xong bài.
    */
-  recordPinyinLesson(lessonId: string, percent: number, xp: number) {
-    done("sound", lessonId);
+  recordZhLesson(prefix: "pinyin" | "hanzi", id: string, percent: number, xp: number) {
+    const key = `${prefix}-${id}`;
+    done("sound", key);
     update((s) => {
-      const key = `pinyin-${lessonId}`;
       const first = !s.topics[key]?.theoryRead;
       const next = patchTopic(s, key, (t) => ({ ...t, theoryRead: true, quizBest: Math.max(t.quizBest ?? 0, percent) }));
       return first ? withXp(next, xp) : next;
+    });
+  },
+
+  /** Tự viết đúng một chữ Hán ở bài tô chữ (khoá tiếng Trung). XP chỉ cộng lần đầu viết đúng chữ đó. */
+  markHanziWritten(ch: string, xp: number) {
+    update((s) => {
+      if ((s.hanzi ?? "").includes(ch)) return s;
+      return withXp({ ...s, hanzi: cleanHanzi((s.hanzi ?? "") + ch) }, xp);
     });
   },
 

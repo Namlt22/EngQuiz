@@ -29,6 +29,8 @@ export const LIMITS = {
   noteLength: 500,
   maxSeconds: 3600,
   maxXp: 10_000_000,
+  /** Số chữ Hán tối đa trong chuỗi "đã viết" (HSK 1–9 có khoảng 3 000 chữ). */
+  hanziChars: 4000,
 } as const;
 
 const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -69,6 +71,11 @@ export const progressSchema = z.strictObject({
   // Tùy chọn như speaking: bản ghi trước khi có Reading / Hội thoại không có hai trường này.
   reading: boundedRecord(key, setScoreSchema, LIMITS.lessons).optional(),
   dialogues: boundedRecord(key, setScoreSchema, LIMITS.lessons).optional(),
+  hanzi: z
+    .string()
+    .regex(/^\p{Script=Han}*$/u, { message: "Chỉ gồm chữ Hán" })
+    .refine((s) => [...s].length <= LIMITS.hanziChars, { message: `Tối đa ${LIMITS.hanziChars} chữ` })
+    .optional(),
   xp: z.number().int().min(0).max(LIMITS.maxXp),
   streak: z.number().int().min(0).max(100_000),
   lastActiveDate: dateKey.optional(),

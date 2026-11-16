@@ -40,7 +40,7 @@ export function CourseSwitcher() {
     <div ref={ref} className="relative">
       <button
         type="button"
-        className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line bg-surface px-2 text-sm font-semibold transition hover:bg-surface-2"
+        className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line bg-surface px-1.5 text-sm sm:px-2 font-semibold transition hover:bg-surface-2"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`Đang học ${current.name}. Đổi ngôn ngữ`}
@@ -48,7 +48,7 @@ export function CourseSwitcher() {
       >
         <CourseMark course={course} className="size-6 text-[10px]" />
         <span className="hidden lg:inline">{current.name}</span>
-        <ChevronDown className={`size-4 text-muted transition ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`hidden size-4 text-muted transition sm:block ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <div className="absolute left-0 top-full z-50 pt-2">

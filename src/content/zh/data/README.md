@@ -31,3 +31,10 @@ Nghĩa tiếng Việt, âm Hán-Việt và câu ví dụ do EngQuiz tự soạn 
 - **Danh mục chữ Hán (汉字表) và danh mục ngữ pháp (语法等级大纲) của GF 0025-2021.**
   - Chữ xuất hiện trong từ vựng HSK 1–4 mới phủ 248 / 371 / 655 / 1 096 chữ (cộng dồn), trong khi chuẩn yêu cầu 300 / 600 / 900 / 1 200 chữ.
   - Cần bổ sung bảng chữ chính thức trước khi làm phần Hán tự.
+
+## Dữ liệu nét chữ (`public/hanzi/*.json`)
+
+- **Tạo bằng:** `npm run build:hanzi`. Script chép nguyên văn file của gói `hanzi-writer-data` 2.0.1 cho các chữ khoá học cần.
+- **Nguồn:** [Make Me a Hanzi](https://github.com/skishore/makemeahanzi), trích từ phông của Arphic Technology.
+- **Giấy phép:** Arphic Public License. File `public/hanzi/ARPHICPL.TXT` phải đi kèm và giữ nguyên văn.
+- **Thư viện vẽ:** [hanzi-writer](https://github.com/chanind/hanzi-writer) 3.7.3, giấy phép MIT.

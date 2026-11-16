@@ -77,3 +77,19 @@ describe("dữ liệu nhiều khoá học", () => {
     expect(out.courses).not.toHaveProperty("fr");
   });
 });
+
+describe("chuỗi chữ Hán đã viết", () => {
+  it("schema nhận chuỗi chữ Hán, từ chối ký tự khác", () => {
+    expect(learnerPutSchema.safeParse({ ...course({ hanzi: "我你他" }), baseVersion: null }).success).toBe(true);
+    expect(learnerPutSchema.safeParse({ ...course({ hanzi: "我a" }), baseVersion: null }).success).toBe(false);
+  });
+
+  it("gộp hai máy: hợp các chữ, không trùng", () => {
+    const merged = mergeLearnerData({ ...course(), courses: { zh: course({ hanzi: "我你" }) } }, { ...course(), courses: { zh: course({ hanzi: "你他" }) } });
+    expect(merged.courses?.zh?.progress.hanzi).toBe("我你他");
+  });
+
+  it("sanitize bỏ ký tự lạ và chữ trùng", () => {
+    expect(sanitizeLearnerData({ ...course(), progress: { ...progress(), hanzi: "我x我你" } }).progress.hanzi).toBe("我你");
+  });
+});

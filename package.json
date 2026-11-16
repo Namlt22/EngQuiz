@@ -17,6 +17,7 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
+    "build:hanzi": "node scripts/build-hanzi-data.mjs",
     "email:check": "node scripts/check-email.mjs"
   },
   "dependencies": {
@@ -24,6 +25,7 @@
     "@auth/prisma-adapter": "2.11.3",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
+    "hanzi-writer": "3.7.3",
     "lucide-react": "1.60.0",
     "next": "16.4.3",
     "next-auth": "5.0.0-beta.32",
@@ -41,6 +43,7 @@
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "dotenv": "18.0.9",
+    "hanzi-writer-data": "2.0.1",
     "prisma": "7.10.1",
     "selfsigned": "^5.5.0",
     "tailwindcss": "4.1.18",

@@ -39,6 +39,12 @@ function pick<T>(raw: unknown, max: number, clean: (v: unknown) => T | undefined
   return out;
 }
 
+/** Giữ chữ Hán, bỏ trùng, cắt theo giới hạn. */
+export function cleanHanzi(v: unknown): string {
+  if (typeof v !== "string") return "";
+  return [...new Set([...v].filter((ch) => /^\p{Script=Han}$/u.test(ch)))].slice(0, LIMITS.hanziChars).join("");
+}
+
 export function sanitizeProgress(raw: unknown): ProgressState {
   const r = isObj(raw) ? raw : {};
   const activityDays = Object.keys(isObj(r.activity) ? r.activity : {}).filter(isDate).sort().slice(-LIMITS.activityDays);
@@ -59,6 +65,8 @@ export function sanitizeProgress(raw: unknown): ProgressState {
   if (Object.keys(reading).length) state.reading = reading;
   const dialogues = pick(r.dialogues, LIMITS.lessons, cleanDictation);
   if (Object.keys(dialogues).length) state.dialogues = dialogues;
+  const hanzi = cleanHanzi(r.hanzi);
+  if (hanzi) state.hanzi = hanzi;
   return progressSchema.parse(state);
 }
 

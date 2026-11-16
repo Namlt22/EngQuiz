@@ -35,7 +35,7 @@ export function PinyinLessonView({ lesson }: { lesson: PinyinLesson }) {
 
   function finish(percent: number) {
     setScore(percent);
-    progressActions.recordPinyinLesson(lesson.id, percent, LESSON_XP);
+    progressActions.recordZhLesson("pinyin", lesson.id, percent, LESSON_XP);
     setStep("done");
   }
 

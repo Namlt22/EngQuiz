@@ -1,6 +1,6 @@
 # Kế hoạch: chọn ngôn ngữ học + khoá tiếng Trung (chuẩn HSK 3.0)
 
-> Đã duyệt 2026-11-17 (theo các lựa chọn đề xuất) · Đã xong: Bước 0 (từ vựng), Bước 1, Bước 2 phần pinyin. Còn của Bước 2: Hán tự
+> Đã duyệt 2026-11-17 (theo các lựa chọn đề xuất) · Đã xong: Bước 0 (từ vựng), Bước 1, Bước 2 phần pinyin. Bước 2 xong (trừ bảng chữ chính thức)
 >
 > **Phạm vi:**
 > - Người dùng chọn ngôn ngữ muốn học: **Tiếng Anh** (đã có) hoặc **Tiếng Trung** (mới).
@@ -343,6 +343,11 @@ Nội dung nằm trong `src/content/zh/…`, viết bằng TypeScript như hiệ
 - **Âm mẫu:** giọng máy `zh-CN` đọc chữ Hán đại diện.
   - Test chặn chữ đa âm và kiểm tra pinyin khớp danh mục HSK.
   - Máy không có giọng tiếng Trung thì hiện hướng dẫn cài giọng.
-- **Còn lại: Hán tự (tô chữ).**
-  - Cần bảng chữ chính thức (汉字表).
-  - Cần cài thư viện Hanzi Writer (MIT) và dữ liệu nét Make Me a Hanzi (giấy phép Arphic).
+- **Đã xong: Hán tự phần nền** (`/zh/hanzi`).
+  - 8 nét cơ bản, 7 quy tắc thứ tự nét, 46 bộ thủ thường gặp (chữ ví dụ đều thuộc HSK 1–4).
+  - Bài kiểm tra bộ thủ: không lấy nghĩa nhiễu từ các bộ cùng nhóm nghĩa.
+- **Đã xong: tập viết từng chữ** (`/zh/hanzi/<mã Unicode>`), cho 1 096 chữ của từ vựng HSK 1–4.
+  - Mỗi chữ có hoạt hình thứ tự nét, tô theo mẫu và viết không mẫu (máy kiểm tra hướng và thứ tự nét); kèm cách đọc và các từ HSK chứa chữ.
+  - Thư viện `hanzi-writer` 3.7.3 (MIT). Dữ liệu nét lấy từ `hanzi-writer-data` 2.0.1 (Arphic Public License), chép sang `public/hanzi` bằng `npm run build:hanzi`, giữ nguyên file `ARPHICPL.TXT`.
+  - Chữ đã viết được lưu gọn thành một chuỗi `progress.hanzi` (có schema, gộp hợp giữa các máy, đồng bộ cùng tài khoản).
+- **Còn thiếu: bảng chữ chính thức (汉字表).** Hiện danh sách chữ rút từ từ vựng; có bảng chính thức thì thay nguồn trong `src/content/zh/hanzi-chars.ts`.

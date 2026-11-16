@@ -55,6 +55,7 @@ export const NAV_EN: NavEntry[] = [
 export const NAV_ZH: NavEntry[] = [
   { kind: "link", href: "/zh", label: "Trang chủ", icon: House },
   { kind: "link", href: "/zh/pinyin", label: "Pinyin", icon: AudioLines },
+  { kind: "link", href: "/zh/hanzi", label: "Hán tự", icon: PenLine },
 ];
 
 export const NAV_BY_COURSE: Record<CourseCode, NavEntry[]> = { en: NAV_EN, zh: NAV_ZH };
