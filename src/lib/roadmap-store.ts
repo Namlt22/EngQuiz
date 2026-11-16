@@ -1,17 +1,16 @@
 "use client";
 
 /**
- * Lưu hồ sơ lộ trình + nhật ký tích ô trong localStorage (cùng cách làm với progress.ts).
+ * Lưu hồ sơ lộ trình + nhật ký tiến độ trong localStorage (cùng cách làm với progress.ts).
  * Lộ trình chi tiết không được lưu: luôn dựng lại từ hồ sơ bằng buildRoadmap().
+ * Nhật ký chỉ do app ghi (học xong bài, ghi âm nói tự do) — không có thao tác tự tích.
  */
 import { useSyncExternalStore } from "react";
 import { EMPTY_LOG, buildRoadmap, parseLog, parseProfile, type RoadmapLog, type RoadmapProfile } from "./roadmap";
-import { buildDays, completeResource } from "./roadmap-days";
+import { buildDays, completeResource, recordSpeakingSeconds } from "./roadmap-days";
 import { readJson, writeJson } from "./local-json";
 
 const KEY = "engquiz:roadmap:v1";
-const MAX_NOTE_LENGTH = 500;
-const MAX_SECONDS = 3600;
 
 export interface RoadmapState {
   profile?: RoadmapProfile;
@@ -46,14 +45,6 @@ function update(fn: (s: RoadmapState) => RoadmapState) {
   listeners.forEach((l) => l());
 }
 
-function patchLog<K extends keyof RoadmapLog>(key: K, id: string, value: RoadmapLog[K][string] | undefined) {
-  update((s) => {
-    const { [id]: _removed, ...rest } = s.log[key];
-    const next = value === undefined ? rest : { ...rest, [id]: value };
-    return { ...s, log: { ...s.log, [key]: next } };
-  });
-}
-
 /**
  * Khóa đã tính trong lần mở trang hiện tại. Một số hoạt động báo "xong" nhiều lần trong một lượt
  * (đọc theo mẫu lưu điểm sau mỗi câu, lý thuyết cuộn qua lại) — chỉ tính một bài cho mỗi lượt mở trang,
@@ -79,16 +70,12 @@ export const roadmapActions = {
   saveProfile(profile: RoadmapProfile) {
     update((s) => ({ ...s, profile }));
   },
-  toggle(key: "sessions" | "talks" | "milestones", id: string, done: boolean) {
-    patchLog(key, id, done ? true : undefined);
-  },
-  setSeconds(week: number, seconds: number | undefined) {
-    const valid = seconds !== undefined && Number.isFinite(seconds) && seconds >= 0;
-    patchLog("seconds", String(week), valid ? Math.min(Math.round(seconds), MAX_SECONDS) : undefined);
-  },
-  setNote(week: number, note: string) {
-    const trimmed = note.slice(0, MAX_NOTE_LENGTH);
-    patchLog("notes", String(week), trimmed.trim() ? trimmed : undefined);
+  /** Vừa ghi âm một lần nói tự do dài `seconds` giây → cập nhật kỷ lục nói liên tục của tuần đang học. */
+  recordSpeakingSeconds(seconds: number) {
+    load();
+    if (!state.profile) return;
+    const next = recordSpeakingSeconds(buildDays(buildRoadmap(state.profile)), state.log, seconds);
+    if (next !== state.log) update((s) => ({ ...s, log: next }));
   },
   reset() {
     update(() => EMPTY);

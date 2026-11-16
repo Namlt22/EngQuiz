@@ -25,7 +25,7 @@ export function privacyDoc({ business: b }: LegalContext): LegalDoc {
             list: [
               "Tài khoản: email, tên hiển thị, mật khẩu (chỉ lưu dạng băm, EngQuiz không đọc được mật khẩu gốc), thời điểm đăng ký và thời điểm bạn đồng ý điều khoản.",
               "Nếu đăng nhập bằng Google: tên, email và ảnh đại diện do Google cung cấp.",
-              "Dữ liệu học: tiến độ bài học, kết quả quiz và nghe chép, điểm XP, chuỗi ngày học, lộ trình (trình độ tự chọn, mục tiêu, số phút mỗi ngày, ngày bắt đầu) và nhật ký luyện nói (số giây nói, các ô bạn tự tích).",
+              "Dữ liệu học: tiến độ bài học, kết quả quiz và nghe chép, điểm XP, chuỗi ngày học, lộ trình (trình độ tự chọn, mục tiêu, số phút mỗi ngày, ngày bắt đầu) và nhật ký luyện nói (số giây nói, các bài đã hoàn thành trong lộ trình).",
               "Gói AI: mã đơn, gói, số tiền, trạng thái, thời điểm tạo và thanh toán, ngày hết hạn gói, số lượt AI đã dùng mỗi ngày.",
               "Kỹ thuật: cookie phiên đăng nhập (bắt buộc để đăng nhập) và địa chỉ IP (chỉ giữ tạm trong bộ nhớ máy chủ để chống spam, không ghi vào cơ sở dữ liệu).",
             ],

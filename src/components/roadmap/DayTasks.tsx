@@ -2,11 +2,11 @@
 
 /** Danh sách bài của một ngày học: mỗi bài một dòng, bấm "Học" là vào đúng trang; xong thì tự hiện dấu tích. */
 import Link from "next/link";
-import { AudioLines, BookOpen, Check, Headphones, Layers, Mic, PenLine, Repeat, Volume2 } from "lucide-react";
+import { AudioLines, BookOpen, BookOpenText, Check, Headphones, Layers, MessagesSquare, Mic, PenLine, Repeat, Volume2 } from "lucide-react";
 import type { RoadmapLog } from "@/lib/roadmap";
 import { taskDone, type RoadmapDay, type TaskKind } from "@/lib/roadmap-days";
 
-const ICONS: Record<TaskKind, typeof BookOpen> = {
+export const TASK_ICONS: Record<TaskKind, typeof BookOpen> = {
   theory: BookOpen,
   quiz: PenLine,
   quizset: Layers,
@@ -14,6 +14,8 @@ const ICONS: Record<TaskKind, typeof BookOpen> = {
   read: Volume2,
   sound: AudioLines,
   talk: Mic,
+  reading: BookOpenText,
+  dialogue: MessagesSquare,
 };
 
 export const dayMinutes = (day: RoadmapDay) => day.tasks.reduce((sum, t) => sum + t.minutes, 0);
@@ -25,7 +27,7 @@ export function DayTasks({ day, log, compact = false }: { day: RoadmapDay; log: 
     <ol className="space-y-2">
       {day.tasks.map((task, i) => {
         const done = taskDone(log, task);
-        const Icon = ICONS[task.kind];
+        const Icon = TASK_ICONS[task.kind];
         const isNext = task.id === firstOpen?.id;
         return (
           <li

@@ -4,15 +4,15 @@ import { useState } from "react";
 import { AlertTriangle, CalendarDays, PartyPopper, Pencil, RotateCcw } from "lucide-react";
 import { todayKey } from "@/lib/progress";
 import { buildRoadmap, currentWeekNumber, type Roadmap, type RoadmapLog, type RoadmapProfile } from "@/lib/roadmap";
-import { buildDays, dayDone, dayTasksDone, nextOpenDay, type RoadmapDay } from "@/lib/roadmap-days";
+import { buildDays, dayDone, dayTasksDone, nextOpenDay, weekDone, type RoadmapDay } from "@/lib/roadmap-days";
 import { roadmapActions, useHydrated, useRoadmapState } from "@/lib/roadmap-store";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SaveToAccountHint } from "@/components/auth/SaveToAccountHint";
 import { DayTasks, dayMinutes } from "./DayTasks";
-import { FOCUS_LABELS, GOAL_LABELS, PHASE_GOALS, PHASE_STYLES, RESCUE_PHRASES } from "./labels";
+import { FOCUS_LABELS, GOAL_LABELS, RESCUE_PHRASES, formatSeconds } from "./labels";
+import { RoadmapPath, dayInfo } from "./RoadmapPath";
 import { RoadmapSetup } from "./RoadmapSetup";
 import { SpeakingChart } from "./SpeakingChart";
-import { WeekCard } from "./WeekCard";
 
 export function RoadmapApp() {
   const hydrated = useHydrated();
@@ -39,45 +39,18 @@ export function RoadmapApp() {
     <div className="space-y-8">
       <SaveToAccountHint />
       <Overview profile={profile} roadmap={roadmap} days={days} log={log} current={current} onEdit={() => setEditing(true)} />
-      <NextDayCard day={next} log={log} talkMinutes={roadmap.talkMinutes} />
+      <NextDayCard day={next} log={log} />
       {(!next || next.week === 1) && <RescuePhrases />}
+
+      <RoadmapPath weeks={roadmap.weeks} days={days} log={log} nextDayN={next?.n} currentWeek={current} />
 
       <section className="card space-y-3 p-5">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="text-lg font-bold">Giây nói liên tục theo tuần</h2>
-          <span className="text-xs text-muted">Vạch đứt là mục tiêu của giai đoạn. Nhập số giây ở thẻ từng tuần.</span>
+          <h2 className="text-lg font-bold">Nói liên tục dài nhất mỗi tuần</h2>
+          <span className="text-xs text-muted">Tự ghi từ các lần Nói tự do. Vạch đứt là mục tiêu của giai đoạn.</span>
         </div>
         <SpeakingChart weeks={roadmap.weeks} seconds={log.seconds} />
       </section>
-
-      {PHASE_STYLES.map((style, i) => {
-        const weeks = roadmap.weeks.filter((w) => w.phase === i + 1);
-        if (weeks.length === 0) return null;
-        return (
-          <section key={style.name} className="space-y-3">
-            <div className={`border-l-4 pl-3 ${style.text}`} style={{ borderColor: "currentColor" }}>
-              <h2 className="text-lg font-bold">
-                Giai đoạn {i + 1} · {style.name}
-              </h2>
-              <p className="text-sm text-muted">{PHASE_GOALS[i]}</p>
-            </div>
-            <div className="space-y-3">
-              {weeks.map((w) => (
-                <WeekCard
-                  key={w.n}
-                  week={w}
-                  days={days.filter((d) => d.week === w.n)}
-                  log={log}
-                  nextDayN={next?.n}
-                  startDate={profile.startDate}
-                  talkMinutes={roadmap.talkMinutes}
-                  isCurrent={w.n === current}
-                />
-              ))}
-            </div>
-          </section>
-        );
-      })}
 
       <ResetPanel />
     </div>
@@ -100,8 +73,8 @@ function Overview({
   onEdit: () => void;
 }) {
   const daysDone = days.filter((d) => dayDone(log, d)).length;
-  const talks = roadmap.weeks.filter((w) => log.talks[w.n]).length;
-  const milestones = roadmap.weeks.filter((w) => log.milestones[w.n]).length;
+  const milestones = roadmap.weeks.filter((w) => weekDone(log, days, w.n)).length;
+  const longest = Math.max(0, ...Object.values(log.seconds));
   const status =
     current === 0
       ? `Bắt đầu ngày ${profile.startDate.split("-").reverse().join("/")}`
@@ -138,29 +111,31 @@ function Overview({
       ))}
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <OverviewStat value={daysDone} total={days.length} label="ngày đã hoàn thành" />
-        <OverviewStat value={talks} total={roadmap.weeks.length} label="buổi nói chuyện thật" />
-        <OverviewStat value={milestones} total={roadmap.weeks.length} label="cột mốc đã đạt" />
+        <OverviewStat value={`${daysDone}`} total={days.length} label="ngày đã hoàn thành" />
+        <OverviewStat value={`${milestones}`} total={roadmap.weeks.length} label="cột mốc đã đạt" />
+        <OverviewStat value={longest ? formatSeconds(longest) : "—"} label="nói liên tục dài nhất" />
       </div>
     </section>
   );
 }
 
-function OverviewStat({ value, total, label }: { value: number; total: number; label: string }) {
+function OverviewStat({ value, total, label }: { value: string; total?: number; label: string }) {
   return (
     <div className="min-w-0 rounded-2xl bg-white/12 p-3 ring-1 ring-white/20 sm:p-4">
-      <div className="font-mono text-xl font-bold tabular-nums sm:text-2xl">
+      <div className="truncate font-mono text-xl font-bold tabular-nums sm:text-2xl">
         {value}
-        <span className="text-base text-white/70">/{total}</span>
+        {total !== undefined && <span className="text-base text-white/70">/{total}</span>}
       </div>
       <div className="text-xs text-white/80">{label}</div>
-      <ProgressBar value={total ? (value / total) * 100 : 0} className="mt-2 bg-white/20" barClassName="bg-white" label={label} />
+      {total !== undefined && (
+        <ProgressBar value={total ? (Number(value) / total) * 100 : 0} className="mt-2 bg-white/20" barClassName="bg-white" label={label} />
+      )}
     </div>
   );
 }
 
 /** Thẻ lớn đầu trang: ngày học tiếp theo (Day n) với danh sách bài — chỉ cần bấm "Học" lần lượt. */
-function NextDayCard({ day, log, talkMinutes }: { day?: RoadmapDay; log: RoadmapLog; talkMinutes: number }) {
+function NextDayCard({ day, log }: { day?: RoadmapDay; log: RoadmapLog }) {
   if (!day) {
     return (
       <section className="card flex flex-col items-center gap-2 p-8 text-center">
@@ -170,26 +145,21 @@ function NextDayCard({ day, log, talkMinutes }: { day?: RoadmapDay; log: Roadmap
       </section>
     );
   }
-  if (day.kind === "talk") {
-    return (
-      <section className="card space-y-3 p-5 md:p-6">
-        <div className="text-xs font-semibold uppercase tracking-wide text-primary">Học tiếp · Day {day.n} · Tuần {day.week}</div>
-        <h2 className="text-xl font-bold">Nói chuyện thật {talkMinutes} phút</h2>
-        <p className="text-sm text-muted">
-          Ngày cuối tuần: nói chuyện bằng tiếng Anh với bạn bè, gia sư hoặc người nước ngoài. Xong thì tích ô “Nói chuyện thật” ở Day {day.n} bên dưới.
-        </p>
-      </section>
-    );
-  }
   const count = dayTasksDone(log, day);
+  const checkpoint = day.kind === "checkpoint";
   return (
     <section className="card space-y-4 p-5 md:p-6">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wide text-primary">Học tiếp · Tuần {day.week}</div>
-          <h2 className="text-2xl font-extrabold">Day {day.n}</h2>
+          <h2 className="text-2xl font-extrabold">
+            Day {day.n} · {dayInfo(day).label}
+          </h2>
           <p className="text-sm text-muted">
-            {day.tasks.length} bài · khoảng {dayMinutes(day)} phút. Bấm “Học” lần lượt — học xong bài nào, bài đó tự được tích; đủ bài là xong Day {day.n}.
+            {day.tasks.length} bài · khoảng {dayMinutes(day)} phút.{" "}
+            {checkpoint
+              ? "Bài kiểm tra cuối tuần được chấm tự động — đạt hết là bạn đạt cột mốc của tuần."
+              : `Học lần lượt từng bài; bài nào xong EngQuiz tự ghi nhận, đủ bài là xong Day ${day.n}.`}
           </p>
         </div>
         <span className="font-mono text-sm font-bold text-primary">
@@ -229,7 +199,7 @@ function ResetPanel() {
   }
   return (
     <div className="card flex flex-wrap items-center gap-3 p-4">
-      <span className="flex-1 text-sm">Xóa lộ trình và toàn bộ ô đã tích? Tiến độ lý thuyết, quiz, nghe chép vẫn giữ nguyên.</span>
+      <span className="flex-1 text-sm">Xóa lộ trình và tiến độ trong lộ trình? Điểm lý thuyết, quiz, nghe chép, bài đọc… vẫn giữ nguyên.</span>
       <button type="button" className="btn bg-danger text-white hover:brightness-110" onClick={() => roadmapActions.reset()}>
         Xóa
       </button>

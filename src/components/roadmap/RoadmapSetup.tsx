@@ -140,7 +140,7 @@ export function RoadmapSetup({ initial, onDone }: { initial?: RoadmapProfile; on
           onChange={(e) => set("startDate", e.target.value)}
           className="input max-w-xs"
         />
-        <p className="text-xs text-muted">Mỗi tuần gồm 6 buổi học và 1 buổi nói chuyện thật.</p>
+        <p className="text-xs text-muted">Mỗi tuần gồm 6 ngày học và 1 bài kiểm tra cuối tuần — tất cả được chấm và ghi nhận tự động.</p>
       </div>
 
       <div className="flex flex-wrap gap-2">

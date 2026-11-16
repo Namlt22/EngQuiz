@@ -2,17 +2,20 @@
  * Chia mỗi tuần của lộ trình thành 7 ngày học cụ thể (Day 1, Day 2, …):
  *  - ngày 1–6: danh sách bài trong EngQuiz (lý thuyết, quiz, nghe chép, đọc theo mẫu, phát âm, nói tự do),
  *    mỗi bài có link học ngay và TỰ HOÀN THÀNH khi người học làm xong hoạt động tương ứng;
- *  - ngày 7: nói chuyện thật với người khác (ngoài app → người học tự tích).
- * Một ngày hoàn thành khi mọi bài trong ngày đã xong. Hàm thuần — kiểm thử được.
+ *  - ngày 7: KIỂM TRA CUỐI TUẦN — đọc hiểu, nhập vai hội thoại, nói tự do về chủ đề tuần; cũng tự chấm.
+ * Một ngày hoàn thành khi mọi bài trong ngày đã xong; một tuần (và cột mốc của tuần) hoàn thành khi xong cả 7 ngày.
+ * Người học KHÔNG tự tích ô nào — mọi trạng thái đều do app ghi nhận. Hàm thuần — kiểm thử được.
  */
 import { getTopicMeta } from "@/content/catalog";
+import { getDialogue } from "@/content/dialogues";
 import { getDictation } from "@/content/dictations";
 import { IPA_MAP } from "@/content/ipa";
+import { getReading } from "@/content/readings";
 import { promptIdByText } from "@/content/speaking-prompts";
 import { getQuizSet, topicSetId } from "./quiz-sets";
-import { SESSIONS_PER_WEEK, sessionKey, type Roadmap, type RoadmapLog, type RoadmapWeek } from "./roadmap";
+import { SESSIONS_PER_WEEK, type Roadmap, type RoadmapLog, type RoadmapWeek } from "./roadmap";
 
-export type TaskKind = "theory" | "quiz" | "dictation" | "read" | "sound" | "talk" | "quizset";
+export type TaskKind = "theory" | "quiz" | "dictation" | "read" | "sound" | "talk" | "quizset" | "reading" | "dialogue";
 
 export interface RoadmapTask {
   /** Duy nhất trong lộ trình: "tuần-ngày-thứ tự" */
@@ -35,7 +38,8 @@ export interface RoadmapDay {
   day: number;
   /** Số thứ tự ngày trong cả lộ trình: Day 1, Day 2, … */
   n: number;
-  kind: "study" | "talk";
+  /** study = ngày học; checkpoint = ngày 7, kiểm tra cuối tuần */
+  kind: "study" | "checkpoint";
   tasks: RoadmapTask[];
 }
 
@@ -43,7 +47,7 @@ export const DAYS_PER_WEEK = SESSIONS_PER_WEEK + 1;
 export const resourceKey = (kind: TaskKind, ref: string) => `${kind}:${ref}`;
 
 const MIN_TASKS_PER_DAY = 2;
-const MINUTES: Record<TaskKind, number> = { theory: 10, quiz: 8, dictation: 12, read: 10, sound: 5, talk: 8, quizset: 15 };
+const MINUTES: Record<TaskKind, number> = { theory: 10, quiz: 8, dictation: 12, read: 10, sound: 5, talk: 8, quizset: 15, reading: 12, dialogue: 12 };
 
 type Draft = Omit<RoadmapTask, "id">;
 
@@ -84,7 +88,30 @@ function draft(kind: TaskKind, ref: string, review = false): Draft | null {
     }
     case "quizset":
       return { ...base, title: `Quiz tổng hợp: ${getQuizSet(ref)?.title ?? ref}`, hint: "Đạt từ 80% trở lên", href: `/quiz/${ref}` };
+    case "reading": {
+      const r = getReading(ref);
+      return r ? { ...base, title: `Đọc hiểu: ${r.title}`, hint: "Trả lời câu hỏi đọc hiểu, đạt từ 80%", href: `/reading/${ref}` } : null;
+    }
+    case "dialogue": {
+      const d = getDialogue(ref);
+      return d ? { ...base, title: `Hội thoại: ${d.title}`, hint: "Nhập vai rồi làm bài tập hội thoại, đạt từ 80%", href: `/dialogues/${ref}` } : null;
+    }
   }
+}
+
+/**
+ * Ngày 7 — kiểm tra cuối tuần, mọi bài đều tự chấm: bài đọc và hội thoại của tuần, rồi nói tự do đề cuối tuần.
+ * Tuần không có bài đọc / hội thoại thì kiểm tra bằng quiz tổng hợp hoặc quiz các chủ điểm của tuần.
+ */
+export function weekCheckpoint(week: RoadmapWeek): Draft[] {
+  const tasks: (Draft | null)[] = [
+    ...week.readings.slice(0, 1).map((id) => draft("reading", id)),
+    ...week.conversations.slice(0, 1).map((id) => draft("dialogue", id)),
+  ];
+  if (!tasks.length) tasks.push(...(week.quizSets.length ? week.quizSets.map((id) => draft("quizset", id, true)) : week.grammar.map((slug) => draft("quiz", slug, true))));
+  const lastPrompt = week.prompts[week.prompts.length - 1];
+  if (lastPrompt) tasks.push(draft("talk", lastPrompt, true));
+  return tasks.filter((t): t is Draft => t !== null);
 }
 
 
@@ -159,20 +186,42 @@ export function buildDays(roadmap: Roadmap): RoadmapDay[] {
         tasks: drafts.map((t, j) => ({ ...t, id: `${week.n}-${i + 1}-${j + 1}` })),
       }),
     );
-    const talk: RoadmapDay = { week: week.n, day: DAYS_PER_WEEK, n: week.n * DAYS_PER_WEEK, kind: "talk", tasks: [] };
-    return [...study, talk];
+    const checkpoint: RoadmapDay = {
+      week: week.n,
+      day: DAYS_PER_WEEK,
+      n: week.n * DAYS_PER_WEEK,
+      kind: "checkpoint",
+      tasks: weekCheckpoint(week).map((t, j) => ({ ...t, id: `${week.n}-${DAYS_PER_WEEK}-${j + 1}` })),
+    };
+    return [...study, checkpoint];
   });
 }
 
-/* ---------------- Trạng thái hoàn thành ---------------- */
+/* ---------------- Trạng thái hoàn thành (chỉ do app ghi nhận) ---------------- */
 
 export const taskDone = (log: RoadmapLog, task: RoadmapTask) => !!log.tasks[task.id];
 
-/** Ngày xong khi mọi bài đã xong (ngày nói thật: khi người học tự tích). Tích tay "Buổi n" ở bản cũ vẫn được tính. */
+/** Ngày xong khi mọi bài trong ngày đã xong. Ô tự tích của bản cũ (sessions, talks) không còn được tính. */
 export function dayDone(log: RoadmapLog, day: RoadmapDay): boolean {
-  if (day.kind === "talk") return !!log.talks[day.week];
-  if (log.sessions[sessionKey(day.week, day.day)]) return true;
   return day.tasks.length > 0 && day.tasks.every((t) => taskDone(log, t));
+}
+
+/** Tuần xong — và đạt cột mốc của tuần — khi xong cả 7 ngày, kể cả bài kiểm tra cuối tuần. */
+export function weekDone(log: RoadmapLog, days: RoadmapDay[], week: number): boolean {
+  const own = days.filter((d) => d.week === week);
+  return own.length > 0 && own.every((d) => dayDone(log, d));
+}
+
+/**
+ * Ghi lần nói tự do dài nhất (giây) vào tuần người học đang học (tuần của ngày học tiếp theo,
+ * hoặc tuần cuối nếu đã xong lộ trình). Trả về chính `log` nếu không dài hơn kỷ lục của tuần.
+ */
+export function recordSpeakingSeconds(days: RoadmapDay[], log: RoadmapLog, seconds: number, maxSeconds = 3600): RoadmapLog {
+  if (!days.length || !Number.isFinite(seconds) || seconds <= 0) return log;
+  const week = String((nextOpenDay(days, log) ?? days[days.length - 1]).week);
+  const value = Math.min(Math.round(seconds), maxSeconds);
+  if ((log.seconds[week] ?? 0) >= value) return log;
+  return { ...log, seconds: { ...log.seconds, [week]: value } };
 }
 
 export const dayTasksDone = (log: RoadmapLog, day: RoadmapDay) => day.tasks.filter((t) => taskDone(log, t)).length;
@@ -186,7 +235,6 @@ export const nextOpenDay = (days: RoadmapDay[], log: RoadmapLog) => days.find((d
  */
 export function completeResource(days: RoadmapDay[], log: RoadmapLog, key: string): RoadmapLog {
   for (const day of days) {
-    if (day.kind !== "study" || log.sessions[sessionKey(day.week, day.day)]) continue;
     const task = day.tasks.find((t) => t.key === key && !taskDone(log, t));
     if (task) return { ...log, tasks: { ...log.tasks, [task.id]: true } };
   }

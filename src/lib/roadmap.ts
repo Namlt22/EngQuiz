@@ -1,10 +1,9 @@
 /**
  * Lộ trình cá nhân (trang /roadmap) — hàm thuần, không phụ thuộc trình duyệt.
- * Lộ trình được TÍNH LẠI từ hồ sơ người học mỗi lần render; chỉ hồ sơ và nhật ký tích ô được lưu.
+ * Lộ trình được TÍNH LẠI từ hồ sơ người học mỗi lần render; chỉ hồ sơ và nhật ký tiến độ được lưu.
+ * Tiến độ do app tự ghi khi người học làm xong bài — người học không tự tích ô nào.
  */
 import { B1_SKIP_UNITS, CORE_UNIT_COUNT, ROADMAP_UNITS, type RoadmapGoal, type RoadmapUnit } from "@/content/roadmap-units";
-import { hasDictation } from "./learn";
-import { PASS_PERCENT, topicStatus, type ProgressState } from "./progress-calc";
 
 export type { RoadmapGoal } from "@/content/roadmap-units";
 export type RoadmapLevel = "A1" | "A2" | "B1";
@@ -17,7 +16,7 @@ export const FOCUS_OPTIONS: RoadmapFocus[] = ["speaking", "listening", "grammar"
 export const MINUTE_OPTIONS = [30, 45, 60, 75, 90] as const;
 export const WEEK_OPTIONS: RoadmapWeeks[] = [8, 12, 16];
 
-/** Số buổi học trong tuần (ngày thứ 7 là buổi nói chuyện thật). */
+/** Số ngày học trong tuần (ngày thứ 7 là bài kiểm tra cuối tuần). */
 export const SESSIONS_PER_WEEK = 6;
 /** Mục tiêu "số giây nói liên tục" theo giai đoạn 1, 2, 3. */
 export const PHASE_TARGET_SECONDS = [30, 120, 300] as const;
@@ -37,13 +36,17 @@ export interface RoadmapProfile {
 
 /** Nhật ký lộ trình. Khóa là số tuần ("3"), tuần-buổi ("3-2") hoặc id bài trong ngày ("3-2-1"). */
 export interface RoadmapLog {
-  /** Bản cũ: người học tự tích "Buổi n" (vẫn được tính là ngày đã xong) */
+  /** Bản cũ (tự tích tay) — chỉ giữ để đọc/đồng bộ dữ liệu cũ, KHÔNG còn được tính là hoàn thành. */
   sessions: Record<string, boolean>;
-  /** Bài trong ngày đã xong — tự đánh dấu khi hoàn thành hoạt động (src/lib/roadmap-days.ts) */
+  /** Bài trong ngày đã xong — app tự đánh dấu khi người học hoàn thành hoạt động (src/lib/roadmap-days.ts) */
   tasks: Record<string, boolean>;
+  /** Bản cũ, như sessions. */
   talks: Record<string, boolean>;
+  /** Bản cũ, như sessions — cột mốc giờ tự đạt khi xong cả tuần (weekDone). */
   milestones: Record<string, boolean>;
+  /** Lần nói tự do dài nhất trong tuần (giây) — tự ghi từ trang Luyện nói. */
   seconds: Record<string, number>;
+  /** Bản cũ: ghi chú tự nhập — giữ dữ liệu, không còn hiển thị. */
   notes: Record<string, string>;
 }
 
@@ -98,6 +101,9 @@ export interface RoadmapWeek {
   review: boolean;
   grammar: string[];
   dictations: string[];
+  /** Bài đọc & hội thoại của tuần — vào bài kiểm tra cuối tuần. */
+  readings: string[];
+  conversations: string[];
   sounds: string[];
   quizSets: string[];
   prompts: string[];
@@ -110,7 +116,6 @@ export interface RoadmapWeek {
 export interface Roadmap {
   weeks: RoadmapWeek[];
   minutes: Record<BlockKey, number>;
-  talkMinutes: number;
   warnings: string[];
 }
 
@@ -155,10 +160,12 @@ export function buildRoadmap(profile: RoadmapProfile): Roadmap {
       review,
       grammar: uniq(picked.flatMap((u) => u.grammar)),
       dictations: uniq(picked.flatMap((u) => u.dictations)),
+      readings: uniq(picked.flatMap((u) => u.readings)),
+      conversations: uniq(picked.flatMap((u) => u.conversations)),
       sounds: uniq(picked.flatMap((u) => u.sounds)),
       quizSets: uniq(picked.flatMap((u) => u.quizSets ?? [])),
       prompts: uniq(picked.flatMap((u) => u.prompts[profile.goal] ?? u.prompts.daily)),
-      milestone: review ? `Làm lại cột mốc tuần trước, nói dài hơn và ít ngập ngừng hơn` : last.milestone,
+      milestone: review ? `${last.milestone} — nói dài hơn, ít ngập ngừng hơn` : last.milestone,
       targetSeconds: PHASE_TARGET_SECONDS[phase - 1],
       recordCheckpoint: checkpoints.has(i + 1),
     };
@@ -171,7 +178,6 @@ export function buildRoadmap(profile: RoadmapProfile): Roadmap {
   return {
     weeks,
     minutes: allocateMinutes(profile.minutesPerDay, profile.focus),
-    talkMinutes: profile.minutesPerDay <= 45 ? 20 : 30,
     warnings,
   };
 }
@@ -198,44 +204,6 @@ export function weekDateRange(startDate: string, n: number): string {
   return `${f(a)} – ${f(b)}`;
 }
 
-export const sessionKey = (week: number, session: number) => `${week}-${session}`;
-
-export interface WeekProgress {
-  sessionsDone: number;
-  talkDone: boolean;
-  milestoneDone: boolean;
-  grammarDone: number;
-  dictationsDone: number;
-}
-
-/** Ghép nhật ký tự tích với tiến độ học thật trong app (lý thuyết, quiz, nghe chép). */
-export function weekProgress(week: RoadmapWeek, log: RoadmapLog, progress: ProgressState): WeekProgress {
-  let sessionsDone = 0;
-  for (let s = 1; s <= SESSIONS_PER_WEEK; s++) if (log.sessions[sessionKey(week.n, s)]) sessionsDone++;
-  return {
-    sessionsDone,
-    talkDone: !!log.talks[week.n],
-    milestoneDone: !!log.milestones[week.n],
-    grammarDone: week.grammar.filter((slug) => topicStatus(progress.topics[slug], hasDictation(slug)) === "done").length,
-    dictationsDone: week.dictations.filter((id) => (progress.dictations[id]?.best ?? 0) >= PASS_PERCENT).length,
-  };
-}
-
-export function roadmapSummary(roadmap: Roadmap, log: RoadmapLog) {
-  const weekNums = roadmap.weeks.map((w) => w.n);
-  const sessions = weekNums.reduce((sum, n) => {
-    let c = 0;
-    for (let s = 1; s <= SESSIONS_PER_WEEK; s++) if (log.sessions[sessionKey(n, s)]) c++;
-    return sum + c;
-  }, 0);
-  return {
-    sessions,
-    sessionsTotal: weekNums.length * SESSIONS_PER_WEEK,
-    talks: weekNums.filter((n) => log.talks[n]).length,
-    milestones: weekNums.filter((n) => log.milestones[n]).length,
-    weeks: weekNums.length,
-  };
-}
 
 /* ---------------- Kiểm tra dữ liệu đọc từ localStorage ---------------- */
 

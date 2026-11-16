@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { ROADMAP_UNITS } from "@/content/roadmap-units";
+import { getDialogue } from "@/content/dialogues";
 import { getDictation } from "@/content/dictations";
+import { getReading } from "@/content/readings";
 import { IPA_MAP } from "@/content/ipa";
 import { TOPIC_CONTENT } from "@/content/topics";
 import { listQuizSets } from "./quiz-sets";
@@ -12,13 +14,9 @@ import {
   currentWeekNumber,
   parseLog,
   parseProfile,
-  roadmapSummary,
-  sessionKey,
   weekDateRange,
-  weekProgress,
   type RoadmapProfile,
 } from "./roadmap";
-import type { ProgressState } from "./progress-calc";
 
 const profile = (patch: Partial<RoadmapProfile> = {}): RoadmapProfile => ({
   level: "A2",
@@ -38,6 +36,8 @@ describe("roadmap units", () => {
       expect(u.grammar.length).toBeGreaterThan(0);
       for (const slug of u.grammar) expect(TOPIC_CONTENT[slug], slug).toBeDefined();
       for (const id of u.dictations) expect(getDictation(id), id).toBeDefined();
+      for (const id of u.readings) expect(getReading(id), id).toBeDefined();
+      for (const id of u.conversations) expect(getDialogue(id), id).toBeDefined();
       for (const id of u.sounds) expect(IPA_MAP[id], id).toBeDefined();
       for (const id of u.quizSets ?? []) expect(quizIds.has(id), id).toBe(true);
       expect(u.prompts.daily.length).toBeGreaterThan(0);
@@ -122,32 +122,6 @@ describe("theo dõi", () => {
   it("weekDateRange", () => {
     expect(weekDateRange("2026-11-16", 1)).toBe("16/11 – 22/11");
     expect(weekDateRange("2026-11-16", 3)).toBe("30/11 – 6/12");
-  });
-
-  it("weekProgress ghép nhật ký với tiến độ học thật", () => {
-    const week = buildRoadmap(profile()).weeks[0];
-    const progress: ProgressState = {
-      version: 1,
-      xp: 0,
-      streak: 0,
-      activity: {},
-      topics: { "to-be": { theoryRead: true, quizBest: 90, dictationBest: 85 } },
-      dictations: { "story-my-family": { best: 80, done: 8, total: 8 } },
-    };
-    const log = { ...EMPTY_LOG, sessions: { [sessionKey(1, 1)]: true, [sessionKey(1, 2)]: true }, talks: { "1": true } };
-    expect(weekProgress(week, log, progress)).toEqual({
-      sessionsDone: 2,
-      talkDone: true,
-      milestoneDone: false,
-      grammarDone: 1,
-      dictationsDone: 1,
-    });
-  });
-
-  it("roadmapSummary bỏ qua nhật ký của tuần nằm ngoài lộ trình", () => {
-    const r = buildRoadmap(profile({ weeks: 8 }));
-    const log = { ...EMPTY_LOG, sessions: { "1-1": true, "12-1": true }, milestones: { "2": true, "11": true } };
-    expect(roadmapSummary(r, log)).toMatchObject({ sessions: 1, sessionsTotal: 48, milestones: 1, weeks: 8 });
   });
 });
 

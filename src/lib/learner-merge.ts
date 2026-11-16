@@ -1,7 +1,7 @@
 /**
  * Gộp dữ liệu học trên trình duyệt với dữ liệu trong database (khi đăng nhập lần đầu trên một máy,
  * hoặc khi hai tab/thiết bị cùng ghi). Nguyên tắc: không bao giờ làm mất thành tích —
- * điểm lấy cao nhất, ô đã tích giữ nguyên, hồ sơ lộ trình ưu tiên bản trong database.
+ * điểm lấy cao nhất, bài đã hoàn thành giữ nguyên, hồ sơ lộ trình ưu tiên bản trong database.
  */
 import type { LearnerData } from "./learner-schema";
 import type { DictationProgress, ProgressState, TopicProgress } from "./progress-calc";

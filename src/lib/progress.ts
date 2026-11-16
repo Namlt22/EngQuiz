@@ -152,11 +152,13 @@ export const progressActions = {
 
   /** Làm xong câu hỏi của một bài đọc (Reading). XP chỉ cộng khi điểm cao hơn lần trước. */
   recordReading(id: string, percent: number, correct: number, total: number) {
+    if (percent >= PASS_PERCENT) done("reading", id);
     update((s) => recordLesson(s, "reading", id, percent, correct, total));
   },
 
   /** Làm xong bài tập của một bài hội thoại. */
   recordDialogue(id: string, percent: number, correct: number, total: number) {
+    if (percent >= PASS_PERCENT) done("dialogue", id);
     update((s) => recordLesson(s, "dialogues", id, percent, correct, total));
   },
 
@@ -170,8 +172,9 @@ export const progressActions = {
     done("sound", soundId);
   },
 
-  /** Đã ghi âm một câu trả lời nói tự do cho đề này. */
-  markTalk(promptId: string) {
+  /** Đã ghi âm một câu trả lời nói tự do cho đề này; `seconds` = độ dài lần nói (ghi kỷ lục nói liên tục của tuần). */
+  markTalk(promptId: string, seconds?: number) {
+    if (seconds) roadmapActions.recordSpeakingSeconds(seconds);
     done("talk", promptId);
   },
 
