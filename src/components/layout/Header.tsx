@@ -9,7 +9,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Flame, Sparkles, Star } from "lucide-react";
 import { Logo } from "./Logo";
-import { NAV, isActive, isEntryActive, type NavGroup } from "./nav-items";
+import { NAV_BY_COURSE, isActive, isEntryActive, type NavGroup } from "./nav-items";
+import { CourseSwitcher } from "./CourseSwitcher";
+import { useCourse } from "@/lib/course-client";
 import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { RoadmapReturnBar } from "@/components/roadmap/RoadmapReturnBar";
@@ -93,14 +95,16 @@ function ProgressChip() {
 export function Header() {
   const pathname = usePathname();
   const pricing = pathname.startsWith("/pricing");
+  const nav = NAV_BY_COURSE[useCourse()];
 
   return (
     <header className="sticky top-0 z-40 border-b border-line/70 bg-bg/80 backdrop-blur-lg">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
         <Logo />
+        <CourseSwitcher />
 
-        <nav className="ml-4 hidden items-center gap-1 md:flex" aria-label="Điều hướng chính">
-          {NAV.map((entry) =>
+        <nav className="ml-2 hidden items-center gap-1 md:flex" aria-label="Điều hướng chính">
+          {nav.map((entry) =>
             entry.kind === "link" ? (
               <Link key={entry.href} href={entry.href} className={itemClass(isEntryActive(entry, pathname))}>
                 {entry.label}

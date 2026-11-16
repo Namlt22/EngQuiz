@@ -3,7 +3,8 @@
  * hoặc khi hai tab/thiết bị cùng ghi). Nguyên tắc: không bao giờ làm mất thành tích —
  * điểm lấy cao nhất, bài đã hoàn thành giữ nguyên, hồ sơ lộ trình ưu tiên bản trong database.
  */
-import type { LearnerData } from "./learner-schema";
+import type { CourseData, CoursesData, LearnerData } from "./learner-schema";
+import { EXTRA_COURSES } from "./course";
 import type { DictationProgress, ProgressState, TopicProgress } from "./progress-calc";
 import { buildRoadmap, type RoadmapLog } from "./roadmap";
 import { buildDays, remapTasks } from "./roadmap-days";
@@ -65,8 +66,8 @@ export function mergeRoadmapLog(a: RoadmapLog, b: RoadmapLog): RoadmapLog {
   };
 }
 
-/** `remote` = bản trong database, `local` = bản trên trình duyệt. */
-export function mergeLearnerData(remote: LearnerData, local: LearnerData): LearnerData {
+/** Gộp một khoá học. `remote` = bản trong database, `local` = bản trên trình duyệt. */
+export function mergeCourseData(remote: CourseData, local: CourseData): CourseData {
   // Id bài trong nhật ký theo vị trí của lịch học: máy này dùng hồ sơ khác bản trên server
   // thì chuyển tiến độ của máy này sang lịch của server trước khi gộp, để không tích nhầm bài.
   const localLog =
@@ -78,6 +79,20 @@ export function mergeLearnerData(remote: LearnerData, local: LearnerData): Learn
     roadmap: remote.roadmap ?? local.roadmap,
     roadmapLog: mergeRoadmapLog(remote.roadmapLog, localLog),
   };
+}
+
+/** Gộp toàn bộ: tiếng Anh ở các trường gốc, từng khoá khác trong `courses`. */
+export function mergeLearnerData(remote: LearnerData, local: LearnerData): LearnerData {
+  const { courses: rc = {}, ...rEn } = remote;
+  const { courses: lc = {}, ...lEn } = local;
+  const courses: CoursesData = {};
+  for (const code of EXTRA_COURSES) {
+    const r = rc[code];
+    const l = lc[code];
+    const merged = r && l ? mergeCourseData(r, l) : (r ?? l);
+    if (merged) courses[code] = merged;
+  }
+  return { ...mergeCourseData(rEn, lEn), ...(Object.keys(courses).length ? { courses } : {}) };
 }
 
 /** So sánh nội dung (không phụ thuộc thứ tự khóa) để biết có cần ghi lên server không. */

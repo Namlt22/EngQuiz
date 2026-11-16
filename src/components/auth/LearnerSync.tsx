@@ -6,10 +6,11 @@
  */
 import { useEffect, useSyncExternalStore } from "react";
 import { useSession } from "next-auth/react";
-import { createLearnerSync, type SyncStatus } from "@/lib/learner-sync";
-import type { LearnerData } from "@/lib/learner-schema";
-import { getProgressState, progressActions, replaceProgress, subscribeProgressInTab } from "@/lib/progress";
-import { getRoadmapState, replaceRoadmapState, roadmapActions, subscribeRoadmapInTab } from "@/lib/roadmap-store";
+import { createLearnerSync, isBlankCourse, type SyncStatus } from "@/lib/learner-sync";
+import type { CourseData, CoursesData, LearnerData } from "@/lib/learner-schema";
+import { EXTRA_COURSES, type CourseCode } from "@/lib/course";
+import { getProgressState, replaceProgress, resetAllProgress, subscribeProgressInTab } from "@/lib/progress";
+import { getRoadmapState, replaceRoadmapState, resetAllRoadmaps, subscribeRoadmapInTab } from "@/lib/roadmap-store";
 
 /** Tài khoản sở hữu dữ liệu đang nằm trên máy — tránh gộp nhầm dữ liệu của người khác. */
 const OWNER_KEY = "engquiz:owner";
@@ -38,14 +39,32 @@ export function useSyncStatus(): SyncStatus {
 
 /* ---------- Truy cập dữ liệu trên máy ---------- */
 
+function readCourse(course: CourseCode): CourseData {
+  const { profile, log } = getRoadmapState(course);
+  return { progress: getProgressState(course), roadmap: profile ?? null, roadmapLog: log };
+}
+
 function readLocal(): LearnerData {
-  const { profile, log } = getRoadmapState();
-  return { progress: getProgressState(), roadmap: profile ?? null, roadmapLog: log };
+  const courses: CoursesData = {};
+  for (const code of EXTRA_COURSES) {
+    const c = readCourse(code);
+    // Khoá chưa học gì thì không gửi, để dữ liệu người chỉ học tiếng Anh giữ nguyên dạng cũ.
+    if (!isBlankCourse(c)) courses[code] = c;
+  }
+  return { ...readCourse("en"), ...(Object.keys(courses).length ? { courses } : {}) };
+}
+
+function writeCourse(course: CourseCode, data: CourseData) {
+  replaceProgress(data.progress, course);
+  replaceRoadmapState({ profile: data.roadmap ?? undefined, log: data.roadmapLog }, course);
 }
 
 function writeLocal(data: LearnerData) {
-  replaceProgress(data.progress);
-  replaceRoadmapState({ profile: data.roadmap ?? undefined, log: data.roadmapLog });
+  writeCourse("en", data);
+  for (const code of EXTRA_COURSES) {
+    const c = data.courses?.[code];
+    if (c) writeCourse(code, c);
+  }
 }
 
 function subscribeLocal(cb: () => void) {
@@ -75,8 +94,8 @@ function writeOwner(userId: string | null) {
 }
 
 function clearLocal() {
-  progressActions.reset();
-  roadmapActions.reset();
+  resetAllProgress();
+  resetAllRoadmaps();
   writeOwner(null);
 }
 

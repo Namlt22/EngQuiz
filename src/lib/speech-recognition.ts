@@ -57,7 +57,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   "audio-capture": "Không tìm thấy micro. Kiểm tra micro đã cắm và đang bật.",
   network: "Nhận dạng giọng nói cần Internet (Chrome/Edge gửi âm thanh lên máy chủ để nhận dạng). Kiểm tra mạng rồi thử lại.",
   "no-speech": "Không nghe thấy tiếng nói. Hãy nói to, rõ và gần micro hơn.",
-  "language-not-supported": "Trình duyệt không hỗ trợ nhận dạng tiếng Anh.",
+  "language-not-supported": "Trình duyệt không hỗ trợ nhận dạng giọng nói cho ngôn ngữ này.",
 };
 
 export function recognitionErrorMessage(code: string): string {

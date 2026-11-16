@@ -2,7 +2,8 @@
  * Làm sạch dữ liệu học đọc từ nguồn không tin cậy (localStorage, hoặc bản ghi cũ trong DB):
  * giữ lại phần hợp lệ, bỏ mục sai thay vì vứt cả khối dữ liệu. Kết quả luôn qua được learnerDataSchema.
  */
-import { LIMITS, progressSchema, topicProgressSchema, type LearnerData } from "./learner-schema";
+import { LIMITS, progressSchema, topicProgressSchema, type CourseData, type CoursesData, type LearnerData } from "./learner-schema";
+import { EXTRA_COURSES } from "./course";
 import type { DictationProgress, ProgressState, TopicProgress } from "./progress-calc";
 import { parseLog, parseProfile } from "./roadmap";
 
@@ -61,10 +62,29 @@ export function sanitizeProgress(raw: unknown): ProgressState {
   return progressSchema.parse(state);
 }
 
-export function sanitizeLearnerData(raw: { progress: unknown; roadmap: unknown; roadmapLog: unknown }): LearnerData {
+export function sanitizeCourseData(raw: { progress: unknown; roadmap: unknown; roadmapLog: unknown }): CourseData {
   return {
     progress: sanitizeProgress(raw.progress),
     roadmap: parseProfile(raw.roadmap) ?? null,
     roadmapLog: parseLog(raw.roadmapLog),
   };
+}
+
+/** Giữ phần hợp lệ của từng khoá học; khoá không đọc được thì bỏ (không khoá cả tài khoản). */
+function sanitizeCourses(raw: unknown): CoursesData | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const out: CoursesData = {};
+  for (const code of EXTRA_COURSES) {
+    const c = (raw as Record<string, unknown>)[code];
+    if (c && typeof c === "object") {
+      const r = c as { progress?: unknown; roadmap?: unknown; roadmapLog?: unknown };
+      out[code] = sanitizeCourseData({ progress: r.progress, roadmap: r.roadmap, roadmapLog: r.roadmapLog });
+    }
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+export function sanitizeLearnerData(raw: { progress: unknown; roadmap: unknown; roadmapLog: unknown; courses?: unknown }): LearnerData {
+  const courses = sanitizeCourses(raw.courses);
+  return { ...sanitizeCourseData(raw), ...(courses ? { courses } : {}) };
 }

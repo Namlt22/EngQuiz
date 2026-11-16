@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "engquiz-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "dev", "--port", "3200"],
+      "port": 3200
+    }
+  ]
+}

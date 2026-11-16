@@ -94,10 +94,24 @@ export const roadmapLogSchema = z.strictObject({
   notes: boundedRecord(key, z.string().max(LIMITS.noteLength), LIMITS.logEntries),
 });
 
-export const learnerDataSchema = z.strictObject({
+/** Dữ liệu học của một khoá học: tiến độ + hồ sơ lộ trình + nhật ký. */
+export const courseDataSchema = z.strictObject({
   progress: progressSchema,
   roadmap: roadmapProfileSchema.nullable(),
   roadmapLog: roadmapLogSchema,
+});
+
+/** Các khoá học ngoài tiếng Anh (EXTRA_COURSES trong src/lib/course.ts). */
+export const coursesSchema = z.strictObject({
+  zh: courseDataSchema.optional(),
+});
+
+/**
+ * Tiếng Anh nằm ở các trường gốc (giữ nguyên định dạng cũ); khoá khác nằm trong `courses`.
+ * `courses` tuỳ chọn: client và bản ghi trước khi có nhiều ngôn ngữ không gửi trường này.
+ */
+export const learnerDataSchema = courseDataSchema.extend({
+  courses: coursesSchema.optional(),
 });
 
 /** Body của PUT /api/learner. `baseVersion` = version client đã đọc lần cuối (null nếu chưa có bản ghi). */
@@ -105,6 +119,8 @@ export const learnerPutSchema = learnerDataSchema.extend({
   baseVersion: z.number().int().min(1).nullable(),
 });
 
+export type CourseData = z.infer<typeof courseDataSchema>;
+export type CoursesData = z.infer<typeof coursesSchema>;
 export type LearnerData = z.infer<typeof learnerDataSchema>;
 export type LearnerPutBody = z.infer<typeof learnerPutSchema>;
 

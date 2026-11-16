@@ -12,7 +12,9 @@ export type SaveResult = { ok: true; version: number } | { ok: false; current: L
 export async function findLearner(userId: string): Promise<LearnerSnapshot | null> {
   const row = await prisma.learnerState.findUnique({ where: { userId } });
   if (!row) return null;
-  const raw = { progress: row.progress, roadmap: row.roadmap, roadmapLog: row.roadmapLog };
+  // Cột courses mặc định {} — bỏ đi khi rỗng để dữ liệu chỉ có tiếng Anh khớp đúng định dạng cũ.
+  const courses = row.courses && typeof row.courses === "object" && Object.keys(row.courses).length ? row.courses : undefined;
+  const raw = { progress: row.progress, roadmap: row.roadmap, roadmapLog: row.roadmapLog, ...(courses ? { courses } : {}) };
   const parsed = learnerDataSchema.safeParse(raw);
   if (parsed.success) return { ...parsed.data, version: row.version };
 
@@ -25,6 +27,7 @@ const toJson = (data: LearnerData) => ({
   progress: data.progress as Prisma.InputJsonValue,
   roadmap: data.roadmap === null ? Prisma.DbNull : (data.roadmap as Prisma.InputJsonValue),
   roadmapLog: data.roadmapLog as Prisma.InputJsonValue,
+  courses: (data.courses ?? {}) as Prisma.InputJsonValue,
 });
 
 export async function saveLearner(userId: string, data: LearnerData, baseVersion: number | null): Promise<SaveResult> {

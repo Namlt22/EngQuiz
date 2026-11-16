@@ -11,34 +11,36 @@ import { resourceKey, type TaskKind } from "./roadmap-days";
 import { roadmapActions } from "./roadmap-store";
 import { sanitizeProgress } from "./learner-sanitize";
 import { readJson, writeJson } from "./local-json";
+import { COURSE_CODES, courseStorageKey, currentCourse, type CourseCode } from "./course";
+import { useCourse } from "./course-client";
 export * from "./progress-calc";
 
-const KEY = "engquiz:progress:v1";
 const SPEAKING_XP_PER_SENTENCE = 3;
 const EMPTY: ProgressState = { version: 1, topics: {}, dictations: {}, xp: 0, streak: 0, activity: {} };
 
-let state: ProgressState = EMPTY;
-let loaded = false;
+/** Mỗi khoá học (tiếng Anh, tiếng Trung) có tiến độ riêng, lưu ở khoá localStorage riêng. */
+const storageKey = (course: CourseCode) => courseStorageKey(course, "progress:v1");
+const states = new Map<CourseCode, ProgressState>();
 const listeners = new Set<() => void>();
 
-function load() {
-  if (loaded || typeof window === "undefined") return;
-  loaded = true;
-  state = readJson(KEY, sanitizeProgress, EMPTY);
-}
-
-function save() {
-  writeJson(KEY, state);
+function load(course: CourseCode): ProgressState {
+  if (typeof window === "undefined") return EMPTY;
+  let s = states.get(course);
+  if (!s) {
+    s = readJson(storageKey(course), sanitizeProgress, EMPTY);
+    states.set(course, s);
+  }
+  return s;
 }
 
 function emit() {
   listeners.forEach((l) => l());
 }
 
-function update(fn: (s: ProgressState) => ProgressState) {
-  load();
-  state = fn(state);
-  save();
+function update(fn: (s: ProgressState) => ProgressState, course: CourseCode = currentCourse()) {
+  const next = fn(load(course));
+  states.set(course, next);
+  writeJson(storageKey(course), next);
   emit();
 }
 
@@ -167,6 +169,20 @@ export const progressActions = {
     if (percent >= PASS_PERCENT) done("quizset", setId);
   },
 
+  /**
+   * Hoàn thành một bài pinyin (khoá tiếng Trung). Lưu như một chủ điểm "pinyin-<id>" trong tiến độ của khoá:
+   * theoryRead = đã xong bài, quizBest = điểm bước nghe phân biệt cao nhất. XP chỉ cộng lần đầu xong bài.
+   */
+  recordPinyinLesson(lessonId: string, percent: number, xp: number) {
+    done("sound", lessonId);
+    update((s) => {
+      const key = `pinyin-${lessonId}`;
+      const first = !s.topics[key]?.theoryRead;
+      const next = patchTopic(s, key, (t) => ({ ...t, theoryRead: true, quizBest: Math.max(t.quizBest ?? 0, percent) }));
+      return first ? withXp(next, xp) : next;
+    });
+  },
+
   /** Đã nghe một âm IPA (trang Phát âm). */
   markSound(soundId: string) {
     done("sound", soundId);
@@ -187,16 +203,21 @@ export const progressActions = {
   },
 };
 
+
 /* ---------------- Đồng bộ với database (src/lib/learner-sync.ts) ---------------- */
 
-export function getProgressState(): ProgressState {
-  load();
-  return state;
+export function getProgressState(course: CourseCode = "en"): ProgressState {
+  return load(course);
 }
 
-/** Thay toàn bộ tiến độ (dữ liệu đã gộp từ server). */
-export function replaceProgress(next: ProgressState) {
-  update(() => next);
+/** Thay toàn bộ tiến độ của một khoá học (dữ liệu đã gộp từ server). */
+export function replaceProgress(next: ProgressState, course: CourseCode = "en") {
+  update(() => next, course);
+}
+
+/** Xoá tiến độ của mọi khoá học trên máy (đăng xuất). */
+export function resetAllProgress() {
+  COURSE_CODES.forEach((c) => update(() => EMPTY, c));
 }
 
 /**
@@ -215,9 +236,9 @@ export function subscribeProgressInTab(cb: () => void) {
 export function subscribeProgress(cb: () => void) {
   listeners.add(cb);
   const onStorage = (e: StorageEvent) => {
-    if (e.key === KEY) {
-      loaded = false;
-      load();
+    const course = COURSE_CODES.find((c) => storageKey(c) === e.key);
+    if (course) {
+      states.delete(course);
       cb();
     }
   };
@@ -228,16 +249,14 @@ export function subscribeProgress(cb: () => void) {
   };
 }
 
-function getSnapshot() {
-  load();
-  return state;
-}
-
 /** Server và lần render đầu tiên dùng trạng thái rỗng để tránh lệch hydration. */
 function getServerSnapshot() {
   return EMPTY;
 }
 
-export function useProgress(): ProgressState {
-  return useSyncExternalStore(subscribeProgress, getSnapshot, getServerSnapshot);
+/** Tiến độ của khoá học đang mở (theo đường dẫn), hoặc của khoá chỉ định. */
+export function useProgress(course?: CourseCode): ProgressState {
+  const routeCourse = useCourse();
+  const c = course ?? routeCourse;
+  return useSyncExternalStore(subscribeProgress, () => load(c), getServerSnapshot);
 }

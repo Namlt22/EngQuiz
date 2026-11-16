@@ -10,8 +10,8 @@ import { EMPTY_LOG, buildRoadmap, parseLog, parseProfile, type RoadmapLog, type 
 import { buildDays, completeResource, recordSpeakingSeconds, remapTasks } from "./roadmap-days";
 import { readReturnTarget } from "./roadmap-return";
 import { readJson, writeJson } from "./local-json";
-
-const KEY = "engquiz:roadmap:v1";
+import { COURSE_CODES, courseStorageKey, currentCourse, type CourseCode } from "./course";
+import { useCourse } from "./course-client";
 
 export interface RoadmapState {
   profile?: RoadmapProfile;
@@ -20,14 +20,19 @@ export interface RoadmapState {
 
 const EMPTY: RoadmapState = { log: EMPTY_LOG };
 
-let state: RoadmapState = EMPTY;
-let loaded = false;
+/** Mỗi khoá học có hồ sơ lộ trình + nhật ký riêng. */
+const storageKey = (course: CourseCode) => courseStorageKey(course, "roadmap:v1");
+const states = new Map<CourseCode, RoadmapState>();
 const listeners = new Set<() => void>();
 
-function load() {
-  if (loaded || typeof window === "undefined") return;
-  loaded = true;
-  state = readJson(KEY, parseState, EMPTY);
+function load(course: CourseCode): RoadmapState {
+  if (typeof window === "undefined") return EMPTY;
+  let s = states.get(course);
+  if (!s) {
+    s = readJson(storageKey(course), parseState, EMPTY);
+    states.set(course, s);
+  }
+  return s;
 }
 
 function parseState(raw: unknown): RoadmapState {
@@ -35,14 +40,10 @@ function parseState(raw: unknown): RoadmapState {
   return { profile: parseProfile(r.profile), log: parseLog(r.log) };
 }
 
-function save() {
-  writeJson(KEY, state);
-}
-
-function update(fn: (s: RoadmapState) => RoadmapState) {
-  load();
-  state = fn(state);
-  save();
+function update(fn: (s: RoadmapState) => RoadmapState, course: CourseCode = currentCourse()) {
+  const next = fn(load(course));
+  states.set(course, next);
+  writeJson(storageKey(course), next);
   listeners.forEach((l) => l());
 }
 
@@ -59,24 +60,25 @@ export function startNewVisit() {
 export const roadmapActions = {
   /** Người học vừa xong một hoạt động → tích bài tương ứng sớm nhất còn dở trong lộ trình (nếu có lộ trình). */
   completeResource(key: string) {
-    load();
-    if (!state.profile || completedThisVisit.has(key)) return;
+    const course = currentCourse();
+    const state = load(course);
+    if (!state.profile || completedThisVisit.has(`${course}:${key}`)) return;
     const days = buildDays(buildRoadmap(state.profile));
     const next = completeResource(days, state.log, key, readReturnTarget()?.taskId);
     if (next === state.log) return;
-    completedThisVisit.add(key);
-    update((s) => ({ ...s, log: next }));
+    completedThisVisit.add(`${course}:${key}`);
+    update((s) => ({ ...s, log: next }), course);
   },
   /** Lưu hồ sơ mới; tiến độ được chuyển theo bài học sang lịch mới (remapTasks) để không tích nhầm bài khác. */
   saveProfile(profile: RoadmapProfile) {
-    load();
+    const state = load(currentCourse());
     const old = state.profile;
     const log = old ? remapTasks(buildDays(buildRoadmap(old)), buildDays(buildRoadmap(profile)), state.log) : state.log;
     update((s) => ({ ...s, profile, log }));
   },
   /** Vừa ghi âm một lần nói tự do dài `seconds` giây → cập nhật kỷ lục nói liên tục của tuần đang học. */
   recordSpeakingSeconds(seconds: number) {
-    load();
+    const state = load(currentCourse());
     if (!state.profile) return;
     const next = recordSpeakingSeconds(buildDays(buildRoadmap(state.profile)), state.log, seconds);
     if (next !== state.log) update((s) => ({ ...s, log: next }));
@@ -88,14 +90,18 @@ export const roadmapActions = {
 
 /* ---------------- Đồng bộ với database (src/lib/learner-sync.ts) ---------------- */
 
-export function getRoadmapState(): RoadmapState {
-  load();
-  return state;
+export function getRoadmapState(course: CourseCode = "en"): RoadmapState {
+  return load(course);
 }
 
-/** Thay toàn bộ hồ sơ + nhật ký (dữ liệu đã gộp từ server). */
-export function replaceRoadmapState(next: RoadmapState) {
-  update(() => next);
+/** Thay toàn bộ hồ sơ + nhật ký của một khoá học (dữ liệu đã gộp từ server). */
+export function replaceRoadmapState(next: RoadmapState, course: CourseCode = "en") {
+  update(() => next, course);
+}
+
+/** Xoá lộ trình của mọi khoá học trên máy (đăng xuất). */
+export function resetAllRoadmaps() {
+  COURSE_CODES.forEach((c) => update(() => EMPTY, c));
 }
 
 /** Chỉ nghe thay đổi trong tab này (xem subscribeProgressInTab). */
@@ -109,9 +115,9 @@ export function subscribeRoadmapInTab(cb: () => void) {
 export function subscribeRoadmap(cb: () => void) {
   listeners.add(cb);
   const onStorage = (e: StorageEvent) => {
-    if (e.key === KEY) {
-      loaded = false;
-      load();
+    const course = COURSE_CODES.find((c) => storageKey(c) === e.key);
+    if (course) {
+      states.delete(course);
       cb();
     }
   };
@@ -122,13 +128,10 @@ export function subscribeRoadmap(cb: () => void) {
   };
 }
 
-function getSnapshot() {
-  load();
-  return state;
-}
-
+/** Lộ trình của khoá học đang mở (theo đường dẫn). */
 export function useRoadmapState(): RoadmapState {
-  return useSyncExternalStore(subscribeRoadmap, getSnapshot, () => EMPTY);
+  const course = useCourse();
+  return useSyncExternalStore(subscribeRoadmap, () => load(course), () => EMPTY);
 }
 
 const noopSubscribe = () => () => {};

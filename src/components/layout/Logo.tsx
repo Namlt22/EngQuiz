@@ -1,5 +1,9 @@
+"use client";
+
 import { useId } from "react";
 import Link from "next/link";
+import { COURSES } from "@/lib/course";
+import { useCourse } from "@/lib/course-client";
 
 /**
  * Biểu tượng EngQuiz — "Sóng giọng nói" (phương án 3, design/logo-options): bốn vạch sóng âm trong hình tròn
@@ -27,8 +31,9 @@ export function LogoMark({ className = "size-9" }: { className?: string }) {
 }
 
 export function Logo({ className = "" }: { className?: string }) {
+  const home = COURSES[useCourse()].home;
   return (
-    <Link href="/" className={`group inline-flex shrink-0 items-center gap-2 ${className}`} aria-label="EngQuiz — Trang chủ">
+    <Link href={home} className={`group inline-flex shrink-0 items-center gap-2 ${className}`} aria-label="EngQuiz — Trang chủ">
       <LogoMark className="size-9 drop-shadow-[0_4px_10px_rgba(99,102,241,0.35)] transition group-hover:-rotate-6" />
       <span className="text-xl font-extrabold tracking-tight">
         Eng<span className="bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent">Quiz</span>

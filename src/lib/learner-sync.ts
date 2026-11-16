@@ -11,7 +11,7 @@
  *
  * Phần điều khiển nhận phụ thuộc qua tham số để test được mà không cần trình duyệt.
  */
-import { LIMITS, learnerPutSchema, type LearnerData, type LearnerSnapshot } from "./learner-schema";
+import { LIMITS, learnerPutSchema, type CourseData, type LearnerData, type LearnerSnapshot } from "./learner-schema";
 import { mergeLearnerData, sameData } from "./learner-merge";
 
 export type SyncStatus = "off" | "loading" | "saving" | "saved" | "error" | "invalid" | "signed-out";
@@ -42,8 +42,7 @@ export interface StartOptions {
 
 const stripVersion = ({ version: _v, ...data }: LearnerSnapshot): LearnerData => data;
 
-/** Giữ lại các ngày hoạt động gần nhất để không vượt giới hạn của server. */
-export function trimForUpload(data: LearnerData): LearnerData {
+function trimCourse<T extends CourseData>(data: T): T {
   const days = Object.keys(data.progress.activity);
   if (days.length <= LIMITS.activityDays) return data;
   const keep = new Set(days.sort().slice(-LIMITS.activityDays));
@@ -51,8 +50,15 @@ export function trimForUpload(data: LearnerData): LearnerData {
   return { ...data, progress: { ...data.progress, activity } };
 }
 
-/** Dữ liệu "trống" (vừa đăng xuất / xóa trên máy) — không bao giờ được ghi đè bản có dữ liệu trên server. */
-export function isBlank(d: LearnerData): boolean {
+/** Giữ lại các ngày hoạt động gần nhất (của từng khoá học) để không vượt giới hạn của server. */
+export function trimForUpload(data: LearnerData): LearnerData {
+  const trimmed = trimCourse(data);
+  if (!data.courses) return trimmed;
+  const courses = Object.fromEntries(Object.entries(data.courses).map(([code, c]) => [code, c && trimCourse(c)]));
+  return { ...trimmed, courses };
+}
+
+export function isBlankCourse(d: CourseData): boolean {
   const p = d.progress;
   const log = d.roadmapLog;
   return (
@@ -63,6 +69,11 @@ export function isBlank(d: LearnerData): boolean {
     d.roadmap === null &&
     Object.values(log).every((r) => Object.keys(r).length === 0)
   );
+}
+
+/** Dữ liệu "trống" (vừa đăng xuất / xóa trên máy) — không bao giờ được ghi đè bản có dữ liệu trên server. */
+export function isBlank(d: LearnerData): boolean {
+  return isBlankCourse(d) && Object.values(d.courses ?? {}).every((c) => !c || isBlankCourse(c));
 }
 
 export function createLearnerSync(deps: SyncDeps) {

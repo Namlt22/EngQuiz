@@ -8,7 +8,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sparkles, X } from "lucide-react";
-import { NAV, isActive, isEntryActive, type NavGroup } from "./nav-items";
+import { NAV_BY_COURSE, isActive, isEntryActive, type NavGroup } from "./nav-items";
+import { useCourse } from "@/lib/course-client";
 
 function GroupSheet({ group, pathname, onClose }: { group: NavGroup; pathname: string; onClose: () => void }) {
   useEffect(() => {
@@ -53,6 +54,7 @@ function GroupSheet({ group, pathname, onClose }: { group: NavGroup; pathname: s
 export function BottomNav() {
   const pathname = usePathname();
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const nav = NAV_BY_COURSE[useCourse()];
   useEffect(() => setOpenGroup(null), [pathname]);
 
   const inSession = /^\/(quiz|dictation)\/.+/.test(pathname);
@@ -60,7 +62,7 @@ export function BottomNav() {
 
   const tab = (active: boolean) =>
     `flex w-full flex-col items-center gap-1 whitespace-nowrap py-2.5 text-[11px] font-semibold ${active ? "text-primary" : "text-muted"}`;
-  const sheet = NAV.find((e): e is { kind: "group" } & NavGroup => e.kind === "group" && e.label === openGroup);
+  const sheet = nav.find((e): e is { kind: "group" } & NavGroup => e.kind === "group" && e.label === openGroup);
 
   return (
     <>
@@ -69,8 +71,9 @@ export function BottomNav() {
         className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
         aria-label="Điều hướng"
       >
-        <ul className="grid grid-cols-5">
-          {NAV.map((entry) => {
+        {/* Số tab = số mục của khoá đang học + "Gói AI" */}
+        <ul className="grid" style={{ gridTemplateColumns: `repeat(${nav.length + 1}, minmax(0, 1fr))` }}>
+          {nav.map((entry) => {
             const active = isEntryActive(entry, pathname) || openGroup === entry.label;
             const Icon = entry.icon;
             return (

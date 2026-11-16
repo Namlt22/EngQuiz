@@ -103,6 +103,8 @@ model LearnerState {
   roadmap    Json?
   /// RoadmapLog: các ô đã tích, số giây nói, ghi chú lỗi
   roadmapLog Json
+  /// Các khoá học ngoài tiếng Anh: { zh?: { progress, roadmap, roadmapLog } } (coursesSchema)
+  courses    Json     @default("{}")
   /// Tăng mỗi lần ghi — chống ghi đè khi mở nhiều tab/thiết bị
   version    Int      @default(1)
   updatedAt  DateTime @updatedAt

@@ -1,4 +1,5 @@
 import { AudioLines, BookOpen, BookOpenText, Dumbbell, Headphones, House, Layers, MessagesSquare, Mic, PenLine, Route, type LucideIcon } from "lucide-react";
+import type { CourseCode } from "@/lib/course";
 
 /**
  * Điều hướng chính, dùng chung cho header (máy tính) và thanh tab dưới (điện thoại).
@@ -20,7 +21,7 @@ export interface NavGroup {
 
 export type NavEntry = ({ kind: "link" } & NavLink) | ({ kind: "group" } & NavGroup);
 
-export const NAV: NavEntry[] = [
+export const NAV_EN: NavEntry[] = [
   { kind: "link", href: "/", label: "Trang chủ", icon: House },
   { kind: "link", href: "/roadmap", label: "Lộ trình", icon: Route },
   {
@@ -47,8 +48,22 @@ export const NAV: NavEntry[] = [
   },
 ];
 
+/**
+ * Khoá tiếng Trung — chỉ liệt kê trang đã có nội dung; các phần pinyin, Hán tự, từ vựng…
+ * được thêm vào đây khi xây xong (docs/PLAN-ZH.md mục 7).
+ */
+export const NAV_ZH: NavEntry[] = [
+  { kind: "link", href: "/zh", label: "Trang chủ", icon: House },
+  { kind: "link", href: "/zh/pinyin", label: "Pinyin", icon: AudioLines },
+];
+
+export const NAV_BY_COURSE: Record<CourseCode, NavEntry[]> = { en: NAV_EN, zh: NAV_ZH };
+
 /** Trang đang mở có thuộc đường dẫn này không ("/" chỉ khớp đúng trang chủ). */
-export const isActive = (href: string, pathname: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
+// Trang chủ của khoá ("/" và "/zh") chỉ khớp đúng chính nó, không khớp mọi trang con.
+const COURSE_HOMES = new Set(["/", "/zh"]);
+export const isActive = (href: string, pathname: string) =>
+  COURSE_HOMES.has(href) ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
 export const isEntryActive = (entry: NavEntry, pathname: string) =>
   entry.kind === "link" ? isActive(entry.href, pathname) : entry.items.some((i) => isActive(i.href, pathname));
