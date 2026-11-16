@@ -7,7 +7,8 @@
  */
 import { useSyncExternalStore } from "react";
 import { EMPTY_LOG, buildRoadmap, parseLog, parseProfile, type RoadmapLog, type RoadmapProfile } from "./roadmap";
-import { buildDays, completeResource, recordSpeakingSeconds } from "./roadmap-days";
+import { buildDays, completeResource, recordSpeakingSeconds, remapTasks } from "./roadmap-days";
+import { readReturnTarget } from "./roadmap-return";
 import { readJson, writeJson } from "./local-json";
 
 const KEY = "engquiz:roadmap:v1";
@@ -61,14 +62,17 @@ export const roadmapActions = {
     load();
     if (!state.profile || completedThisVisit.has(key)) return;
     const days = buildDays(buildRoadmap(state.profile));
-    const next = completeResource(days, state.log, key);
+    const next = completeResource(days, state.log, key, readReturnTarget()?.taskId);
     if (next === state.log) return;
     completedThisVisit.add(key);
     update((s) => ({ ...s, log: next }));
   },
-  /** Lưu hồ sơ mới. Nhật ký giữ nguyên (khóa theo số tuần), để đổi lịch không mất tiến độ. */
+  /** Lưu hồ sơ mới; tiến độ được chuyển theo bài học sang lịch mới (remapTasks) để không tích nhầm bài khác. */
   saveProfile(profile: RoadmapProfile) {
-    update((s) => ({ ...s, profile }));
+    load();
+    const old = state.profile;
+    const log = old ? remapTasks(buildDays(buildRoadmap(old)), buildDays(buildRoadmap(profile)), state.log) : state.log;
+    update((s) => ({ ...s, profile, log }));
   },
   /** Vừa ghi âm một lần nói tự do dài `seconds` giây → cập nhật kỷ lục nói liên tục của tuần đang học. */
   recordSpeakingSeconds(seconds: number) {

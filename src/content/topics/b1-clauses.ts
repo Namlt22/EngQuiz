@@ -50,7 +50,7 @@ const definingRelative: TopicContent = {
       explanation: "Chỉ người → who.",
     },
     { id: "dr6", type: "transform", prompt: "I met a girl. She speaks five languages.", starter: "I met a girl", answers: ["I met a girl who speaks five languages.", "I met a girl that speaks five languages."], explanation: "Nối bằng who: She → who." },
-    { id: "dr7", type: "transform", prompt: "This is the hotel. We stayed there last summer.", starter: "This is the hotel", answers: ["This is the hotel where we stayed last summer.", "This is the hotel which we stayed at last summer.", "This is the hotel that we stayed at last summer."], explanation: "there (nơi chốn) → where." },
+    { id: "dr7", type: "transform", prompt: "This is the hotel. We stayed there last summer.", starter: "This is the hotel", answers: ["This is the hotel where we stayed last summer.", "This is the hotel which we stayed at last summer.", "This is the hotel that we stayed at last summer.", "This is the hotel we stayed at last summer.", "This is the hotel at which we stayed last summer."], explanation: "there (nơi chốn) → where." },
     { id: "dr8", type: "gap_fill", prompt: "Do you know the woman ___ is talking to Nam?", answers: ["who", "that"], explanation: "Chỉ người, làm chủ ngữ → who / that." },
     { id: "dr9", type: "mcq", prompt: "Which sentence is correct?", options: ["The cake who she made was delicious.", "The cake she made was delicious.", "The cake where she made was delicious.", "The cake whose she made was delicious."], answer: 1, explanation: "which/that làm tân ngữ có thể bỏ: The cake (that) she made." },
   ],

@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { ArrowLeft, Languages, Pause, Play } from "lucide-react";
 import type { ReadingPassage } from "@/content/types";
 import { progressActions } from "@/lib/progress";
-import { useSpeech } from "@/lib/speech";
+import { SPEECH_ERROR_NOTICE, useSpeech } from "@/lib/speech";
 import { LevelBadge } from "@/components/ui/LevelBadge";
 import { SpeakButton } from "@/components/ui/SpeakButton";
 import { LessonQuiz } from "./LessonQuiz";
@@ -15,6 +15,7 @@ const READ_RATE = 0.9;
 export function ReadingView({ passage }: { passage: ReadingPassage }) {
   const [showVi, setShowVi] = useState(false);
   const [playing, setPlaying] = useState<number | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const { speak, stop, supported } = useSpeech();
   /** Mỗi lần bấm Nghe / Dừng tạo lượt mới; lượt cũ đọc xong sẽ không nối tiếp đoạn sau. */
   const runRef = useRef(0);
@@ -26,7 +27,15 @@ export function ReadingView({ passage }: { passage: ReadingPassage }) {
       return;
     }
     setPlaying(i);
-    speak(passage.paragraphs[i].en, READ_RATE, { onEnd: () => playFrom(i + 1, run) });
+    setNotice(null);
+    speak(passage.paragraphs[i].en, READ_RATE, {
+      onEnd: () => playFrom(i + 1, run),
+      onError: () => {
+        if (run !== runRef.current) return;
+        setPlaying(null);
+        setNotice(SPEECH_ERROR_NOTICE);
+      },
+    });
   }
 
   function toggleAll() {
@@ -65,6 +74,11 @@ export function ReadingView({ passage }: { passage: ReadingPassage }) {
           <Languages className="size-4" /> {showVi ? "Ẩn bản dịch" : "Hiện bản dịch"}
         </button>
       </div>
+      {notice && (
+        <p role="alert" className="text-sm text-danger">
+          {notice}
+        </p>
+      )}
 
       <article className="card space-y-4 p-5 md:p-7">
         {passage.paragraphs.map((p, i) => (

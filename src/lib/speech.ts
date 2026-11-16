@@ -19,6 +19,9 @@ const ONLINE_VOICE_PENALTY = 10;
 /** Toàn bộ phần đọc của EngQuiz dùng giọng Anh-Mỹ. */
 export const SPEECH_LANG = "en-US";
 
+/** Thông báo chung khi giọng máy không phát được (onError của speak). */
+export const SPEECH_ERROR_NOTICE = "Không phát được âm thanh. Thử chọn giọng khác hoặc tải lại trang.";
+
 /**
  * Giọng Anh-Mỹ (en-US) có trên máy, giọng tốt nhất trước. Máy không có giọng Mỹ nào thì mới dùng giọng tiếng Anh khác.
  * Giọng offline (cài trên máy) đứng trước: phát gần như tức thì. Giọng online (Google…, Microsoft …Natural trên Edge)
@@ -100,8 +103,10 @@ export function useSpeech({ storageKey = "engquiz:voice-us" }: { storageKey?: st
     /**
      * pitch: đổi cao độ để phân biệt hai nhân vật trong hội thoại.
      * onEnd: gọi khi đọc xong cả câu (KHÔNG gọi khi bị hủy hay lỗi) — dùng để đọc nối câu tiếp theo.
+     * onError: giọng máy lỗi thật (không phát được, mất mạng với giọng online…) — để giao diện thoát trạng thái "đang đọc".
+     *   Bị hủy vì đọc câu khác / bấm dừng ("interrupted", "canceled") không tính là lỗi.
      */
-    (text: string, rate = 1, { pitch = 1, onEnd }: { pitch?: number; onEnd?: () => void } = {}) => {
+    (text: string, rate = 1, { pitch = 1, onEnd, onError }: { pitch?: number; onEnd?: () => void; onError?: (code: string) => void } = {}) => {
       if (!supported) return;
       const synth = window.speechSynthesis;
       // Chỉ hủy khi đang có câu đọc dở: gọi cancel() liền trước speak() làm Chrome khởi động lại engine, trễ thêm.
@@ -122,12 +127,21 @@ export function useSpeech({ storageKey = "engquiz:voice-us" }: { storageKey?: st
           ? segments.map((p) => (p.lang === "vi" ? make(p.text, viVoice, "vi-VN") : make(p.text, enVoice, SPEECH_LANG)))
           : [make(respellVietnameseNames(text), enVoice, SPEECH_LANG)];
       const lastPart = parts[parts.length - 1];
+      let failed = false;
       parts[0].onstart = () => setSpeaking(true);
       lastPart.onend = () => {
         setSpeaking(false);
-        onEnd?.();
+        if (!failed) onEnd?.();
       };
-      parts.forEach((u) => (u.onerror = () => setSpeaking(false)));
+      parts.forEach(
+        (u) =>
+          (u.onerror = (e) => {
+            setSpeaking(false);
+            if (failed || e.error === "interrupted" || e.error === "canceled") return;
+            failed = true;
+            onError?.(e.error);
+          }),
+      );
       utterRef.current = parts; // giữ tham chiếu để Chrome không thu hồi sớm
       parts.forEach((u) => synth.speak(u));
     },

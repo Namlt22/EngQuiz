@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_LOG, buildRoadmap, type RoadmapLog, type RoadmapProfile } from "./roadmap";
-import { DAYS_PER_WEEK, buildDays, completeResource, dayDone, nextOpenDay, recordSpeakingSeconds, resourceKey, weekDone } from "./roadmap-days";
+import {
+  DAYS_PER_WEEK,
+  buildDays,
+  completeResource,
+  dayDone,
+  nextOpenDay,
+  recordSpeakingSeconds,
+  remapTasks,
+  resourceKey,
+  taskDone,
+  weekDone,
+} from "./roadmap-days";
 
 const profile = (patch: Partial<RoadmapProfile> = {}): RoadmapProfile => ({
   level: "A1",
@@ -106,5 +117,40 @@ describe("tự ghi số giây nói", () => {
   it("bỏ qua giá trị không hợp lệ", () => {
     expect(recordSpeakingSeconds(days, EMPTY_LOG, 0)).toBe(EMPTY_LOG);
     expect(recordSpeakingSeconds(days, EMPTY_LOG, Number.NaN)).toBe(EMPTY_LOG);
+  });
+});
+
+describe("bài người học mở từ lộ trình được ưu tiên", () => {
+  it("mở bài ôn tập Day 6 khi bài cùng khóa ở ngày trước còn dở → tích đúng bài ôn tập", () => {
+    const review = days[5].tasks.find((t) => t.review && t.kind === "quiz")!;
+    const log = completeResource(days, EMPTY_LOG, review.key, review.id);
+    expect(log.tasks[review.id]).toBe(true);
+    expect(Object.keys(log.tasks)).toEqual([review.id]);
+  });
+
+  it("bài ưu tiên khác khóa hoặc đã xong → quay về quy tắc bài sớm nhất", () => {
+    const first = days[0].tasks[0];
+    const other = days[0].tasks[1];
+    expect(Object.keys(completeResource(days, EMPTY_LOG, first.key, other.id).tasks)).toEqual([first.id]);
+  });
+});
+
+describe("remapTasks — đổi hồ sơ không tích nhầm bài", () => {
+  it("tiến độ đi theo bài học sang lịch mới, không theo vị trí", () => {
+    const a1 = buildDays(buildRoadmap(profile()));
+    const b1 = buildDays(buildRoadmap(profile({ level: "B1" })));
+    let log = EMPTY_LOG;
+    for (const t of a1[0].tasks) log = completeResource(a1, log, t.key);
+    const next = remapTasks(a1, b1, log);
+    const doneKeys = new Set(a1[0].tasks.map((t) => t.key));
+    for (const t of b1.flatMap((d) => d.tasks)) if (taskDone(next, t)) expect(doneKeys.has(t.key), t.title).toBe(true);
+  });
+
+  it("cùng hồ sơ → giữ nguyên tiến độ; giữ cả số giây nói", () => {
+    let log: RoadmapLog = { ...EMPTY_LOG, seconds: { "1": 50 } };
+    for (let n = 1; n <= 2; n++) log = finishDay(log, n);
+    const next = remapTasks(days, days, log);
+    expect(next.tasks).toEqual(log.tasks);
+    expect(next.seconds).toEqual({ "1": 50 });
   });
 });

@@ -232,11 +232,30 @@ export const nextOpenDay = (days: RoadmapDay[], log: RoadmapLog) => days.find((d
 /**
  * Người học vừa làm xong một hoạt động (khóa `key`) → đánh dấu bài CHƯA XONG SỚM NHẤT có khóa đó.
  * Bài lặp lại (ôn tập) vì vậy chỉ được tính khi làm lại lần nữa. Trả về nhật ký mới, hoặc chính `log` nếu không có gì đổi.
+ * `preferredId`: bài người học vừa mở từ lộ trình — nếu đúng khóa và chưa xong thì tích chính bài đó (vd mở bài ôn tập ở Day 6).
  */
-export function completeResource(days: RoadmapDay[], log: RoadmapLog, key: string): RoadmapLog {
+export function completeResource(days: RoadmapDay[], log: RoadmapLog, key: string, preferredId?: string): RoadmapLog {
+  const tick = (id: string): RoadmapLog => ({ ...log, tasks: { ...log.tasks, [id]: true } });
+  if (preferredId && !log.tasks[preferredId]) {
+    const preferred = days.flatMap((d) => d.tasks).find((t) => t.id === preferredId);
+    if (preferred?.key === key) return tick(preferred.id);
+  }
   for (const day of days) {
     const task = day.tasks.find((t) => t.key === key && !taskDone(log, t));
-    if (task) return { ...log, tasks: { ...log.tasks, [task.id]: true } };
+    if (task) return tick(task.id);
   }
   return log;
+}
+
+/**
+ * Đổi hồ sơ lộ trình (trình độ, mục tiêu, số tuần…) làm bài dời vị trí, mà id bài theo vị trí (tuần-ngày-thứ tự).
+ * Chuyển tiến độ theo BÀI HỌC: mỗi bài đã xong ở lịch cũ tích bài chưa xong sớm nhất cùng khóa ở lịch mới.
+ * Bài không còn trong lịch mới thì bỏ; các mục khác của nhật ký (số giây nói…) giữ nguyên.
+ */
+export function remapTasks(oldDays: RoadmapDay[], newDays: RoadmapDay[], log: RoadmapLog): RoadmapLog {
+  let next: RoadmapLog = { ...log, tasks: {} };
+  for (const task of oldDays.flatMap((d) => d.tasks)) {
+    if (taskDone(log, task)) next = completeResource(newDays, next, task.key);
+  }
+  return next;
 }

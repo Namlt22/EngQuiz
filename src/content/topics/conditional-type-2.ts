@@ -79,7 +79,7 @@ export const conditionalType2: TopicContent = {
     },
     { id: "c2f", type: "transform", prompt: "I don't have a car, so I can't drive to work.", starter: "If I", answers: ["If I had a car, I could drive to work.", "If I had a car, I would be able to drive to work.", "If I had a car, I would drive to work."], explanation: "Thực tế phủ định ở hiện tại → loại 2 khẳng định: If I had a car, I could drive..." },
     { id: "c2g", type: "transform", prompt: "He is not tall, so he can't play basketball well.", starter: "If he", answers: ["If he were taller, he could play basketball well.", "If he was taller, he could play basketball well.", "If he were tall, he could play basketball well.", "If he was tall, he could play basketball well."], explanation: "Đảo nghĩa thực tế: is not tall → If he were (taller), he could..." },
-    { id: "c2h", type: "word_order", words: ["would", "I", "if", "travel", "I", "more", "had", "money"], answers: ["I would travel if I had more money"], explanation: "Mệnh đề chính trước: S + would + V + if + S + V2." },
+    { id: "c2h", type: "word_order", words: ["would", "I", "if", "travel", "I", "more", "had", "money"], answers: ["I would travel if I had more money", "If I had more money I would travel"], explanation: "S + would + V + if + S + V2; đặt mệnh đề if lên trước cũng đúng." },
     { id: "c2i", type: "mcq", prompt: "What ___ you do if you found a wallet in the street?", options: ["will", "would", "do", "did"], answer: 1, explanation: "found (quá khứ) trong mệnh đề if → mệnh đề chính dùng would." },
     {
       id: "c2j", type: "matching", prompt: "Nối mỗi câu với loại câu điều kiện",

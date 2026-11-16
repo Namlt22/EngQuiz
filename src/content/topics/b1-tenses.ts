@@ -51,7 +51,7 @@ const presentPerfectVsPast: TopicContent = {
   questions: [
     { id: "pvp1", type: "mcq", prompt: "I ___ this film last weekend.", options: ["have watched", "watched", "have been watching", "watch"], answer: 1, explanation: "last weekend là thời điểm đã kết thúc → quá khứ đơn watched." },
     { id: "pvp2", type: "mcq", prompt: "___ you ever ___ sushi?", options: ["Did / eat", "Have / eaten", "Do / eat", "Were / eating"], answer: 1, explanation: "ever hỏi về trải nghiệm → Have you ever eaten." },
-    { id: "pvp3", type: "verb_form", prompt: "We ___ in this city since 2015.", base: "live", answers: ["have lived", "'ve lived"], explanation: "since + mốc thời gian, việc vẫn còn → have lived." },
+    { id: "pvp3", type: "verb_form", prompt: "We ___ in this city since 2015.", base: "live", answers: ["have lived", "'ve lived", "have been living", "'ve been living"], explanation: "since + mốc thời gian, việc vẫn còn → have lived (hoặc have been living)." },
     { id: "pvp4", type: "verb_form", prompt: "She ___ to Japan two years ago.", base: "go", answers: ["went"], explanation: "ago → quá khứ đơn: went." },
     { id: "pvp5", type: "gap_fill", prompt: "I haven't finished my homework ___.", answers: ["yet"], hint: "already / yet", explanation: "yet dùng ở cuối câu phủ định và câu hỏi của HTHT." },
     { id: "pvp6", type: "mcq", prompt: "When ___ your new job?", options: ["have you started", "did you start", "you started", "have you start"], answer: 1, explanation: "When hỏi thời điểm → quá khứ đơn did you start." },
@@ -160,7 +160,7 @@ const pastPerfect: TopicContent = {
     },
   ],
   questions: [
-    { id: "pfp1", type: "mcq", prompt: "When we reached the station, the train ___.", options: ["left", "had left", "has left", "was leaving"], answer: 1, explanation: "Tàu rời đi TRƯỚC khi chúng tôi đến → had left." },
+    { id: "pfp1", type: "mcq", prompt: "When we reached the station, the train ___, so we had to wait for the next one.", options: ["left", "had left", "has left", "was leaving"], answer: 1, explanation: "Tàu rời đi TRƯỚC khi chúng tôi đến → had left." },
     { id: "pfp2", type: "verb_form", prompt: "She told me she ___ the book already.", base: "read", answers: ["had read", "'d read"], explanation: "Việc đọc xảy ra trước lúc kể → had read." },
     { id: "pfp3", type: "verb_form", prompt: "By the time I got up, everyone ___ breakfast.", base: "have", answers: ["had had", "'d had"], explanation: "By the time + quá khứ đơn → mệnh đề kia dùng had + V3: had had." },
     { id: "pfp4", type: "mcq", prompt: "I ___ never ___ snow before I visited Sa Pa.", options: ["have / seen", "had / seen", "did / see", "was / seeing"], answer: 1, explanation: "Trải nghiệm tính đến một thời điểm quá khứ → had never seen." },
@@ -171,7 +171,7 @@ const pastPerfect: TopicContent = {
       answer: 3, correction: "had",
       explanation: "Câu chuyện ở quá khứ, việc bắt đầu xảy ra trước → had already started.",
     },
-    { id: "pfp7", type: "transform", prompt: "First she locked the door. Then she went to bed.", starter: "After she had", answers: ["After she had locked the door, she went to bed."], explanation: "Việc trước → had + V3; việc sau → quá khứ đơn." },
+    { id: "pfp7", type: "transform", prompt: "First she locked the door. Then she went to bed.", starter: "After she had", answers: ["After she had locked the door, she went to bed.", "After she'd locked the door, she went to bed."], explanation: "Việc trước → had + V3; việc sau → quá khứ đơn." },
     { id: "pfp8", type: "mcq", prompt: "They were hungry because they ___ all day.", options: ["didn't eat", "haven't eaten", "hadn't eaten", "don't eat"], answer: 2, explanation: "Việc không ăn kéo dài trước lúc thấy đói (quá khứ) → hadn't eaten." },
     { id: "pfp9", type: "verb_form", prompt: "I couldn't get in because I ___ my keys.", base: "lose", answers: ["had lost", "'d lost"], explanation: "Mất chìa khóa xảy ra trước việc không vào được → had lost." },
   ],
@@ -215,7 +215,7 @@ const usedToWould: TopicContent = {
     { id: "utw1", type: "mcq", prompt: "When I was a child, I ___ afraid of the dark.", options: ["would be", "used to be", "use to be", "was used to be"], answer: 1, explanation: "Trạng thái trong quá khứ → used to be (không dùng would)." },
     { id: "utw2", type: "gap_fill", prompt: "Did you ___ to live near the river?", answers: ["use"], explanation: "Câu hỏi với did → use to." },
     { id: "utw3", type: "mcq", prompt: "My grandmother ___ tell us stories every evening.", options: ["would", "was", "uses to", "is used to"], answer: 0, explanation: "Hành động lặp lại khi kể chuyện quá khứ → would tell (used to cũng đúng nhưng không có trong lựa chọn)." },
-    { id: "utw4", type: "transform", prompt: "I smoked in the past, but I don't now.", starter: "I used", answers: ["I used to smoke."], explanation: "Thói quen quá khứ không còn → used to smoke." },
+    { id: "utw4", type: "transform", prompt: "I smoked in the past, but I don't now.", starter: "I used", answers: ["I used to smoke.", "I used to smoke, but I don't now."], explanation: "Thói quen quá khứ không còn → used to smoke." },
     {
       id: "utw5", type: "error_id",
       segments: [{ text: "She " }, { text: "didn't used to", underline: true }, { text: " " }, { text: "drink", underline: true }, { text: " " }, { text: "coffee", underline: true }, { text: "." }],
@@ -225,7 +225,7 @@ const usedToWould: TopicContent = {
     { id: "utw6", type: "mcq", prompt: "We ___ a dog, but it died last year.", options: ["would have", "used to have", "use to have", "were having"], answer: 1, explanation: "have (sở hữu) là trạng thái → used to have." },
     { id: "utw7", type: "word_order", words: ["used", "there", "be", "to", "a", "cinema", "here"], answers: ["There used to be a cinema here"], explanation: "There used to be ... = ngày xưa ở đây từng có ..." },
     { id: "utw8", type: "gap_fill", prompt: "He ___ to work at a bank, but now he's a teacher.", answers: ["used"], explanation: "Công việc trước đây, nay không còn → used to work." },
-    { id: "utw9", type: "transform", prompt: "There was a market here, but it's gone now.", starter: "There used", answers: ["There used to be a market here."], explanation: "There used to be + N." },
+    { id: "utw9", type: "transform", prompt: "There was a market here, but it's gone now.", starter: "There used", answers: ["There used to be a market here.", "There used to be a market here, but it's gone now.", "There used to be a market here, but it has gone now."], explanation: "There used to be + N." },
   ],
 };
 

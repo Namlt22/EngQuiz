@@ -5,7 +5,7 @@
  *  - mã giới thiệu: người dùng nhập mã → được dùng AI đầy đủ trong grantDays ngày (null = không thời hạn).
  * Mọi thay đổi số lượt dùng mã đều có điều kiện trong câu lệnh để hai người nhập cùng lúc không vượt maxUses.
  */
-import { prisma } from "./db";
+import { isUniqueViolation, prisma } from "./db";
 import { BillingError } from "./billing";
 
 /** "Không thời hạn": premiumUntil đặt tới mốc rất xa thay cho null (null nghĩa là chưa từng có gói). */
@@ -82,8 +82,9 @@ export async function createReferral(input: ReferralInput, adminEmail: string) {
   };
   try {
     return await prisma.referralCode.create({ data });
-  } catch {
-    throw new BillingError(409, "Mã này đã tồn tại.");
+  } catch (e) {
+    if (isUniqueViolation(e)) throw new BillingError(409, "Mã này đã tồn tại.");
+    throw e;
   }
 }
 

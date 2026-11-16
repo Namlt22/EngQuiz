@@ -198,7 +198,7 @@ export const DIALOGUES: Dialogue[] = [
       { id: "dl-ll-2", type: "mcq", prompt: "What colour is the suitcase?", options: ["Yellow", "Black", "Blue", "Red"], answer: 2, explanation: "“a large blue suitcase with a yellow ribbon.”" },
       { id: "dl-ll-3", type: "gap_fill", prompt: "Please fill ___ this form.", answers: ["in", "out"], explanation: "fill in / fill out a form = điền mẫu đơn." },
       { id: "dl-ll-4", type: "mcq", prompt: "What will the airport do?", options: ["Give the passenger money", "Deliver the suitcase to the hotel", "Buy a new suitcase", "Cancel the flight"], answer: 1, explanation: "“We can deliver it to your hotel.”" },
-      { id: "dl-ll-5", type: "verb_form", prompt: "I ___ for an hour, but my suitcase didn't come out.", base: "wait", answers: ["waited"], explanation: "Kể lại việc đã xảy ra → quá khứ đơn waited." },
+      { id: "dl-ll-5", type: "verb_form", prompt: "I ___ for an hour, but my suitcase didn't come out.", base: "wait", answers: ["waited", "have been waiting", "'ve been waiting"], explanation: "Kể lại việc đã xảy ra → waited; nhấn mạnh đợi đến giờ vẫn chưa thấy → have been waiting." },
     ],
   },
 

@@ -143,7 +143,7 @@ const BASE_DICTATIONS: DictationExercise[] = [
       { text: "If she hadn't helped me, I would have failed.", vi: "Nếu cô ấy không giúp, tôi đã trượt." },
       { text: "He might have won if he hadn't fallen.", vi: "Có lẽ anh ấy đã thắng nếu không bị ngã." },
       { text: "If you had asked me, I would have told you the truth.", vi: "Nếu bạn hỏi, tôi đã nói sự thật với bạn." },
-      { text: "What would you have done if you had been there?", vi: "Bạn sẽ làm gì nếu bạn ở đó?" },
+      { text: "What would you have done if you had been there?", vi: "Nếu lúc đó bạn có mặt ở đó, bạn sẽ làm gì?" },
     ],
   },
 

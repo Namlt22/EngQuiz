@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { learnerPutSchema, progressSchema, roadmapLogSchema, roadmapProfileSchema, type LearnerData } from "./learner-schema";
 import { mergeLearnerData, mergeProgress, mergeRoadmapLog, sameData } from "./learner-merge";
-import { EMPTY_LOG } from "./roadmap";
+import { EMPTY_LOG, buildRoadmap } from "./roadmap";
+import { buildDays } from "./roadmap-days";
 import type { ProgressState } from "./progress-calc";
 
 const progress = (patch: Partial<ProgressState> = {}): ProgressState => ({
@@ -56,10 +57,32 @@ describe("mergeProgress", () => {
     expect(m.activity).toEqual({ "2026-11-10": 20, "2026-11-12": 8 });
   });
 
-  it("nghe chép: lấy lần làm có điểm cao hơn", () => {
-    const a = progress({ dictations: { x: { best: 70, done: 5, total: 5 } } });
-    const b = progress({ dictations: { x: { best: 90, done: 3, total: 5 } } });
-    expect(mergeProgress(a, b).dictations.x).toEqual({ best: 90, done: 3, total: 5 });
+  it("nghe chép / đọc theo mẫu: điểm cao nhất và số câu đã làm nhiều nhất lấy riêng từng bên", () => {
+    const a = progress({ dictations: { x: { best: 70, done: 5, total: 5 } }, speaking: { s: { best: 90, done: 3, total: 8 } } });
+    const b = progress({ dictations: { x: { best: 90, done: 3, total: 5 } }, speaking: { s: { best: 80, done: 8, total: 8 } } });
+    const merged = mergeProgress(a, b);
+    expect(merged.dictations.x).toEqual({ best: 90, done: 5, total: 5 });
+    // done không tụt → đọc lại các câu đã tính không được cộng XP lần nữa
+    expect(merged.speaking?.s).toEqual({ best: 90, done: 8, total: 8 });
+  });
+});
+
+describe("gộp lộ trình khi hai máy dùng hồ sơ khác nhau", () => {
+  it("tiến độ của máy này được chuyển sang lịch của server theo bài học, không theo vị trí", () => {
+    const base = { goal: "daily", focus: "speaking", minutesPerDay: 60, weeks: 12, startDate: "2026-11-16" } as const;
+    const localProfile = { ...base, level: "A1" as const };
+    const remoteProfile = { ...base, level: "B1" as const };
+    const localDays = buildDays(buildRoadmap(localProfile));
+    // Máy này đã làm xong bài đầu tiên của Day 1 (lịch A1).
+    const first = localDays[0].tasks[0];
+    const local: LearnerData = { progress: progress(), roadmap: localProfile, roadmapLog: { ...EMPTY_LOG, tasks: { [first.id]: true } } };
+    const remote: LearnerData = { progress: progress(), roadmap: remoteProfile, roadmapLog: EMPTY_LOG };
+
+    const merged = mergeLearnerData(remote, local);
+    const remoteDays = buildDays(buildRoadmap(remoteProfile));
+    const ticked = remoteDays.flatMap((d) => d.tasks).filter((t) => merged.roadmapLog.tasks[t.id]);
+    // Chỉ những bài cùng khóa với bài đã làm mới được tích (hoặc không bài nào nếu lịch B1 không có bài đó).
+    expect(ticked.every((t) => t.key === first.key)).toBe(true);
   });
 });
 

@@ -27,6 +27,14 @@ function devOriginsFromAuthUrl(): string[] {
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Không phát hành source map ra trình duyệt: DevTools chỉ thấy JS đã nén, không thấy mã TypeScript gốc.
+  productionBrowserSourceMaps: false,
+  // Không lộ "X-Powered-By: Next.js".
+  poweredByHeader: false,
+  compiler: {
+    // Bỏ console.log/info/debug khỏi bản production (giữ error, warn để còn lần lỗi).
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
+  },
   allowedDevOrigins: devOriginsFromAuthUrl(),
   async headers() {
     const AUDIO_CACHE_SECONDS = 7 * 24 * 60 * 60;

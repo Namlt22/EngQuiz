@@ -97,7 +97,7 @@ export const conditionalType1: TopicContent = {
     },
     { id: "c1f", type: "mcq", prompt: "___ you hurry, you'll miss the train.", options: ["If", "Unless", "When", "Because"], answer: 1, explanation: "Unless = If ... not: Nếu bạn không nhanh lên, bạn sẽ lỡ tàu." },
     { id: "c1g", type: "transform", prompt: "Study hard or you will fail the exam.", starter: "If you don't", answers: ["If you don't study hard, you will fail the exam.", "If you do not study hard, you will fail the exam.", "If you don't study hard, you'll fail the exam."], explanation: "\"... or ...\" (nếu không thì) → If you don't + V, you will..." },
-    { id: "c1h", type: "word_order", words: ["will", "if", "be", "you", "late", "you", "don't", "hurry"], answers: ["You will be late if you don't hurry"], explanation: "Mệnh đề chính đứng trước: S + will + V + if + S + V (hiện tại đơn)." },
+    { id: "c1h", type: "word_order", words: ["will", "if", "be", "you", "late", "you", "don't", "hurry"], answers: ["You will be late if you don't hurry", "If you don't hurry you will be late"], explanation: "S + will + V + if + S + V (hiện tại đơn); đặt mệnh đề if lên trước cũng đúng." },
     {
       id: "c1i", type: "matching", prompt: "Nối mệnh đề If với kết quả phù hợp",
       left: ["If you eat too much,", "If it's sunny tomorrow,", "If you need help,"],

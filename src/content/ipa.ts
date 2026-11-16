@@ -103,6 +103,7 @@ export const IPA_SOUNDS: IpaSound[] = [
     guide: "Âm \"schwa\" — âm yếu và phổ biến nhất trong tiếng Anh. Miệng và lưỡi thả lỏng hoàn toàn, đọc \"ơ\" thật nhẹ và ngắn. Chỉ xuất hiện ở âm tiết KHÔNG nhấn.",
     viLike: "Như \"ơ\" tiếng Việt nhưng rất nhẹ, gần như lướt qua.",
     tip: "Người Việt hay đọc rõ mọi nguyên âm (ba-na-na) làm mất nhịp. Hãy đọc /bəˈnɑːnə/: chỉ âm giữa mạnh, hai âm /ə/ rất nhẹ.",
+    us: "Giọng Mỹ: đuôi -er đọc /ɚ/ có uốn lưỡi — teacher /ˈtiːtʃɚ/ (tương tự father, summer, dinner).",
     examples: [ex("about", "/əˈbaʊt/", "về, khoảng"), ex("teacher", "/ˈtiːtʃə/", "giáo viên"), ex("banana", "/bəˈnɑːnə/", "quả chuối")],
   },
   {
@@ -116,6 +117,7 @@ export const IPA_SOUNDS: IpaSound[] = [
     id: "or-long", symbol: "ɔː", group: "long",
     guide: "Môi tròn, miệng mở vừa, lưỡi lùi về sau. Đọc \"o\" và KÉO DÀI.",
     viLike: "Gần \"o\" tiếng Việt kéo dài.",
+    us: "Giọng Mỹ: trước r đọc /ɔːr/ có uốn lưỡi (door /dɔːr/); nhiều người Mỹ đọc talk, saw gần như /ɑː/.",
     examples: [ex("door", "/dɔː/", "cánh cửa"), ex("saw", "/sɔː/", "đã nhìn thấy"), ex("talk", "/tɔːk/", "nói chuyện")],
     pair: { with: "o-short", a: ex("port", "/pɔːt/", "cảng"), b: ex("pot", "/pɒt/", "cái nồi") },
   },
@@ -146,7 +148,7 @@ export const IPA_SOUNDS: IpaSound[] = [
     id: "o-short", symbol: "ɒ", group: "short",
     guide: "Môi hơi tròn, miệng mở rộng, lưỡi hạ thấp ở phía sau. Đọc NGẮN.",
     viLike: "Gần \"o\" tiếng Việt đọc thật nhanh.",
-    us: "Giọng Mỹ đọc gần như /ɑː/: hot ≈ \"hát\".",
+    us: "Giọng Mỹ đọc gần như /ɑː/: hot ≈ \"hát\" (dog thường gần /ɔː/). Giọng đọc mẫu của EngQuiz là giọng Mỹ nên bạn sẽ nghe /ɑː/; cặp pot / port vẫn phân biệt được.",
     examples: [ex("hot", "/hɒt/", "nóng"), ex("dog", "/dɒɡ/", "con chó"), ex("watch", "/wɒtʃ/", "xem, đồng hồ")],
     pair: { with: "or-long", a: ex("pot", "/pɒt/", "cái nồi"), b: ex("port", "/pɔːt/", "cảng") },
   },
@@ -156,6 +158,7 @@ export const IPA_SOUNDS: IpaSound[] = [
     id: "ia", symbol: "ɪə", group: "diphthong",
     guide: "Bắt đầu bằng /ɪ/ rồi trượt nhẹ sang /ə/. Âm đầu rõ, âm sau nhẹ.",
     viLike: "Gần \"ia\" trong \"bia\".",
+    us: "Giọng Mỹ (giọng đọc mẫu của EngQuiz) đọc là /ɪr/ có uốn lưỡi: here /hɪr/, near /nɪr/. Riêng idea đọc /aɪˈdiːə/, không có r.",
     examples: [ex("here", "/hɪə/", "ở đây"), ex("near", "/nɪə/", "gần"), ex("idea", "/aɪˈdɪə/", "ý tưởng")],
   },
   {
@@ -169,7 +172,7 @@ export const IPA_SOUNDS: IpaSound[] = [
     id: "ua", symbol: "ʊə", group: "diphthong",
     guide: "Bắt đầu bằng /ʊ/ (môi hơi tròn) rồi trượt sang /ə/ thả lỏng.",
     viLike: "Gần \"ua\" trong \"mua\".",
-    us: "Nhiều người (cả Anh và Mỹ) đọc thành /ɔː/: sure /ʃɔː/.",
+    us: "Giọng Mỹ đọc /ʊr/ có uốn lưỡi: tour /tʊr/, pure /pjʊr/, sure /ʃʊr/. Nhiều người (cả Anh và Mỹ) đọc sure thành /ʃɔː(r)/.",
     examples: [ex("tour", "/tʊə/", "chuyến du lịch"), ex("pure", "/pjʊə/", "tinh khiết"), ex("sure", "/ʃʊə/", "chắc chắn")],
   },
   {
@@ -271,7 +274,7 @@ export const IPA_SOUNDS: IpaSound[] = [
     id: "f", symbol: "f", group: "voiceless",
     guide: "Răng cửa trên chạm nhẹ môi dưới, thổi hơi qua khe hở. Không rung dây thanh.",
     viLike: "Như \"ph\" tiếng Việt.",
-    examples: [ex("fish", "/fɪʃ/", "con cá"), ex("coffee", "/ˈkɒfi/", "cà phê"), ex("laugh", "/lɑːf/", "cười")],
+    examples: [ex("fish", "/fɪʃ/", "con cá"), ex("coffee", "/ˈkɒfi/", "cà phê"), ex("phone", "/fəʊn/", "điện thoại")],
     pair: { with: "v", a: ex("fan", "/fæn/", "cái quạt"), b: ex("van", "/væn/", "xe tải nhỏ") },
   },
   {
@@ -324,7 +327,7 @@ export const IPA_SOUNDS: IpaSound[] = [
     id: "zh", symbol: "ʒ", group: "voiced",
     guide: "Như /ʃ/ (môi chu) nhưng RUNG dây thanh. Âm hiếm, thường ở giữa từ.",
     viLike: "Gần \"gi\" đọc chu môi, không có trong tiếng Việt chuẩn.",
-    examples: [ex("vision", "/ˈvɪʒn/", "tầm nhìn"), ex("usually", "/ˈjuːʒuəli/", "thường xuyên"), ex("garage", "/ˈɡærɑːʒ/", "ga-ra")],
+    examples: [ex("vision", "/ˈvɪʒn/", "tầm nhìn"), ex("usually", "/ˈjuːʒuəli/", "thường xuyên"), ex("television", "/ˈtelɪvɪʒn/", "ti vi")],
   },
   {
     id: "m", symbol: "m", group: "voiced",

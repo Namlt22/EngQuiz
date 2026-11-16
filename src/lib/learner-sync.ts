@@ -20,6 +20,9 @@ const DEBOUNCE_MS = 1200;
 const RETRY_BASE_MS = 5_000;
 const RETRY_MAX_MS = 5 * 60_000;
 const MAX_CONFLICT_RETRIES = 3;
+/** Trần thân request keepalive của trình duyệt là 64 KB; chừa khoảng an toàn. */
+export const KEEPALIVE_MAX_BYTES = 60_000;
+const byteLength = (s: string) => new TextEncoder().encode(s).length;
 
 export interface SyncDeps {
   fetch: typeof fetch;
@@ -142,13 +145,16 @@ export function createLearnerSync(deps: SyncDeps) {
     }
 
     deps.onStatus("saving");
+    const payload = JSON.stringify(body.data);
     let res: Response;
     try {
       res = await deps.fetch("/api/learner", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body.data),
-        keepalive,
+        body: payload,
+        // Trình duyệt từ chối request keepalive có thân > 64 KB (TypeError, trông như lỗi mạng).
+        // Dữ liệu lớn → gửi thường: lúc đăng xuất trang vẫn mở chờ kết quả nên không cần keepalive.
+        keepalive: keepalive && byteLength(payload) <= KEEPALIVE_MAX_BYTES,
       });
     } catch (e) {
       log("[sync] Lỗi mạng khi lưu", e);

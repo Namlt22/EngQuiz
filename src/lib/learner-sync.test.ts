@@ -17,12 +17,12 @@ function harness(responses: Scripted[], initialLocal: LearnerData) {
   const listeners = new Set<() => void>();
   const timers = new Map<number, () => void>();
   let nextTimer = 0;
-  const requests: Array<{ method: string; body?: unknown }> = [];
+  const requests: Array<{ method: string; body?: unknown; keepalive?: boolean }> = [];
   const statuses: SyncStatus[] = [];
 
   const sync = createLearnerSync({
     fetch: (async (_url: string, init?: RequestInit) => {
-      requests.push({ method: init?.method ?? "GET", body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      requests.push({ method: init?.method ?? "GET", body: init?.body ? JSON.parse(String(init.body)) : undefined, keepalive: init?.keepalive });
       const r = responses.shift() ?? { status: 500, body: {} };
       if (r.gate) await r.gate;
       return new Response(JSON.stringify(r.body), { status: r.status });
@@ -169,6 +169,29 @@ describe("createLearnerSync", () => {
     const puts = h.requests.filter((r) => r.method === "PUT");
     expect(puts).toHaveLength(2);
     expect(puts[1].body).toMatchObject({ baseVersion: 2, progress: { xp: 20 } });
+  });
+
+  it("flushAndWait: dữ liệu nhỏ gửi keepalive, dữ liệu > 64 KB gửi thường (trình duyệt từ chối keepalive lớn)", async () => {
+    const big = base(5);
+    big.progress.dictations = Object.fromEntries(
+      Array.from({ length: 500 }, (_, i) => [`bai-nghe-chep-${String(i).padStart(3, "0")}-${"x".repeat(70)}`, { best: 90, done: 5, total: 5 }]),
+    );
+    for (const [data, expected] of [
+      [base(30), true],
+      [big, false],
+    ] as const) {
+      const h = harness(
+        [
+          { status: 200, body: { success: true, data: snapshot(base(1), 1) } },
+          { status: 200, body: { success: true, data: { version: 2 } } },
+        ],
+        base(1),
+      );
+      await h.sync.start({ mergeLocal: true });
+      h.setLocal(data);
+      expect(await h.sync.flushAndWait()).toBe(true);
+      expect(h.requests.find((r) => r.method === "PUT")?.keepalive).toBe(expected);
+    }
   });
 
   it("flushAndWait trả false khi chưa lưu được (để không xóa dữ liệu trên máy)", async () => {

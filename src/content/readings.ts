@@ -119,7 +119,7 @@ export const READINGS: ReadingPassage[] = [
       { id: "rd-dl-2", type: "mcq", prompt: "Why did they wear jackets?", options: ["Because it was raining.", "Because the weather was cool.", "Because they were at the market.", "Because jackets were cheap."], answer: 1, explanation: "“The weather was cool and fresh, so we wore jackets.”" },
       { id: "rd-dl-3", type: "verb_form", prompt: "In the afternoon, they ___ around Xuan Huong Lake.", base: "ride", answers: ["rode"], explanation: "Quá khứ của ride là rode: “we rented bikes and rode around Xuan Huong Lake.”" },
       { id: "rd-dl-4", type: "mcq", prompt: "What did the writer eat for the first time?", options: ["Grilled rice paper", "Pho", "Strawberries", "Banh mi"], answer: 0, explanation: "“I tried grilled rice paper for the first time.”" },
-      { id: "rd-dl-5", type: "mcq", prompt: "How did the writer feel about the trip?", options: ["Bored", "Angry", "Happy — they want to go back", "Scared"], answer: 2, explanation: "“I want to go back there next year.”" },
+      { id: "rd-dl-5", type: "mcq", prompt: "How did the writer feel about the trip?", options: ["Bored", "Angry", "Happy — the writer wants to go back", "Scared"], answer: 2, explanation: "“I want to go back there next year.”" },
     ],
   },
   {
@@ -206,7 +206,7 @@ export const READINGS: ReadingPassage[] = [
       { id: "rd-rw-3", type: "mcq", prompt: "What does “hybrid model” mean in the text?", options: ["Working only at home", "Working only in the office", "Working partly in the office and partly at home", "Working at weekends"], answer: 2, explanation: "Đoạn cuối giải thích: vài ngày ở văn phòng, còn lại ở nhà." },
       { id: "rd-rw-4", type: "gap_fill", prompt: "Some people find it hard to stop working because their office is also their living ___.", answers: ["room"], explanation: "“since their office is also their living room.”" },
       { id: "rd-rw-5", type: "mcq", prompt: "What is the writer's attitude?", options: ["Working from home is perfect.", "Working from home is a terrible idea.", "It has advantages and disadvantages.", "Offices will disappear."], answer: 2, explanation: "Bài nêu cả ưu điểm (đoạn 2) và nhược điểm (đoạn 3)." },
-      { id: "rd-rw-6", type: "transform", prompt: "Working from home became normal a few years ago and it is still normal.", starter: "Working from home has", answers: ["Working from home has become normal.", "Working from home has become normal over the past few years."], explanation: "Việc bắt đầu trong quá khứ, còn đúng đến giờ → has become." },
+      { id: "rd-rw-6", type: "transform", prompt: "Working from home became normal a few years ago and it is still normal.", starter: "Working from home has", answers: ["Working from home has become normal.", "Working from home has become normal over the past few years.", "Working from home has been normal for a few years.", "Working from home has become normal for millions of people."], explanation: "Việc bắt đầu trong quá khứ, còn đúng đến giờ → has become." },
     ],
   },
   {

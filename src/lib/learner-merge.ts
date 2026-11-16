@@ -5,7 +5,8 @@
  */
 import type { LearnerData } from "./learner-schema";
 import type { DictationProgress, ProgressState, TopicProgress } from "./progress-calc";
-import type { RoadmapLog } from "./roadmap";
+import { buildRoadmap, type RoadmapLog } from "./roadmap";
+import { buildDays, remapTasks } from "./roadmap-days";
 
 const maxOpt = (a?: number, b?: number) => (a === undefined ? b : b === undefined ? a : Math.max(a, b));
 
@@ -24,10 +25,12 @@ function mergeTopic(a: TopicProgress = {}, b: TopicProgress = {}): TopicProgress
   return out;
 }
 
+/** Điểm cao nhất và số câu đã làm nhiều nhất lấy riêng từng bên (XP đọc theo mẫu tính theo `done` — không được tụt). */
 function mergeDictation(a?: DictationProgress, b?: DictationProgress): DictationProgress {
   if (!a) return b as DictationProgress;
   if (!b) return a;
-  return a.best >= b.best ? a : b;
+  const best = a.best >= b.best ? a : b;
+  return { ...best, done: Math.max(a.done, b.done) };
 }
 
 export function mergeProgress(a: ProgressState, b: ProgressState): ProgressState {
@@ -64,10 +67,16 @@ export function mergeRoadmapLog(a: RoadmapLog, b: RoadmapLog): RoadmapLog {
 
 /** `remote` = bản trong database, `local` = bản trên trình duyệt. */
 export function mergeLearnerData(remote: LearnerData, local: LearnerData): LearnerData {
+  // Id bài trong nhật ký theo vị trí của lịch học: máy này dùng hồ sơ khác bản trên server
+  // thì chuyển tiến độ của máy này sang lịch của server trước khi gộp, để không tích nhầm bài.
+  const localLog =
+    remote.roadmap && local.roadmap && !sameData(remote.roadmap, local.roadmap)
+      ? remapTasks(buildDays(buildRoadmap(local.roadmap)), buildDays(buildRoadmap(remote.roadmap)), local.roadmapLog)
+      : local.roadmapLog;
   return {
     progress: mergeProgress(remote.progress, local.progress),
     roadmap: remote.roadmap ?? local.roadmap,
-    roadmapLog: mergeRoadmapLog(remote.roadmapLog, local.roadmapLog),
+    roadmapLog: mergeRoadmapLog(remote.roadmapLog, localLog),
   };
 }
 

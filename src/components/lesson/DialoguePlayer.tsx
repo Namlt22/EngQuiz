@@ -10,7 +10,7 @@ import { ArrowLeft, Eye, Languages, Pause, Play, Theater } from "lucide-react";
 import type { Dialogue } from "@/content/types";
 import { scoreReadAloud, type ReadAloudResult } from "@/core/speaking";
 import { progressActions } from "@/lib/progress";
-import { useSpeech } from "@/lib/speech";
+import { SPEECH_ERROR_NOTICE, useSpeech } from "@/lib/speech";
 import { useSpeechRecognition } from "@/lib/speech-recognition";
 import { LevelBadge } from "@/components/ui/LevelBadge";
 import { SpeakButton } from "@/components/ui/SpeakButton";
@@ -98,14 +98,21 @@ export function DialoguePlayer({ dialogue }: { dialogue: Dialogue }) {
 function ListenMode({ dialogue, showVi, onToggleVi }: { dialogue: Dialogue; showVi: boolean; onToggleVi: () => void }) {
   const { speak, stop, supported } = useSpeech();
   const [playing, setPlaying] = useState<number | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const runRef = useRef(0);
+  const fail = (run: number) => () => {
+    if (run !== runRef.current) return;
+    setPlaying(null);
+    setNotice(SPEECH_ERROR_NOTICE);
+  };
 
   function playFrom(i: number, run: number) {
     if (run !== runRef.current) return;
     const line = dialogue.lines[i];
     if (!line) return setPlaying(null);
     setPlaying(i);
-    speak(line.en, LINE_RATE, { pitch: SPEAKER_PITCH[line.speaker], onEnd: () => playFrom(i + 1, run) });
+    setNotice(null);
+    speak(line.en, LINE_RATE, { pitch: SPEAKER_PITCH[line.speaker], onEnd: () => playFrom(i + 1, run), onError: fail(run) });
   }
 
   function toggleAll() {
@@ -122,7 +129,8 @@ function ListenMode({ dialogue, showVi, onToggleVi }: { dialogue: Dialogue; show
     setPlaying(i);
     const line = dialogue.lines[i];
     const run = runRef.current;
-    speak(line.en, LINE_RATE, { pitch: SPEAKER_PITCH[line.speaker], onEnd: () => run === runRef.current && setPlaying(null) });
+    setNotice(null);
+    speak(line.en, LINE_RATE, { pitch: SPEAKER_PITCH[line.speaker], onEnd: () => run === runRef.current && setPlaying(null), onError: fail(run) });
   }
 
   return (
@@ -138,6 +146,11 @@ function ListenMode({ dialogue, showVi, onToggleVi }: { dialogue: Dialogue; show
           <Languages className="size-4" /> {showVi ? "Ẩn bản dịch" : "Hiện bản dịch"}
         </button>
       </div>
+      {notice && (
+        <p role="alert" className="text-sm text-danger">
+          {notice}
+        </p>
+      )}
       <ol className="space-y-3">
         {dialogue.lines.map((line, i) => (
           <li key={i} className={`flex gap-2 ${line.speaker === 1 ? "flex-row-reverse text-right" : ""}`}>
@@ -200,7 +213,12 @@ function RolePlay({ dialogue }: { dialogue: Dialogue }) {
     }
     const attempt = attemptRef.current;
     if (!ttsSupported) return;
-    speak(next.en, LINE_RATE, { pitch: SPEAKER_PITCH[next.speaker], onEnd: () => attempt === attemptRef.current && goTo(i + 1, who) });
+    speak(next.en, LINE_RATE, {
+      pitch: SPEAKER_PITCH[next.speaker],
+      onEnd: () => attempt === attemptRef.current && goTo(i + 1, who),
+      // Không đọc được lời nhân vật kia: dừng tự chuyển câu, người học đọc chữ rồi bấm "Tiếp".
+      onError: () => attempt === attemptRef.current && setNotice(SPEECH_ERROR_NOTICE),
+    });
   }
 
   function start(r: 0 | 1) {
@@ -317,7 +335,9 @@ function RolePlay({ dialogue }: { dialogue: Dialogue }) {
         </div>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm text-muted">{ttsSupported ? "Máy đang đọc lời nhân vật kia…" : "Đọc lời nhân vật kia rồi bấm Tiếp."}</p>
+          <p className={`text-sm ${notice ? "text-danger" : "text-muted"}`}>
+            {notice ? `${notice} Đọc lời nhân vật kia rồi bấm Tiếp.` : ttsSupported ? "Máy đang đọc lời nhân vật kia…" : "Đọc lời nhân vật kia rồi bấm Tiếp."}
+          </p>
           <button type="button" onClick={() => goTo(idx + 1)} className="btn-ghost">
             Tiếp
           </button>

@@ -4,7 +4,7 @@
  * không cùng lấy được lượt cuối.
  */
 import { randomInt } from "node:crypto";
-import { prisma } from "./db";
+import { isUniqueViolation, prisma } from "./db";
 import { AI_DAILY_LIMIT, AI_TRIAL_TURNS, extendPremium, getPlan, ORDER_EXPIRES_DAYS, vnDay, type AiEntitlement } from "@/lib/plans";
 
 import { vnYearRange, type PaidOrder } from "@/lib/revenue";
@@ -50,8 +50,12 @@ export async function takeAiTurn(userId: string, now = new Date()): Promise<AiTu
     try {
       await prisma.aiUsage.create({ data: { userId, day, count: 1 } });
       return { kind: "premium", day };
-    } catch {
-      // Dòng đã có (đã đủ lượt, hoặc request khác vừa tạo) → coi như hết lượt hôm nay.
+    } catch (e) {
+      // Lỗi DB thật (mất kết nối…) không được báo nhầm thành "hết lượt".
+      if (!isUniqueViolation(e)) throw e;
+      // Dòng của hôm nay vừa được request khác tạo → thử cộng lại một lần; vẫn không được thì đã đủ lượt.
+      const retry = await prisma.aiUsage.updateMany({ where: { userId, day, count: { lt: AI_DAILY_LIMIT } }, data: { count: { increment: 1 } } });
+      if (retry.count === 1) return { kind: "premium", day };
       throw new BillingError(429, `Bạn đã dùng hết ${AI_DAILY_LIMIT} lượt AI hôm nay. Lượt mới có lại lúc 0 giờ.`);
     }
   }
@@ -126,7 +130,8 @@ export async function createOrder(userId: string, planId: unknown, now = new Dat
       const order = await prisma.order.create({ data: { code: newCode(), userId, plan: plan.id, months: plan.months, amount: plan.price } });
       return { order: toOrderView(order, now), created: true };
     } catch (e) {
-      if (attempt === 4) throw e; // trùng mã (rất hiếm) → thử mã khác
+      // Chỉ thử lại khi trùng mã đơn (rất hiếm); lỗi khác báo ngay.
+      if (!isUniqueViolation(e) || attempt === 4) throw e;
     }
   }
   throw new Error("unreachable");

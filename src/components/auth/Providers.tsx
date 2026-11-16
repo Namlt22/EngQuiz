@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
 import { startNewVisit } from "@/lib/roadmap-store";
+import { DevtoolsGuard } from "@/components/layout/DevtoolsGuard";
 import { LearnerSync } from "./LearnerSync";
 
 /** Mỗi lần chuyển trang là một "lượt học" mới cho lộ trình (xem startNewVisit). */
@@ -19,6 +20,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <LearnerSync />
       <RoadmapVisitScope />
+      <DevtoolsGuard />
       {children}
     </SessionProvider>
   );
