@@ -138,3 +138,47 @@ export interface TopicContent {
   theory: TheoryBlock[];
   questions: Question[];
 }
+
+/* ---------------- Bài đọc (Reading) ---------------- */
+
+export interface ReadingParagraph {
+  en: string;
+  vi: string;
+}
+
+export interface ReadingPassage {
+  id: string;
+  title: string;
+  level: LevelCode;
+  /** Chủ đề, hiện trên thẻ bài (tiếng Việt). */
+  theme: string;
+  description: string;
+  paragraphs: ReadingParagraph[];
+  /** Từ vựng đáng chú ý trong bài. */
+  glossary: { word: string; meaning: string }[];
+  /** Câu hỏi đọc hiểu (dùng chung kiểu câu hỏi với Quiz). */
+  questions: Question[];
+}
+
+/* ---------------- Hội thoại ---------------- */
+
+export interface DialogueLine {
+  /** Chỉ số người nói trong `speakers` (0 hoặc 1). */
+  speaker: 0 | 1;
+  en: string;
+  vi: string;
+}
+
+export interface Dialogue {
+  id: string;
+  title: string;
+  level: LevelCode;
+  /** Tình huống, hiện trên thẻ bài (tiếng Việt). */
+  situation: string;
+  speakers: [string, string];
+  lines: DialogueLine[];
+  /** Mẫu câu nên thuộc, rút từ hội thoại. */
+  phrases: { en: string; vi: string }[];
+  /** Bài tập sau hội thoại. */
+  questions: Question[];
+}

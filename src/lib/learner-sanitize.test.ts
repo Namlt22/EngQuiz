@@ -94,3 +94,33 @@ describe("tiến độ luyện nói (speaking)", () => {
     expect(mergeProgress({ ...base, version: 1 }, { ...base, version: 1 })).not.toHaveProperty("speaking");
   });
 });
+
+describe("tiến độ bài đọc & hội thoại (reading, dialogues)", () => {
+  const base = { version: 1 as const, topics: {}, dictations: {}, xp: 0, streak: 0, activity: {} };
+
+  it("bản cũ không có hai trường này vẫn hợp lệ và không bị thêm trường rỗng", () => {
+    const p = sanitizeProgress(base);
+    expect(p).not.toHaveProperty("reading");
+    expect(p).not.toHaveProperty("dialogues");
+  });
+
+  it("giữ mục hợp lệ, bỏ mục sai", () => {
+    const p = sanitizeProgress({
+      ...base,
+      reading: { "my-family": { best: 80, done: 4, total: 5 }, bad: { best: -1 } },
+      dialogues: { "new-friend": { best: 100, done: 5, total: 5 }, __proto__: { best: 1 } },
+    });
+    expect(p.reading).toEqual({ "my-family": { best: 80, done: 4, total: 5 } });
+    expect(p.dialogues).toEqual({ "new-friend": { best: 100, done: 5, total: 5 } });
+  });
+
+  it("gộp hai máy: lấy điểm cao nhất mỗi bài", () => {
+    const merged = mergeProgress(
+      { ...base, reading: { a: { best: 60, done: 3, total: 5 } }, dialogues: { d: { best: 100, done: 5, total: 5 } } },
+      { ...base, reading: { a: { best: 80, done: 4, total: 5 } } },
+    );
+    expect(merged.reading).toEqual({ a: { best: 80, done: 4, total: 5 } });
+    expect(merged.dialogues).toEqual({ d: { best: 100, done: 5, total: 5 } });
+    expect(mergeProgress(base, base)).not.toHaveProperty("reading");
+  });
+});

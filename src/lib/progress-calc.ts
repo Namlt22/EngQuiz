@@ -24,6 +24,10 @@ export interface ProgressState {
   dictations: Record<string, DictationProgress>;
   /** Luyện nói — đọc theo câu mẫu, theo id bộ câu (= id bài nghe chép). Bản cũ chưa có trường này. */
   speaking?: Record<string, SpeakingProgress>;
+  /** Bài đọc: điểm câu hỏi đọc hiểu cao nhất, theo id bài. Bản cũ chưa có trường này. */
+  reading?: Record<string, DictationProgress>;
+  /** Bài hội thoại: điểm bài tập cao nhất, theo id bài. Bản cũ chưa có trường này. */
+  dialogues?: Record<string, DictationProgress>;
   xp: number;
   streak: number;
   /** yyyy-mm-dd theo giờ địa phương */

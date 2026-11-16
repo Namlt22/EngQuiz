@@ -54,6 +54,10 @@ export function sanitizeProgress(raw: unknown): ProgressState {
   // Chỉ thêm khi có dữ liệu: bản cũ không có trường này, thêm {} sẽ làm bộ đồng bộ tưởng dữ liệu đã đổi.
   const speaking = pick(r.speaking, LIMITS.speaking, cleanDictation);
   if (Object.keys(speaking).length) state.speaking = speaking;
+  const reading = pick(r.reading, LIMITS.lessons, cleanDictation);
+  if (Object.keys(reading).length) state.reading = reading;
+  const dialogues = pick(r.dialogues, LIMITS.lessons, cleanDictation);
+  if (Object.keys(dialogues).length) state.dialogues = dialogues;
   return progressSchema.parse(state);
 }
 

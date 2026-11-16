@@ -33,12 +33,16 @@ function mergeDictation(a?: DictationProgress, b?: DictationProgress): Dictation
 export function mergeProgress(a: ProgressState, b: ProgressState): ProgressState {
   const later = (a.lastActiveDate ?? "") >= (b.lastActiveDate ?? "") ? a : b;
   const speaking = mergeKeys(a.speaking ?? {}, b.speaking ?? {}, mergeDictation);
+  const reading = mergeKeys(a.reading ?? {}, b.reading ?? {}, mergeDictation);
+  const dialogues = mergeKeys(a.dialogues ?? {}, b.dialogues ?? {}, mergeDictation);
   return {
     version: 1,
     topics: mergeKeys(a.topics, b.topics, mergeTopic),
     dictations: mergeKeys(a.dictations, b.dictations, mergeDictation),
-    // Bỏ trường khi rỗng để bản gộp trùng khớp với bản cũ chưa có luyện nói.
+    // Bỏ trường khi rỗng để bản gộp trùng khớp với bản cũ chưa có luyện nói / reading / hội thoại.
     ...(Object.keys(speaking).length ? { speaking } : {}),
+    ...(Object.keys(reading).length ? { reading } : {}),
+    ...(Object.keys(dialogues).length ? { dialogues } : {}),
     xp: Math.max(a.xp, b.xp),
     streak: later.streak,
     ...(later.lastActiveDate ? { lastActiveDate: later.lastActiveDate } : {}),

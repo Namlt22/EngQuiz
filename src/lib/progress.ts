@@ -76,6 +76,17 @@ function patchTopic(s: ProgressState, slug: string, patch: (t: TopicProgress) =>
   return { ...s, topics: { ...s.topics, [slug]: patch(s.topics[slug] ?? {}) } };
 }
 
+const LESSON_XP_PER_CORRECT = 2;
+
+/** Lưu điểm cao nhất của một bài đọc / hội thoại; XP = số câu đúng VƯỢT lần tốt nhất trước (làm lại không cộng lặp). */
+function recordLesson(s: ProgressState, field: "reading" | "dialogues", id: string, percent: number, correct: number, total: number): ProgressState {
+  const prev = s[field]?.[id];
+  const prevCorrect = prev ? Math.round((prev.best / 100) * prev.total) : 0;
+  const best = Math.max(prev?.best ?? 0, percent);
+  const next: ProgressState = { ...s, [field]: { ...s[field], [id]: { best, done: Math.max(prev?.done ?? 0, correct), total } } };
+  return withXp(next, Math.max(0, correct - prevCorrect) * LESSON_XP_PER_CORRECT);
+}
+
 /* ---------------- Hành động ---------------- */
 
 /** Báo cho lộ trình: hoạt động này đã xong (tự tích bài tương ứng trong ngày học). */
@@ -137,6 +148,16 @@ export const progressActions = {
       };
       return withXp(next, Math.max(0, passedCount - prevDone) * SPEAKING_XP_PER_SENTENCE);
     });
+  },
+
+  /** Làm xong câu hỏi của một bài đọc (Reading). XP chỉ cộng khi điểm cao hơn lần trước. */
+  recordReading(id: string, percent: number, correct: number, total: number) {
+    update((s) => recordLesson(s, "reading", id, percent, correct, total));
+  },
+
+  /** Làm xong bài tập của một bài hội thoại. */
+  recordDialogue(id: string, percent: number, correct: number, total: number) {
+    update((s) => recordLesson(s, "dialogues", id, percent, correct, total));
   },
 
   /** Làm xong quiz tổng hợp (không thuộc một chủ điểm). */

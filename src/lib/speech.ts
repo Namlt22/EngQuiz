@@ -97,7 +97,11 @@ export function useSpeech({ storageKey = "engquiz:voice-us" }: { storageKey?: st
   }, [supported]);
 
   const speak = useCallback(
-    (text: string, rate = 1) => {
+    /**
+     * pitch: đổi cao độ để phân biệt hai nhân vật trong hội thoại.
+     * onEnd: gọi khi đọc xong cả câu (KHÔNG gọi khi bị hủy hay lỗi) — dùng để đọc nối câu tiếp theo.
+     */
+    (text: string, rate = 1, { pitch = 1, onEnd }: { pitch?: number; onEnd?: () => void } = {}) => {
       if (!supported) return;
       const synth = window.speechSynthesis;
       // Chỉ hủy khi đang có câu đọc dở: gọi cancel() liền trước speak() làm Chrome khởi động lại engine, trễ thêm.
@@ -108,6 +112,7 @@ export function useSpeech({ storageKey = "engquiz:voice-us" }: { storageKey?: st
         if (voice) u.voice = voice;
         u.lang = voice?.lang ?? lang;
         u.rate = rate;
+        u.pitch = pitch;
         return u;
       };
       // Tên riêng Việt Nam (Huế, Đà Nẵng, Linh…): đọc bằng giọng Việt nếu máy có, không thì đọc theo phiên âm.
@@ -118,7 +123,10 @@ export function useSpeech({ storageKey = "engquiz:voice-us" }: { storageKey?: st
           : [make(respellVietnameseNames(text), enVoice, SPEECH_LANG)];
       const lastPart = parts[parts.length - 1];
       parts[0].onstart = () => setSpeaking(true);
-      lastPart.onend = () => setSpeaking(false);
+      lastPart.onend = () => {
+        setSpeaking(false);
+        onEnd?.();
+      };
       parts.forEach((u) => (u.onerror = () => setSpeaking(false)));
       utterRef.current = parts; // giữ tham chiếu để Chrome không thu hồi sớm
       parts.forEach((u) => synth.speak(u));

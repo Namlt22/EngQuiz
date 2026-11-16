@@ -1,0 +1,27 @@
+import type { Metadata } from "next";
+import { READINGS } from "@/content/readings";
+import { LessonList } from "@/components/lesson/LessonList";
+
+export const metadata: Metadata = {
+  title: "Đọc hiểu (Reading)",
+  description: "Bài đọc tiếng Anh A1–B1 theo chủ đề, có bản dịch, từ vựng, âm thanh và câu hỏi đọc hiểu tự chấm.",
+};
+
+export default function ReadingIndexPage() {
+  return (
+    <div className="space-y-6">
+      <header className="max-w-3xl">
+        <h1 className="text-2xl font-extrabold md:text-3xl">Đọc hiểu</h1>
+        <p className="mt-2 text-muted">
+          Đọc bài ngắn theo chủ đề quen thuộc. Bấm loa để nghe từng đoạn, bật bản dịch khi cần, học từ vựng rồi làm câu hỏi đọc hiểu — đúng từ{" "}
+          80% là hoàn thành bài.
+        </p>
+      </header>
+      <LessonList
+        basePath="/reading"
+        field="reading"
+        lessons={READINGS.map((r) => ({ id: r.id, title: r.title, level: r.level, tag: r.theme, description: r.description }))}
+      />
+    </div>
+  );
+}

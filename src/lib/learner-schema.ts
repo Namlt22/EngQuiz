@@ -21,6 +21,8 @@ export const LIMITS = {
   topics: 200,
   dictations: 500,
   speaking: 500,
+  /** Bài đọc (Reading) và bài hội thoại — mỗi loại vài chục bài, để dư chỗ cho nội dung thêm sau. */
+  lessons: 500,
   /** Số ngày hoạt động giữ lại (~10 năm); client cắt bớt ngày cũ nhất trước khi gửi. */
   activityDays: 3660,
   logEntries: 400,
@@ -64,6 +66,9 @@ export const progressSchema = z.strictObject({
   dictations: boundedRecord(key, setScoreSchema, LIMITS.dictations),
   // Tùy chọn: client và bản ghi cũ (trước khi có luyện nói) không gửi trường này.
   speaking: boundedRecord(key, setScoreSchema, LIMITS.speaking).optional(),
+  // Tùy chọn như speaking: bản ghi trước khi có Reading / Hội thoại không có hai trường này.
+  reading: boundedRecord(key, setScoreSchema, LIMITS.lessons).optional(),
+  dialogues: boundedRecord(key, setScoreSchema, LIMITS.lessons).optional(),
   xp: z.number().int().min(0).max(LIMITS.maxXp),
   streak: z.number().int().min(0).max(100_000),
   lastActiveDate: dateKey.optional(),
