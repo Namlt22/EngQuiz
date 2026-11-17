@@ -27,6 +27,7 @@ type Status = "done" | "next" | "todo";
 export function dayInfo(day: RoadmapDay): { icon: typeof Trophy; label: string } {
   if (day.kind === "checkpoint") return { icon: Trophy, label: "Kiểm tra cuối tuần" };
   if (day.day === 6) return { icon: Repeat, label: "Ôn tập cả tuần" };
+  if (day.label && day.tasks[0]) return { icon: TASK_ICONS[day.tasks[0].kind], label: day.label };
   const main =
     day.tasks.find((t) => t.kind === "theory") ?? day.tasks.find((t) => t.kind === "dictation") ?? day.tasks.find((t) => t.kind !== "sound") ?? day.tasks[0];
   if (!main) return { icon: Flag, label: `Day ${day.n}` };
@@ -40,12 +41,15 @@ export function RoadmapPath({
   log,
   nextDayN,
   currentWeek,
+  phaseNames,
 }: {
   weeks: RoadmapWeek[];
   days: RoadmapDay[];
   log: RoadmapLog;
   nextDayN?: number;
   currentWeek: number;
+  /** Tên các phần thay cho tên mặc định của lộ trình tiếng Anh (vd khoá tiếng Trung) */
+  phaseNames?: readonly string[];
 }) {
   const [openDay, setOpenDay] = useState<number | null>(null);
   const selected = openDay === null ? undefined : days.find((d) => d.n === openDay);
@@ -75,7 +79,7 @@ export function RoadmapPath({
               <span className="h-px flex-1 bg-line" />
               <div className="text-center">
                 <div className={`text-xs font-bold uppercase tracking-[0.2em] ${style.text}`}>Phần {p + 1}</div>
-                <div className="font-bold">{style.name}</div>
+                <div className="font-bold">{phaseNames?.[p] ?? style.name}</div>
               </div>
               <span className="h-px flex-1 bg-line" />
             </div>

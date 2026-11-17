@@ -17,6 +17,12 @@ import { useCourse } from "./course-client";
 export * from "./progress-calc";
 
 const SPEAKING_XP_PER_SENTENCE = 3;
+
+/** Loại bài của khoá tiếng Trung và loại nhiệm vụ lộ trình tương ứng (khoá nhiệm vụ = "<loại>:<tiền tố>-<id>"). */
+export type ZhLessonPrefix = "pinyin" | "hanzi" | "grammar" | "mock";
+export const ZH_TASK_KIND: Record<ZhLessonPrefix, TaskKind> = { pinyin: "sound", hanzi: "quiz", grammar: "theory", mock: "quizset" };
+/** Nhiệm vụ "ôn thẻ từ vựng" lặp lại mỗi ngày — mỗi lượt ôn xong tích một nhiệm vụ. */
+export const ZH_VOCAB_TASK_REF = "zh-vocab";
 const EMPTY: ProgressState = { version: 1, topics: {}, dictations: {}, xp: 0, streak: 0, activity: {} };
 
 /** Mỗi khoá học (tiếng Anh, tiếng Trung) có tiến độ riêng, lưu ở khoá localStorage riêng. */
@@ -174,9 +180,9 @@ export const progressActions = {
    * Hoàn thành một bài của khoá tiếng Trung (pinyin, Hán tự…). Lưu như chủ điểm "<prefix>-<id>" trong tiến độ của khoá:
    * theoryRead = đã xong bài, quizBest = điểm cao nhất. XP chỉ cộng lần đầu xong bài.
    */
-  recordZhLesson(prefix: "pinyin" | "hanzi" | "grammar", id: string, percent: number, xp: number) {
+  recordZhLesson(prefix: ZhLessonPrefix, id: string, percent: number, xp: number) {
     const key = `${prefix}-${id}`;
-    done("sound", key);
+    done(ZH_TASK_KIND[prefix], key);
     update((s) => {
       const first = !s.topics[key]?.theoryRead;
       const next = patchTopic(s, key, (t) => ({ ...t, theoryRead: true, quizBest: Math.max(t.quizBest ?? 0, percent) }));
@@ -186,6 +192,7 @@ export const progressActions = {
 
   /** Tự viết đúng một chữ Hán ở bài tô chữ (khoá tiếng Trung). XP chỉ cộng lần đầu viết đúng chữ đó. */
   markHanziWritten(ch: string, xp: number) {
+    done("quiz", `hanzi-${ch}`);
     update((s) => {
       if ((s.hanzi ?? "").includes(ch)) return s;
       return withXp({ ...s, hanzi: cleanHanzi((s.hanzi ?? "") + ch) }, xp);
@@ -205,6 +212,11 @@ export const progressActions = {
       const next = { ...s, srs: encodeSrs(map) };
       return xp ? withXp(next, xp) : next;
     });
+  },
+
+  /** Xong một lượt ôn thẻ từ vựng tiếng Trung (lộ trình tự tích bài "Ôn từ vựng" của ngày). */
+  finishVocabSession() {
+    done("quizset", ZH_VOCAB_TASK_REF);
   },
 
   /** Đã nghe một âm IPA (trang Phát âm). */

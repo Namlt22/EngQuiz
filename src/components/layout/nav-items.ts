@@ -54,6 +54,7 @@ export const NAV_EN: NavEntry[] = [
  */
 export const NAV_ZH: NavEntry[] = [
   { kind: "link", href: "/zh", label: "Trang chủ", icon: House },
+  { kind: "link", href: "/zh/roadmap", label: "Lộ trình", icon: Route },
   {
     kind: "group",
     label: "Học",
@@ -73,6 +74,7 @@ export const NAV_ZH: NavEntry[] = [
     items: [
       { href: "/zh/dialogues", label: "Hội thoại", hint: "Tình huống giao tiếp, mỗi vai một giọng", icon: MessagesSquare },
       { href: "/zh/dictation", label: "Nghe chép", hint: "Gõ pinyin hoặc chữ Hán, chấm từng thanh", icon: Headphones },
+      { href: "/zh/mock/hsk1", label: "Thi thử HSK 1", hint: "20 câu nghe – đọc, chấm điểm từng phần", icon: PenLine },
     ],
   },
 ];

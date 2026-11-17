@@ -6,6 +6,7 @@ import { AudioLines, BookOpen, BookOpenText, Check, Headphones, Layers, Messages
 import type { RoadmapLog } from "@/lib/roadmap";
 import { taskDone, type RoadmapDay, type TaskKind } from "@/lib/roadmap-days";
 import { saveReturnTarget } from "@/lib/roadmap-return";
+import { useCourse } from "@/lib/course-client";
 
 export const TASK_ICONS: Record<TaskKind, typeof BookOpen> = {
   theory: BookOpen,
@@ -24,6 +25,7 @@ export const dayMinutes = (day: RoadmapDay) => day.tasks.reduce((sum, t) => sum 
 export function DayTasks({ day, log, compact = false }: { day: RoadmapDay; log: RoadmapLog; compact?: boolean }) {
   // Bài đầu tiên chưa xong được làm nổi bật: người học chỉ cần bấm nút đó.
   const firstOpen = day.tasks.find((t) => !taskDone(log, t));
+  const course = useCourse();
   return (
     <ol className="space-y-2">
       {day.tasks.map((task, i) => {
@@ -63,7 +65,7 @@ export function DayTasks({ day, log, compact = false }: { day: RoadmapDay; log: 
             </div>
             <Link
               href={task.href}
-              onClick={() => saveReturnTarget({ day: day.n, taskId: task.id, title: task.title })}
+              onClick={() => saveReturnTarget({ day: day.n, taskId: task.id, title: task.title, course })}
               className={`shrink-0 px-3 py-1.5 text-xs ${done ? "btn-ghost" : isNext ? "btn-primary" : "btn-ghost"}`}
               aria-label={`${done ? "Học lại" : "Học"}: ${task.title}`}
             >

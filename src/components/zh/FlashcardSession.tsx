@@ -62,6 +62,9 @@ export function FlashcardSession({ queue: initial, mode, speak, onExit }: Props)
       setRequeued((r) => new Set(r).add(word));
     }
     setFlipped(false);
+    // Thẻ cuối của lượt (không còn thẻ "Quên" nào phải ôn lại) → báo lộ trình đã ôn xong.
+    const willRequeue = g === "again" && !requeued.has(word);
+    if (i + 1 >= queue.length && !willRequeue) progressActions.finishVocabSession();
     setI((n) => n + 1);
   }
 

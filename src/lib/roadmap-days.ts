@@ -41,6 +41,8 @@ export interface RoadmapDay {
   /** study = ngày học; checkpoint = ngày 7, kiểm tra cuối tuần */
   kind: "study" | "checkpoint";
   tasks: RoadmapTask[];
+  /** Nhãn ngắn của ngày trên bản đồ (bỏ trống thì tự suy ra từ bài chính) */
+  label?: string;
 }
 
 export const DAYS_PER_WEEK = SESSIONS_PER_WEEK + 1;

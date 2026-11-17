@@ -1,6 +1,6 @@
 # Kế hoạch: chọn ngôn ngữ học + khoá tiếng Trung (chuẩn HSK 3.0)
 
-> Đã duyệt 2026-11-17 (theo các lựa chọn đề xuất) · Đã xong: Bước 0 (từ vựng), Bước 1, Bước 2 phần pinyin. Bước 2 xong (trừ bảng chữ chính thức)
+> Đã duyệt 2026-11-17 (theo các lựa chọn đề xuất) · Đã xong: Bước 0 (từ vựng), Bước 1, Bước 2 phần pinyin. Bước 2 xong (trừ bảng chữ chính thức) · Bước 3 (HSK 1) xong
 >
 > **Phạm vi:**
 > - Người dùng chọn ngôn ngữ muốn học: **Tiếng Anh** (đã có) hoặc **Tiếng Trung** (mới).
@@ -367,4 +367,12 @@ Nội dung nằm trong `src/content/zh/…`, viết bằng TypeScript như hiệ
   - 6 bài đọc (`/zh/reading`).
   - Chạm vào từ để xem pinyin, âm Hán-Việt và nghĩa; mỗi vai một giọng; có câu hỏi đọc hiểu.
   - Mỗi bài cũng là một bài nghe chép (`/zh/dictation`): gõ pinyin (số hoặc dấu thanh, chấm từng âm và thanh) hoặc gõ chữ Hán (chấm từng chữ); dóng hàng bằng LCS.
-- **Còn lại của HSK 1:** lộ trình tuần 3–10 và bài thi thử HSK 1.
+- **Đã xong: lộ trình tiếng Trung** (`/zh/roadmap`), 10 tuần gồm Nhập môn (tuần 1–2) và HSK 1 (tuần 3–10).
+  - Có thể chọn "Đã biết pinyin" để bỏ qua Nhập môn.
+  - Mỗi tuần 6 ngày học + 1 ngày kiểm tra. Bài tự hoàn thành theo hoạt động: bài pinyin, ngữ pháp, hội thoại, bài đọc, nghe chép, tập viết từng chữ, ôn thẻ từ vựng.
+  - Dùng lại giao diện đường đi và cơ chế tự tích của lộ trình tiếng Anh. Lịch được dựng theo khoá học (`daysFor`), cả khi gộp dữ liệu hai máy và ở thanh "Về lộ trình".
+- **Đã xong: thi thử HSK 1** (`/zh/mock/hsk1`).
+  - 20 câu (10 nghe, 10 đọc), mỗi câu nghe tối đa 2 lần, không báo đúng/sai từng câu.
+  - Kết quả chia theo phần, có xem lại đáp án; đạt từ 60%.
+  - Đây là bài mô phỏng do EngQuiz soạn, không phải đề thi thật.
+- **HSK 1 hoàn tất (Bước 3).** Tiếp theo là Bước 4 (HSK 2) theo cùng khuôn: nghĩa tiếng Việt cho 197 từ, ngữ pháp cấp 2, hội thoại, bài đọc, lộ trình, thi thử.

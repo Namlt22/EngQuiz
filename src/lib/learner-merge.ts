@@ -4,12 +4,13 @@
  * điểm lấy cao nhất, bài đã hoàn thành giữ nguyên, hồ sơ lộ trình ưu tiên bản trong database.
  */
 import type { CourseData, CoursesData, LearnerData } from "./learner-schema";
-import { EXTRA_COURSES } from "./course";
+import { EXTRA_COURSES, type CourseCode } from "./course";
+import { daysFor } from "./course-roadmap";
 import { cleanHanzi } from "./learner-sanitize";
 import { mergeSrs } from "@/core/srs";
 import type { DictationProgress, ProgressState, TopicProgress } from "./progress-calc";
-import { buildRoadmap, type RoadmapLog } from "./roadmap";
-import { buildDays, remapTasks } from "./roadmap-days";
+import type { RoadmapLog } from "./roadmap";
+import { remapTasks } from "./roadmap-days";
 
 const maxOpt = (a?: number, b?: number) => (a === undefined ? b : b === undefined ? a : Math.max(a, b));
 
@@ -71,12 +72,12 @@ export function mergeRoadmapLog(a: RoadmapLog, b: RoadmapLog): RoadmapLog {
 }
 
 /** Gộp một khoá học. `remote` = bản trong database, `local` = bản trên trình duyệt. */
-export function mergeCourseData(remote: CourseData, local: CourseData): CourseData {
+export function mergeCourseData(remote: CourseData, local: CourseData, course: CourseCode = "en"): CourseData {
   // Id bài trong nhật ký theo vị trí của lịch học: máy này dùng hồ sơ khác bản trên server
   // thì chuyển tiến độ của máy này sang lịch của server trước khi gộp, để không tích nhầm bài.
   const localLog =
     remote.roadmap && local.roadmap && !sameData(remote.roadmap, local.roadmap)
-      ? remapTasks(buildDays(buildRoadmap(local.roadmap)), buildDays(buildRoadmap(remote.roadmap)), local.roadmapLog)
+      ? remapTasks(daysFor(course, local.roadmap), daysFor(course, remote.roadmap), local.roadmapLog)
       : local.roadmapLog;
   return {
     progress: mergeProgress(remote.progress, local.progress),
@@ -93,7 +94,7 @@ export function mergeLearnerData(remote: LearnerData, local: LearnerData): Learn
   for (const code of EXTRA_COURSES) {
     const r = rc[code];
     const l = lc[code];
-    const merged = r && l ? mergeCourseData(r, l) : (r ?? l);
+    const merged = r && l ? mergeCourseData(r, l, code) : (r ?? l);
     if (merged) courses[code] = merged;
   }
   return { ...mergeCourseData(rEn, lEn), ...(Object.keys(courses).length ? { courses } : {}) };

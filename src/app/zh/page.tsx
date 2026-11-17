@@ -31,8 +31,11 @@ export default function ZhHomePage() {
           <p className="mt-4 max-w-xl text-base text-white/85 md:text-lg">
             Lộ trình khoảng 40 tuần, mỗi ngày 45 phút: thanh điệu → Hán tự → từ vựng → ngữ pháp → nghe, nói, đọc. Bám đề cương thi HSK mới (kỳ thi đầu tiên 13/12/2026).
           </p>
-          <div className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-white/12 px-4 py-3 text-sm ring-1 ring-white/20">
-            <Route className="size-4" /> Khoá học đang được xây dựng — các phần sẽ mở dần theo thứ tự bên dưới.
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link href="/zh/roadmap" className="btn bg-white text-rose-700 hover:bg-rose-50">
+              <Route className="size-4" /> Bắt đầu lộ trình
+            </Link>
+            <span className="text-sm text-white/80">Đã mở: Nhập môn và HSK 1. HSK 2–4 mở dần theo kế hoạch.</span>
           </div>
         </div>
       </section>

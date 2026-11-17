@@ -6,8 +6,9 @@
  * Nhật ký chỉ do app ghi (học xong bài, ghi âm nói tự do) — không có thao tác tự tích.
  */
 import { useSyncExternalStore } from "react";
-import { EMPTY_LOG, buildRoadmap, parseLog, parseProfile, type RoadmapLog, type RoadmapProfile } from "./roadmap";
-import { buildDays, completeResource, recordSpeakingSeconds, remapTasks } from "./roadmap-days";
+import { EMPTY_LOG, parseLog, parseProfile, type RoadmapLog, type RoadmapProfile } from "./roadmap";
+import { daysFor } from "./course-roadmap";
+import { completeResource, recordSpeakingSeconds, remapTasks } from "./roadmap-days";
 import { readReturnTarget } from "./roadmap-return";
 import { readJson, writeJson } from "./local-json";
 import { COURSE_CODES, courseStorageKey, currentCourse, type CourseCode } from "./course";
@@ -63,25 +64,27 @@ export const roadmapActions = {
     const course = currentCourse();
     const state = load(course);
     if (!state.profile || completedThisVisit.has(`${course}:${key}`)) return;
-    const days = buildDays(buildRoadmap(state.profile));
-    const next = completeResource(days, state.log, key, readReturnTarget()?.taskId);
+    const days = daysFor(course, state.profile);
+    const next = completeResource(days, state.log, key, readReturnTarget(course)?.taskId);
     if (next === state.log) return;
     completedThisVisit.add(`${course}:${key}`);
     update((s) => ({ ...s, log: next }), course);
   },
   /** Lưu hồ sơ mới; tiến độ được chuyển theo bài học sang lịch mới (remapTasks) để không tích nhầm bài khác. */
   saveProfile(profile: RoadmapProfile) {
-    const state = load(currentCourse());
+    const course = currentCourse();
+    const state = load(course);
     const old = state.profile;
-    const log = old ? remapTasks(buildDays(buildRoadmap(old)), buildDays(buildRoadmap(profile)), state.log) : state.log;
-    update((s) => ({ ...s, profile, log }));
+    const log = old ? remapTasks(daysFor(course, old), daysFor(course, profile), state.log) : state.log;
+    update((s) => ({ ...s, profile, log }), course);
   },
   /** Vừa ghi âm một lần nói tự do dài `seconds` giây → cập nhật kỷ lục nói liên tục của tuần đang học. */
   recordSpeakingSeconds(seconds: number) {
-    const state = load(currentCourse());
+    const course = currentCourse();
+    const state = load(course);
     if (!state.profile) return;
-    const next = recordSpeakingSeconds(buildDays(buildRoadmap(state.profile)), state.log, seconds);
-    if (next !== state.log) update((s) => ({ ...s, log: next }));
+    const next = recordSpeakingSeconds(daysFor(course, state.profile), state.log, seconds);
+    if (next !== state.log) update((s) => ({ ...s, log: next }), course);
   },
   reset() {
     update(() => EMPTY);

@@ -8,31 +8,33 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, CheckCircle2, Route, X } from "lucide-react";
-import { buildRoadmap } from "@/lib/roadmap";
-import { buildDays, taskDone } from "@/lib/roadmap-days";
-import { clearReturnTarget, readReturnTarget, roadmapDayHref, type ReturnTarget } from "@/lib/roadmap-return";
+import { taskDone } from "@/lib/roadmap-days";
+import { clearReturnTarget, readReturnTarget, roadmapDayHref, roadmapPath, type ReturnTarget } from "@/lib/roadmap-return";
 import { useRoadmapState } from "@/lib/roadmap-store";
+import { useCourse } from "@/lib/course-client";
+import { daysFor } from "@/lib/course-roadmap";
 
 export function RoadmapReturnBar() {
   const pathname = usePathname();
   const { profile, log } = useRoadmapState();
+  const course = useCourse();
   const [target, setTarget] = useState<ReturnTarget | null>(null);
 
   useEffect(() => {
-    if (pathname === "/roadmap") {
+    if (pathname === roadmapPath(course)) {
       clearReturnTarget();
       setTarget(null);
     } else {
-      setTarget(readReturnTarget());
+      setTarget(readReturnTarget(course));
     }
-  }, [pathname]);
+  }, [pathname, course]);
 
   const task = useMemo(() => {
     if (!profile || !target) return undefined;
-    return buildDays(buildRoadmap(profile))
+    return daysFor(course, profile)
       .find((d) => d.n === target.day)
       ?.tasks.find((t) => t.id === target.taskId);
-  }, [profile, target]);
+  }, [profile, target, course]);
 
   if (!target || !task) return null;
   const done = taskDone(log, task);
@@ -44,7 +46,7 @@ export function RoadmapReturnBar() {
         <span className="min-w-0 flex-1 truncate">
           <b>Day {target.day}</b> · {done ? "Đã xong bài này — học bài tiếp theo trong lộ trình" : <>Đang học: {target.title}</>}
         </span>
-        <Link href={roadmapDayHref(target.day)} className={`shrink-0 px-3 py-1.5 text-xs ${done ? "btn-primary" : "btn-ghost"}`}>
+        <Link href={roadmapDayHref(target.day, course)} className={`shrink-0 px-3 py-1.5 text-xs ${done ? "btn-primary" : "btn-ghost"}`}>
           <ArrowLeft className="size-3.5" /> Về lộ trình
         </Link>
         <button
