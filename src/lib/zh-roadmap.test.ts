@@ -36,6 +36,7 @@ describe("lộ trình tiếng Trung", () => {
     for (const t of ZH_TEXTS) expect(keys, t.id).toContain(`${t.kind}:${t.id}`);
     expect(keys).toContain("quizset:mock-hsk1");
     expect(keys).toContain("quizset:mock-hsk2");
+    expect(keys).toContain("quizset:mock-hsk3");
   });
 
   it("chữ tập viết không lặp và không vượt cấp HSK của tuần", () => {

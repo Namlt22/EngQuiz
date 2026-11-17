@@ -1,13 +1,13 @@
 /**
- * Khung lộ trình tiếng Trung — chặng Nhập môn (tuần 1–2) và HSK 1 (tuần 3–10), docs/PLAN-ZH.md mục 5.
+ * Khung lộ trình tiếng Trung — Nhập môn (tuần 1–2), HSK 1 (3–10), HSK 2 (11–16), HSK 3 (17–28), docs/PLAN-ZH.md mục 5.
  * Mỗi tuần liệt kê tài nguyên; src/lib/zh-roadmap.ts chia thành 6 ngày học + ngày 7 kiểm tra.
  * Test: src/lib/zh-roadmap.test.ts (mọi id phải tồn tại, mọi bài HSK 1 đều có trong lộ trình).
  */
 
 export interface ZhWeekPlan {
-  phase: 1 | 2 | 3;
+  phase: 1 | 2 | 3 | 4;
   /** Cấp HSK của tuần (ôn thẻ từ vựng cấp này); bỏ trống ở chặng Nhập môn */
-  hsk?: 1 | 2;
+  hsk?: 1 | 2 | 3;
   title: string;
   milestone: string;
   /** Bài pinyin (id trong PINYIN_LESSONS) — chỉ chặng Nhập môn */
@@ -27,7 +27,7 @@ export interface ZhWeekPlan {
   radicals?: boolean;
 }
 
-export const ZH_PHASE_NAMES = ["Nhập môn: pinyin, thanh điệu, chữ Hán", "HSK 1: giao tiếp cơ bản", "HSK 2: kể việc, so sánh, nói chi tiết"] as const;
+export const ZH_PHASE_NAMES = ["Nhập môn: pinyin, thanh điệu, chữ Hán", "HSK 1: giao tiếp cơ bản", "HSK 2: kể việc, so sánh, nói chi tiết", "HSK 3: câu 把 / 被, bổ ngữ, kể chuyện và nêu ý kiến"] as const;
 
 /** Số tuần nhập môn — người đã biết pinyin bỏ qua. */
 export const ZH_INTRO_WEEKS = 2;
@@ -66,4 +66,16 @@ export const ZH_WEEKS: ZhWeekPlan[] = [
   { phase: 3, hsk: 2, title: "Hỏi chi tiết việc đã xảy ra; khoảng cách, phương hướng", milestone: "Hỏi đến khi nào, bằng gì; nói cách bao xa, đi hướng nào", pinyin: [], grammar: ["shi-de", "prepositions-distance-direction"], dialogue: "d10-arrival", reading: "r8-travel", chars: ["离", "往", "跟", "因"], vocab: true },
   { phase: 3, hsk: 2, title: "Vì… nên, tuy… nhưng; kế hoạch theo thời tiết", milestone: "Nối câu bằng cặp liên từ, nói sắp / đã làm, làm bao lâu", pinyin: [], grammar: ["conjunction-pairs", "aspect-time"], dialogue: "d12-weekend", reading: "r9-birthday", chars: ["所", "虽", "但", "让"], vocab: true },
   { phase: 3, hsk: 2, title: "Đi khám, nhờ và khuyên; thi thử HSK 2", milestone: "Nói triệu chứng, nhờ / bảo ai làm gì; hoàn thành bài thi thử HSK 2", pinyin: [], grammar: ["rang-bie-duo"], dialogue: "d11-doctor", chars: ["药", "身", "体", "笑"], vocab: true, mock: "hsk2" },
+  { phase: 4, hsk: 3, title: "Câu 把; chuyển nhà", milestone: "Nói việc xử lý đồ vật: đặt ở đâu, đưa cho ai, làm xong chưa", pinyin: [], grammar: ["ba-sentence"], dialogue: "d15-moving", reading: "r11-new-home", chars: ["把", "搬", "放", "箱"], vocab: true },
+  { phase: 4, hsk: 3, title: "Câu bị động 被; tìm đồ thất lạc", milestone: "Kể chuyện không may đã xảy ra bằng câu 被", pinyin: [], grammar: ["bei-passive"], dialogue: "d16-lost-phone", chars: ["被", "拿", "包", "丢"], vocab: true },
+  { phase: 4, hsk: 3, title: "Bổ ngữ khả năng; lớp học và du học", milestone: "Nói nghe hiểu / nhìn rõ / làm xong được hay không", pinyin: [], grammar: ["potential-complement"], dialogue: "d17-classroom", reading: "r12-study-abroad", chars: ["听", "写", "清", "楚"], vocab: true },
+  { phase: 4, hsk: 3, title: "起来, 下去, 出来; gặp lại bạn cũ", milestone: "Nhớ ra, nhận ra, nói tiếp, đánh giá vẻ ngoài", pinyin: [], grammar: ["direction-extended"], dialogue: "d18-old-friend", chars: ["起", "想", "声", "音"], vocab: true },
+  { phase: 4, hsk: 3, title: "So sánh nâng cao; thời tiết bốn mùa", milestone: "So sánh bằng, hơn nhiều, ngày càng; tả thời tiết các vùng", pinyin: [], grammar: ["comparison-advanced"], dialogue: "d19-seasons", reading: "r13-four-seasons", chars: ["春", "夏", "秋", "冬"], vocab: true },
+  { phase: 4, hsk: 3, title: "Làm bao lâu, mấy lần; sở thích thể thao", milestone: "Nói đã học / làm bao lâu, mấy lần một tuần", pinyin: [], grammar: ["duration-frequency"], dialogue: "d20-tennis", chars: ["网", "球", "练", "习"], vocab: true },
+  { phase: 4, hsk: 3, title: "才 và 就; giờ giấc, đi làm muộn", milestone: "Thể hiện sớm / muộn so với mong đợi, xin lỗi khi đến muộn", pinyin: [], grammar: ["cai-jiu"], dialogue: "d21-late", reading: "r14-early-bird", chars: ["才", "就", "早", "晚"], vocab: true },
+  { phase: 4, hsk: 3, title: "Cặp liên từ điều kiện; chọn nhà thuê", milestone: "Cân nhắc lựa chọn bằng 不但…而且, 只要, 只有, 除了", pinyin: [], grammar: ["conditional-conjunctions"], dialogue: "d22-choose-flat", chars: ["只", "要", "而", "且"], vocab: true },
+  { phase: 4, hsk: 3, title: "Trình tự hành động; cuối tuần của tôi", milestone: "Kể một ngày theo trình tự: trước, sau, vừa… vừa, vừa… là", pinyin: [], grammar: ["sequence-actions"], reading: "r15-weekend", chars: ["先", "然", "后", "边"], vocab: true },
+  { phase: 4, hsk: 3, title: "又, 再, 还 và mức độ; ở nhà hàng", milestone: "Gọi thêm món, khen chê với 极了, 挺…的, 有一点儿", pinyin: [], grammar: ["adverbs-again-degree"], dialogue: "d23-restaurant", chars: ["又", "再", "还", "极"], vocab: true },
+  { phase: 4, hsk: 3, title: "谁都, 什么都; chuyện trong nhà", milestone: "Nói \"ai cũng, gì cũng, chẳng đâu\" bằng đại từ nghi vấn", pinyin: [], grammar: ["question-words-indefinite"], reading: "r16-little-sister", chars: ["谁", "什", "么", "哪"], vocab: true },
+  { phase: 4, hsk: 3, title: "Giới từ 为了, 关于, 对; thi thử HSK 3", milestone: "Nói mục đích, chủ đề, đối tượng; hoàn thành bài thi thử HSK 3", pinyin: [], grammar: ["prepositions-purpose-topic"], chars: ["为", "关", "于", "向"], vocab: true, mock: "hsk3" },
 ];

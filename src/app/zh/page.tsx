@@ -35,7 +35,7 @@ export default function ZhHomePage() {
             <Link href="/zh/roadmap" className="btn bg-white text-rose-700 hover:bg-rose-50">
               <Route className="size-4" /> Bắt đầu lộ trình
             </Link>
-            <span className="text-sm text-white/80">Đã mở: Nhập môn, HSK 1 và HSK 2. HSK 3–4 mở dần theo kế hoạch.</span>
+            <span className="text-sm text-white/80">Đã mở: Nhập môn, HSK 1, HSK 2 và HSK 3. HSK 4 mở dần theo kế hoạch.</span>
           </div>
         </div>
       </section>

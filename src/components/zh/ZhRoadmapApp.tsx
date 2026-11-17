@@ -60,7 +60,7 @@ export function ZhRoadmapApp() {
 
       <NextDay day={next} log={log} />
 
-      <RoadmapPath weeks={weeks} days={days} log={log} nextDayN={next?.n} currentWeek={current} phaseNames={zhSkipsIntro(profile) ? ZH_PHASE_NAMES.slice(1) : ZH_PHASE_NAMES} />
+      <RoadmapPath weeks={weeks} days={days} log={log} nextDayN={next?.n} currentWeek={current} phaseNames={ZH_PHASE_NAMES} />
 
       <section className="card space-y-2 p-5 text-sm">
         <h2 className="font-bold">Làm lại lộ trình</h2>

@@ -76,6 +76,7 @@ export const NAV_ZH: NavEntry[] = [
       { href: "/zh/dictation", label: "Nghe chép", hint: "Gõ pinyin hoặc chữ Hán, chấm từng thanh", icon: Headphones },
       { href: "/zh/mock/hsk1", label: "Thi thử HSK 1", hint: "20 câu nghe – đọc, chấm điểm từng phần", icon: PenLine },
       { href: "/zh/mock/hsk2", label: "Thi thử HSK 2", hint: "20 câu nghe – đọc, ngữ pháp HSK 2", icon: PenLine },
+      { href: "/zh/mock/hsk3", label: "Thi thử HSK 3", hint: "20 câu nghe – đọc, câu 把 / 被, bổ ngữ", icon: PenLine },
     ],
   },
 ];

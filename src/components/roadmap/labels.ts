@@ -31,6 +31,8 @@ export const PHASE_STYLES = [
   { name: "Phá băng, mở miệng nói", text: "text-teal-600 dark:text-teal-300", bg: "bg-teal-500", soft: "bg-teal-50 dark:bg-teal-500/10", ring: "ring-teal-500", fill: "fill-teal-500" },
   { name: "Kể chuyện, xử lý tình huống", text: "text-sky-600 dark:text-sky-300", bg: "bg-sky-500", soft: "bg-sky-50 dark:bg-sky-500/10", ring: "ring-sky-500", fill: "fill-sky-500" },
   { name: "Nêu ý kiến, nói trôi chảy", text: "text-violet-600 dark:text-violet-300", bg: "bg-violet-500", soft: "bg-violet-50 dark:bg-violet-500/10", ring: "ring-violet-500", fill: "fill-violet-500" },
+  // Chặng 4 chỉ khoá tiếng Trung dùng (HSK 3); lộ trình tiếng Anh có 3 chặng.
+  { name: "Kể chuyện, nêu ý kiến", text: "text-emerald-600 dark:text-emerald-300", bg: "bg-emerald-500", soft: "bg-emerald-50 dark:bg-emerald-500/10", ring: "ring-emerald-500", fill: "fill-emerald-500" },
 ] as const;
 
 export const PHASE_GOALS = [
