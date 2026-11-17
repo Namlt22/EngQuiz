@@ -37,7 +37,7 @@ export function PinyinOverview() {
         </p>
       </header>
 
-      <ZhVoiceNotice supported={speech.supported} voiceCount={speech.voiceOptions.length} />
+      <ZhVoiceNotice speech={speech} />
 
       <section className="space-y-3">
         <h2 className="text-lg font-extrabold">Bốn thanh — bấm để nghe</h2>

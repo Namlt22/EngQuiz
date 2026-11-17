@@ -4,6 +4,9 @@
 import { useCallback, useEffect, useRef } from "react";
 import { IPA_SOUNDS, type IpaSound } from "@/content/ipa";
 import { ipaAudioSrc } from "@/content/ipa-audio";
+import { wakeAudio } from "./audio-keepalive";
+import { stopSpeech } from "./speech";
+import { COLD_START_MS } from "./speech-runner";
 
 type Speak = (text: string, rate?: number) => void;
 
@@ -11,6 +14,7 @@ export function useIpaSoundPlayer(speak: Speak, preload: readonly IpaSound[] = I
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // Mỗi âm một <audio> dùng lại: tải và giải mã sẵn, bấm là phát ngay.
   const cacheRef = useRef(new Map<string, HTMLAudioElement>());
+  const seqRef = useRef(0);
 
   useEffect(() => {
     const cache = cacheRef.current;
@@ -31,16 +35,23 @@ export function useIpaSoundPlayer(speak: Speak, preload: readonly IpaSound[] = I
       const src = ipaAudioSrc(sound.id);
       if (!src) return sayExample();
 
-      if (window.speechSynthesis?.speaking) window.speechSynthesis.cancel();
+      stopSpeech();
       const audio = cacheRef.current.get(sound.id) ?? new Audio(src);
-      audio.currentTime = 0;
       audioRef.current = audio;
-      audio.play().catch((err: unknown) => {
-        // AbortError: người dùng bấm âm khác khi file này đang tải — không phải lỗi.
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        console.warn(`Không phát được ${src}, đọc từ ví dụ thay thế.`, err);
-        sayExample();
-      });
+      const my = ++seqRef.current;
+      const start = () => {
+        if (my !== seqRef.current) return; // đã bấm âm khác trong lúc chờ
+        audio.currentTime = 0;
+        audio.play().catch((err: unknown) => {
+          // AbortError: người dùng bấm âm khác khi file này đang tải — không phải lỗi.
+          if (err instanceof DOMException && err.name === "AbortError") return;
+          console.warn(`Không phát được ${src}, đọc từ ví dụ thay thế.`, err);
+          sayExample();
+        });
+      };
+      // Thiết bị âm thanh đang ngủ: đánh thức rồi chờ một nhịp, nếu không âm đầu (chính là âm cần nghe) bị nuốt.
+      if (wakeAudio()) window.setTimeout(start, COLD_START_MS);
+      else start();
     },
     [speak],
   );

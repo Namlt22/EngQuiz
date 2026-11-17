@@ -111,7 +111,7 @@ export function ZhDictationView({ lesson }: { lesson: ZhTextLesson }) {
           {lesson.speakers && line.speaker ? ` · ${lesson.speakers[line.speaker]}` : ""}
         </p>
       </header>
-      <ZhVoiceNotice supported={speech.supported} voiceCount={speech.voiceOptions.length} />
+      <ZhVoiceNotice speech={speech} />
 
       <div role="radiogroup" aria-label="Cách gõ" className="flex gap-2">
         {(["pinyin", "hanzi"] as const).map((m) => (

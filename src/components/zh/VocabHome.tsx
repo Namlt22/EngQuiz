@@ -76,7 +76,7 @@ export function VocabHome() {
         ))}
       </div>
 
-      <ZhVoiceNotice supported={speech.supported} voiceCount={speech.voiceOptions.length} />
+      <ZhVoiceNotice speech={speech} />
 
       {hasVi ? (
         <section className="card grid gap-4 p-5 md:grid-cols-[1fr_auto] md:items-center">

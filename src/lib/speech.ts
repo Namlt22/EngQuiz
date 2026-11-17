@@ -7,6 +7,8 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { respellVietnameseNames, splitVietnameseNames } from "./vi-names";
+import { wakeAudio } from "./audio-keepalive";
+import { createSpeechRunner, type SpeechRunner, type SynthLike, type UtteranceLike } from "./speech-runner";
 
 export interface VoiceOption {
   id: string;
@@ -69,6 +71,25 @@ export function pickVietnameseVoice(all: SpeechSynthesisVoice[]): SpeechSynthesi
  * lang: "en" (mặc định, giọng Anh-Mỹ, đọc được tên riêng Việt Nam trong câu) hoặc "zh" (giọng phổ thông).
  * Mỗi ngôn ngữ nhớ giọng đã chọn ở khoá localStorage riêng.
  */
+/** Một bộ điều phối cho cả trang (giọng máy là tài nguyên chung của trình duyệt) — xem speech-runner.ts. */
+let runner: SpeechRunner | null = null;
+function getRunner(): SpeechRunner {
+  runner ??= createSpeechRunner({ synth: window.speechSynthesis as unknown as SynthLike, setTimeout: (fn, ms) => window.setTimeout(fn, ms), wakeAudio });
+  return runner;
+}
+/** Dừng giọng máy đang đọc / đang chờ đọc (vd trước khi phát file ghi âm). */
+export function stopSpeech() {
+  if (typeof window !== "undefined" && "speechSynthesis" in window) getRunner().stop();
+}
+
+/** Hook nào đang đọc — hook bị gỡ khỏi trang chỉ dừng câu của chính nó. */
+let ownerSeq = 0;
+let currentOwner = 0;
+
+/**
+ * lang: "en" (mặc định, giọng Anh-Mỹ, đọc được tên riêng Việt Nam trong câu) hoặc "zh" (giọng phổ thông).
+ * Mỗi ngôn ngữ nhớ giọng đã chọn ở khoá localStorage riêng.
+ */
 export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; lang?: "en" | "zh" } = {}) {
   storageKey ??= lang === "zh" ? "engquiz:voice-zh" : "engquiz:voice-us";
   const [supported, setSupported] = useState(true);
@@ -76,7 +97,10 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
   const [voiceId, setVoiceId] = useState<string>("");
   const [speaking, setSpeaking] = useState(false);
   const [viVoice, setViVoice] = useState<SpeechSynthesisVoice | undefined>();
-  const utterRef = useRef<SpeechSynthesisUtterance[]>([]);
+  const ownerRef = useRef(0);
+  if (!ownerRef.current) ownerRef.current = ++ownerSeq;
+
+  const pick = useCallback((all: SpeechSynthesisVoice[]) => (lang === "zh" ? pickChineseVoices(all) : pickEnglishVoices(all)), [lang]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
@@ -84,9 +108,10 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
       return;
     }
     const synth = window.speechSynthesis;
+    const owner = ownerRef.current;
     const refresh = () => {
       const all = synth.getVoices();
-      const list = lang === "zh" ? pickChineseVoices(all) : pickEnglishVoices(all);
+      const list = pick(all);
       setVoices(list);
       setViVoice(lang === "zh" ? undefined : pickVietnameseVoice(all));
       setVoiceId((cur) => {
@@ -102,9 +127,10 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
     synth.addEventListener("voiceschanged", refresh);
     return () => {
       synth.removeEventListener("voiceschanged", refresh);
-      synth.cancel();
+      // Chỉ dừng nếu câu đang đọc là của hook này (không cắt ngang nút nghe khác trên trang).
+      if (currentOwner === owner) getRunner().stop();
     };
-  }, [storageKey, lang]);
+  }, [storageKey, lang, pick]);
 
   const chooseVoice = useCallback(
     (id: string) => {
@@ -118,7 +144,7 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
 
   const stop = useCallback(() => {
     if (!supported) return;
-    window.speechSynthesis.cancel();
+    getRunner().stop();
     setSpeaking(false);
   }, [supported]);
 
@@ -126,51 +152,42 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
     /**
      * pitch: đổi cao độ để phân biệt hai nhân vật trong hội thoại.
      * onEnd: gọi khi đọc xong cả câu (KHÔNG gọi khi bị hủy hay lỗi) — dùng để đọc nối câu tiếp theo.
-     * onError: giọng máy lỗi thật (không phát được, mất mạng với giọng online…) — để giao diện thoát trạng thái "đang đọc".
+     * onError: giọng máy lỗi thật (không phát được, mất mạng với giọng online, kẹt quá lâu…) — để giao diện thoát trạng thái "đang đọc".
      *   Bị hủy vì đọc câu khác / bấm dừng ("interrupted", "canceled") không tính là lỗi.
      */
     (text: string, rate = 1, { pitch = 1, onEnd, onError }: { pitch?: number; onEnd?: () => void; onError?: (code: string) => void } = {}) => {
       if (!supported) return;
       const synth = window.speechSynthesis;
-      // Chỉ hủy khi đang có câu đọc dở: gọi cancel() liền trước speak() làm Chrome khởi động lại engine, trễ thêm.
-      if (synth.speaking || synth.pending) synth.cancel();
-      const mainVoice = voices.find((v) => v.voiceURI === voiceId);
-      const make = (part: string, voice: SpeechSynthesisVoice | undefined, lang: string) => {
+      // Danh sách giọng nạp không đồng bộ: bấm nghe ngay khi vừa mở trang thì lấy giọng trực tiếp,
+      // không để trình duyệt tự chọn giọng mặc định (thường là giọng online, chậm hơn).
+      const list = voices.length ? voices : pick(synth.getVoices());
+      const mainVoice = list.find((v) => v.voiceURI === voiceId) ?? list[0];
+      const vi = lang === "zh" ? undefined : (viVoice ?? pickVietnameseVoice(synth.getVoices()));
+      const make = (part: string, voice: SpeechSynthesisVoice | undefined, fallbackLang: string) => {
         const u = new SpeechSynthesisUtterance(part);
         if (voice) u.voice = voice;
-        u.lang = voice?.lang ?? lang;
+        u.lang = voice?.lang ?? fallbackLang;
         u.rate = rate;
         u.pitch = pitch;
         return u;
       };
       // Tên riêng Việt Nam (Huế, Đà Nẵng, Linh…): đọc bằng giọng Việt nếu máy có, không thì đọc theo phiên âm.
-      const segments = lang === "zh" ? [] : splitVietnameseNames(text);
-      const parts =
-        lang === "zh"
-          ? [make(text, mainVoice, SPEECH_LANG_ZH)]
-          : viVoice && segments.some((p) => p.lang === "vi")
-            ? segments.map((p) => (p.lang === "vi" ? make(p.text, viVoice, "vi-VN") : make(p.text, mainVoice, SPEECH_LANG)))
-            : [make(respellVietnameseNames(text), mainVoice, SPEECH_LANG)];
-      const lastPart = parts[parts.length - 1];
-      let failed = false;
-      parts[0].onstart = () => setSpeaking(true);
-      lastPart.onend = () => {
-        setSpeaking(false);
-        if (!failed) onEnd?.();
+      const makeParts = () => {
+        if (lang === "zh") return [make(text, mainVoice, SPEECH_LANG_ZH)];
+        const segments = splitVietnameseNames(text);
+        return vi && segments.some((p) => p.lang === "vi")
+          ? segments.map((p) => (p.lang === "vi" ? make(p.text, vi, "vi-VN") : make(p.text, mainVoice, SPEECH_LANG)))
+          : [make(respellVietnameseNames(text), mainVoice, SPEECH_LANG)];
       };
-      parts.forEach(
-        (u) =>
-          (u.onerror = (e) => {
-            setSpeaking(false);
-            if (failed || e.error === "interrupted" || e.error === "canceled") return;
-            failed = true;
-            onError?.(e.error);
-          }),
-      );
-      utterRef.current = parts; // giữ tham chiếu để Chrome không thu hồi sớm
-      parts.forEach((u) => synth.speak(u));
+      currentOwner = ownerRef.current;
+      getRunner().speak(makeParts as () => UtteranceLike[], {
+        onStart: () => setSpeaking(true),
+        onSettle: () => setSpeaking(false),
+        onEnd,
+        onError,
+      });
     },
-    [supported, voices, voiceId, viVoice, lang],
+    [supported, voices, voiceId, viVoice, lang, pick],
   );
 
   const voiceOptions: VoiceOption[] = voices.map((v) => ({
@@ -178,5 +195,8 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
     label: `${v.name.replace(/^(Microsoft|Google)\s*/i, "")} (${v.lang})${v.localService ? "" : " · online, chậm hơn"}`,
   }));
 
-  return { supported, speaking, speak, stop, voiceOptions, voiceId, chooseVoice };
+  /** Giọng đang dùng là giọng online (mỗi câu phải tải từ server → có độ trễ). */
+  const voiceIsOnline = !!voices.find((v) => v.voiceURI === voiceId) && !voices.find((v) => v.voiceURI === voiceId)!.localService;
+
+  return { supported, speaking, speak, stop, voiceOptions, voiceId, chooseVoice, voiceIsOnline };
 }

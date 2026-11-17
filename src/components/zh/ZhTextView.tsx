@@ -67,7 +67,7 @@ export function ZhTextView({ lesson }: { lesson: ZhTextLesson }) {
         <p className="text-muted">{lesson.scene}</p>
       </header>
 
-      <ZhVoiceNotice supported={speech.supported} voiceCount={speech.voiceOptions.length} />
+      <ZhVoiceNotice speech={speech} />
 
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={toggleAll} className="btn-primary">

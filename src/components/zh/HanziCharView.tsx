@@ -59,7 +59,7 @@ export function HanziCharView({ info }: { info: HanziChar }) {
             </div>
           </header>
 
-          <ZhVoiceNotice supported={speech.supported} voiceCount={speech.voiceOptions.length} />
+          <ZhVoiceNotice speech={speech} />
 
           <div>
             <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">Từ HSK có chữ này</h2>

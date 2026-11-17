@@ -51,7 +51,7 @@ export function ZhGrammarView({ lesson }: { lesson: ZhGrammarLesson }) {
       </header>
 
       <div className="flex items-center justify-between gap-2">
-        <ZhVoiceNotice supported={speech.supported} voiceCount={speech.voiceOptions.length} />
+        <ZhVoiceNotice speech={speech} />
         <label className="ml-auto flex shrink-0 items-center gap-2 text-sm font-semibold">
           <input type="checkbox" checked={pinyin} onChange={(e) => setPinyin(e.target.checked)} className="size-4 accent-[var(--primary)]" />
           Hiện pinyin

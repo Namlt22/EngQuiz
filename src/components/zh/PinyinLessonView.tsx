@@ -49,7 +49,7 @@ export function PinyinLessonView({ lesson }: { lesson: PinyinLesson }) {
         <h1 className="mt-1 text-2xl font-extrabold">{lesson.title}</h1>
         <p className="text-muted">{lesson.goal}</p>
       </header>
-      <ZhVoiceNotice supported={speech.supported} voiceCount={speech.voiceOptions.length} />
+      <ZhVoiceNotice speech={speech} />
       <Stepper step={step} />
       {step === 1 && <ObserveStep lesson={lesson} say={say} onNext={() => setStep(2)} />}
       {step === 2 && <RepeatStep lesson={lesson} say={say} onNext={() => setStep(3)} />}
