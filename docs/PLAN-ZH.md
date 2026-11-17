@@ -362,4 +362,9 @@ Nội dung nằm trong `src/content/zh/…`, viết bằng TypeScript như hiệ
   - Các bài: câu chữ 是; câu hỏi 吗 / chính phản / 呢; đại từ và 的; câu tính từ; đại từ nghi vấn; số và lượng từ; thời gian; câu chữ 有 và phương vị; 在; động từ năng nguyện; phó từ 都 / 也 / 还 / 再 / 只 và 不 / 没有; 了 / 正在…呢 / 吧 / câu cầu khiến.
   - Câu tiếng Trung soạn ở dạng tách từ: pinyin lấy tự động từ danh mục HSK, và test chặn mọi từ vượt cấp (`src/core/zh-sentence.ts`).
   - Bài tập có trắc nghiệm và sắp xếp câu; đạt từ 80% thì tự ghi nhận bài.
-- **Còn lại của HSK 1:** nghe chép, bài đọc, hội thoại, lộ trình tuần 3–10, bài thi thử.
+- **Đã xong: hội thoại, bài đọc, nghe chép HSK 1.**
+  - 8 hội thoại theo tình huống (`/zh/dialogues`): chào hỏi, gia đình, mua sắm, nhà hàng, hẹn giờ, hỏi đường, đi khám, gọi điện.
+  - 6 bài đọc (`/zh/reading`).
+  - Chạm vào từ để xem pinyin, âm Hán-Việt và nghĩa; mỗi vai một giọng; có câu hỏi đọc hiểu.
+  - Mỗi bài cũng là một bài nghe chép (`/zh/dictation`): gõ pinyin (số hoặc dấu thanh, chấm từng âm và thanh) hoặc gõ chữ Hán (chấm từng chữ); dóng hàng bằng LCS.
+- **Còn lại của HSK 1:** lộ trình tuần 3–10 và bài thi thử HSK 1.

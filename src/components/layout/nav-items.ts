@@ -63,6 +63,16 @@ export const NAV_ZH: NavEntry[] = [
       { href: "/zh/hanzi", label: "Hán tự", hint: "Nét, bộ thủ, tập viết có hoạt hình", icon: PenLine },
       { href: "/zh/vocab", label: "Từ vựng HSK", hint: "Thẻ ôn lặp lại ngắt quãng", icon: Layers },
       { href: "/zh/grammar", label: "Ngữ pháp", hint: "Theo danh mục chuẩn HSK 3.0", icon: BookOpenText },
+      { href: "/zh/reading", label: "Bài đọc", hint: "Bài đọc ngắn, chạm từ xem nghĩa", icon: BookOpen },
+    ],
+  },
+  {
+    kind: "group",
+    label: "Luyện tập",
+    icon: Dumbbell,
+    items: [
+      { href: "/zh/dialogues", label: "Hội thoại", hint: "Tình huống giao tiếp, mỗi vai một giọng", icon: MessagesSquare },
+      { href: "/zh/dictation", label: "Nghe chép", hint: "Gõ pinyin hoặc chữ Hán, chấm từng thanh", icon: Headphones },
     ],
   },
 ];

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { joinSyllables, outOfLevel, plainText, sameOrder, sentencePinyin, tokenize } from "./zh-sentence";
+import { charSyllables, joinSyllables, outOfLevel, plainText, sameOrder, sentencePinyin, tokenize } from "./zh-sentence";
 
 describe("câu tách từ", () => {
   it("lấy pinyin từ danh mục, viết liền trong từ", () => {
@@ -10,7 +10,8 @@ describe("câu tách từ", () => {
   it("tên riêng ghi kèm pinyin; số ghép theo chữ số", () => {
     const [name, , num] = tokenize("王|Wáng 老师 二十五 岁");
     expect(name).toMatchObject({ text: "王", pinyin: "Wáng", kind: "name" });
-    expect(num).toMatchObject({ text: "二十五", pinyin: "èrshíwǔ", kind: "number" });
+    expect(num).toMatchObject({ text: "二十五", pinyin: "èrshíwǔ", kind: "number", syllables: ["èr", "shí", "wǔ"] });
+    expect(tokenize("越南|Yuè-nán")[0]).toMatchObject({ pinyin: "Yuènán", syllables: ["Yuè", "nán"] });
   });
 
   it("dấu ' trước âm tiết bắt đầu bằng nguyên âm", () => {
@@ -27,5 +28,16 @@ describe("câu tách từ", () => {
   it("so thứ tự câu sắp xếp, bỏ qua dấu câu", () => {
     expect(sameOrder(["我", "是", "学生"], "我 是 学生 。")).toBe(true);
     expect(sameOrder(["是", "我", "学生"], "我 是 学生 。")).toBe(false);
+  });
+});
+
+describe("âm tiết theo từng chữ", () => {
+  it("bỏ dấu câu, giữ thanh nhẹ", () => {
+    expect(charSyllables("我 是 学生 。")).toEqual([
+      { char: "我", syllable: "wǒ" },
+      { char: "是", syllable: "shì" },
+      { char: "学", syllable: "xué" },
+      { char: "生", syllable: "sheng" },
+    ]);
   });
 });

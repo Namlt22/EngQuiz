@@ -3,7 +3,7 @@
  *
  * Câu được soạn ở dạng TÁCH TỪ, các từ cách nhau bằng dấu cách: "我 是 学生 。".
  *  - Từ thường phải có trong danh mục HSK → pinyin lấy từ danh mục (không gõ tay, tránh sai).
- *  - Tên riêng / từ ngoài danh mục ghi kèm pinyin: "王|Wáng", "越南|Yuènán".
+ *  - Tên riêng / từ ngoài danh mục ghi kèm pinyin, các âm tiết nối bằng "-": "王|Wáng", "越南|Yuè-nán".
  *  - Số viết bằng chữ Hán (二十五) được ghép pinyin theo từng chữ số.
  *  - Dấu câu toàn khổ là một token riêng.
  * Nhờ vậy test kiểm tra được mọi câu chỉ dùng từ trong phạm vi cấp đang học.
@@ -15,6 +15,8 @@ export interface ZhToken {
   /** Pinyin viết liền trong một từ (xuéshēng); rỗng với dấu câu */
   pinyin: string;
   kind: "word" | "name" | "number" | "punct";
+  /** Âm tiết gốc (có dấu thanh, chưa biến điệu) của từng chữ — dùng chấm nghe chép */
+  syllables: string[];
   /** Cấp HSK của từ (chỉ với kind = word) */
   level?: number;
 }
@@ -35,13 +37,19 @@ export function joinSyllables(pinyin: string): string {
 
 export function parseToken(raw: string): ZhToken {
   const [text, override] = raw.split("|");
-  if (override !== undefined) return { text, pinyin: override, kind: "name" };
-  if (PUNCT.test(text)) return { text, pinyin: "", kind: "punct" };
+  if (override !== undefined) {
+    const syl = override.split("-");
+    return { text, pinyin: joinSyllables(syl.join(" ")), kind: "name", syllables: syl };
+  }
+  if (PUNCT.test(text)) return { text, pinyin: "", kind: "punct", syllables: [] };
   const w = getHskWord(text);
-  if (w) return { text, pinyin: joinSyllables(w.pinyin), kind: "word", level: w.level };
-  if (NUMBER.test(text)) return { text, pinyin: [...text].map((c) => NUMBER_PINYIN[c]).join(""), kind: "number" };
+  if (w) return { text, pinyin: joinSyllables(w.pinyin), kind: "word", level: w.level, syllables: w.pinyin.split(" ") };
+  if (NUMBER.test(text)) {
+    const syl = [...text].map((c) => NUMBER_PINYIN[c]);
+    return { text, pinyin: syl.join(""), kind: "number", syllables: syl };
+  }
   // Không nhận ra: vẫn hiển thị, test nội dung sẽ báo lỗi.
-  return { text, pinyin: "?", kind: "word" };
+  return { text, pinyin: "?", kind: "word", syllables: [] };
 }
 
 export const tokenize = (sentence: string): ZhToken[] => sentence.trim().split(/\s+/).filter(Boolean).map(parseToken);
@@ -70,4 +78,9 @@ export function outOfLevel(sentence: string, maxLevel: number): string[] {
 export function sameOrder(answer: readonly string[], expected: string): boolean {
   const norm = (arr: readonly string[]) => arr.filter((t) => !PUNCT.test(t)).join(" ");
   return norm(answer) === norm(expected.trim().split(/\s+/).map((t) => t.split("|")[0]));
+}
+
+/** Chữ và âm tiết gốc của cả câu (bỏ dấu câu), theo từng chữ. */
+export function charSyllables(sentence: string): { char: string; syllable: string }[] {
+  return tokenize(sentence).flatMap((t) => [...t.text].filter(() => t.kind !== "punct").map((char, i) => ({ char, syllable: t.syllables[i] ?? "" })));
 }
