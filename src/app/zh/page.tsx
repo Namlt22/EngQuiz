@@ -6,11 +6,11 @@ import { HSK_INFO, HSK_LEVELS, ZH_INTRO_STAGE } from "@/content/zh/hsk-levels";
 const MODULES: { icon: typeof AudioLines; title: string; hint: string; href?: string }[] = [
   { icon: AudioLines, title: "Pinyin & thanh điệu", hint: "Thanh mẫu, vận mẫu, 4 thanh, biến điệu 3-3, 不, 一", href: "/zh/pinyin" },
   { icon: Brush, title: "Hán tự", hint: "Nét, quy tắc thứ tự nét, bộ thủ; tập viết 1 096 chữ HSK 1–4 có hoạt hình nét", href: "/zh/hanzi" },
-  { icon: Layers, title: "Từ vựng HSK", hint: "Thẻ ghi nhớ ôn lặp lại ngắt quãng; HSK 1 có nghĩa tiếng Việt và âm Hán-Việt", href: "/zh/vocab" },
-  { icon: BookOpen, title: "Ngữ pháp", hint: "Theo danh mục điểm ngữ pháp của chuẩn HSK 3.0; HSK 1 có 12 bài kèm bài tập", href: "/zh/grammar" },
+  { icon: Layers, title: "Từ vựng HSK", hint: "Thẻ ghi nhớ ôn lặp lại ngắt quãng; HSK 1–2 có nghĩa tiếng Việt và âm Hán-Việt", href: "/zh/vocab" },
+  { icon: BookOpen, title: "Ngữ pháp", hint: "Theo danh mục điểm ngữ pháp của chuẩn HSK 3.0; HSK 1–2 có 23 bài kèm bài tập", href: "/zh/grammar" },
   { icon: PenLine, title: "Quiz & thi thử", hint: "Sắp xếp câu, chọn thanh, chọn chữ, mô phỏng cấu trúc đề" },
   { icon: Headphones, title: "Nghe chép", hint: "Gõ pinyin (HSK 1–2) hoặc chữ Hán, chấm theo từng chữ", href: "/zh/dictation" },
-  { icon: MessagesSquare, title: "Đọc & hội thoại", hint: "Bật/tắt pinyin, chạm từ để xem nghĩa; HSK 1 có 6 bài đọc, 8 hội thoại", href: "/zh/dialogues" },
+  { icon: MessagesSquare, title: "Đọc & hội thoại", hint: "Bật/tắt pinyin, chạm từ để xem nghĩa; HSK 1–2 có 10 bài đọc, 14 hội thoại", href: "/zh/dialogues" },
   { icon: Mic, title: "Luyện nói", hint: "Đọc theo mẫu, nhận dạng giọng nói tiếng phổ thông" },
 ];
 
@@ -35,7 +35,7 @@ export default function ZhHomePage() {
             <Link href="/zh/roadmap" className="btn bg-white text-rose-700 hover:bg-rose-50">
               <Route className="size-4" /> Bắt đầu lộ trình
             </Link>
-            <span className="text-sm text-white/80">Đã mở: Nhập môn và HSK 1. HSK 2–4 mở dần theo kế hoạch.</span>
+            <span className="text-sm text-white/80">Đã mở: Nhập môn, HSK 1 và HSK 2. HSK 3–4 mở dần theo kế hoạch.</span>
           </div>
         </div>
       </section>

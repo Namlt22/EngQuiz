@@ -41,7 +41,7 @@ const dialogueTask = (id: string) => task("dialogue", id, `Hội thoại: ${ZH_T
 const readingTask = (id: string) => task("reading", id, `Bài đọc: ${ZH_TEXT_MAP[id]?.title ?? id}`, "Đọc bài, trả lời câu hỏi đạt từ 80%", `/zh/reading/${id}`, 12);
 const dictationTask = (id: string, review = false) =>
   task("dictation", `zh-${id}`, `${review ? "Nghe chép lại" : "Nghe chép"}: ${ZH_TEXT_MAP[id]?.title ?? id}`, "Chép cả bài, điểm trung bình từ 80%", `/zh/dictation/${id}`, 12, review);
-const vocabTask = () => task("quizset", "zh-vocab", "Ôn thẻ từ vựng HSK 1", "Ôn hết một lượt thẻ của hôm nay", "/zh/vocab?level=1", 10);
+const vocabTask = (hsk: number) => task("quizset", "zh-vocab", `Ôn thẻ từ vựng HSK ${hsk}`, "Ôn hết một lượt thẻ của hôm nay", `/zh/vocab?level=${hsk}`, 10);
 const charTask = (ch: string) => task("quiz", `hanzi-${ch}`, `Tập viết chữ ${ch}`, "Tự viết đúng thứ tự nét (sai không quá 3 lần)", `/zh/hanzi/${ch.codePointAt(0)!.toString(16)}`, 5);
 const radicalsTask = () => task("quiz", "hanzi-radicals", "Chữ Hán: nét, thứ tự nét, bộ thủ", "Đọc bài, qua bài kiểm tra bộ thủ (từ 75%)", "/zh/hanzi", 15);
 const mockTask = (id: string) => task("quizset", `mock-${id}`, `Thi thử ${id.toUpperCase()}`, "Làm hết bài thi, đạt từ 60%", `/zh/mock/${id}`, 25);
@@ -67,7 +67,7 @@ function studyDays(w: ZhWeekPlan): Draft[][] {
   else days[4].push(grammarTask(g1, true));
   if (!g2 && w.dialogue) days[2].push(grammarTask(g1, true));
   w.chars.forEach((ch, i) => days[i]?.push(charTask(ch)));
-  days.forEach((d) => w.vocab && d.push(vocabTask()));
+  days.forEach((d) => w.vocab && d.push(vocabTask(w.hsk ?? 1)));
   // Ngày 6: ôn tập — nghe chép bài đọc (hoặc chép lại hội thoại).
   if (w.reading) days[5].push(dictationTask(w.reading));
   else if (w.dialogue) days[5].push(dictationTask(w.dialogue, true));

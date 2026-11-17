@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { outOfLevel } from "@/core/zh-sentence";
-import { ZH_MOCKS } from "./mock/hsk1";
+import { ZH_MOCKS } from "./mock";
 
 const HAN = /\p{Script=Han}/u;
 

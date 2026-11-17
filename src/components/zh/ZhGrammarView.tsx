@@ -31,7 +31,7 @@ export function ZhGrammarView({ lesson }: { lesson: ZhGrammarLesson }) {
       <header className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="chip bg-surface-2">
-            HSK {lesson.level} · Bài {idx + 1}
+            HSK {lesson.level} · Bài {ZH_GRAMMAR.filter((l) => l.level === lesson.level).findIndex((l) => l.id === lesson.id) + 1}
           </span>
           {done && (
             <span className="chip bg-success/10 text-success">

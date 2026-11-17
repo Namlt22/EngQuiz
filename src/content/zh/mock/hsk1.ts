@@ -21,7 +21,7 @@ export interface MockItem {
 export interface MockTest {
   id: string;
   title: string;
-  level: 1;
+  level: 1 | 2 | 3 | 4;
   passPercent: number;
   /** Số lần được nghe lại mỗi câu ở phần nghe */
   maxPlays: number;
@@ -59,4 +59,3 @@ export const HSK1_MOCK: MockTest = {
   ],
 };
 
-export const ZH_MOCKS: Record<string, MockTest> = { hsk1: HSK1_MOCK };

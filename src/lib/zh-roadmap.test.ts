@@ -32,15 +32,16 @@ describe("lộ trình tiếng Trung", () => {
   it("phủ ĐỦ nội dung đã có: mọi bài pinyin, ngữ pháp HSK 1, hội thoại, bài đọc", () => {
     const keys = new Set(buildZhRoadmap(full).days.flatMap((d) => d.tasks.map((t) => t.key)));
     for (const l of PINYIN_LESSONS) expect(keys, l.id).toContain(`sound:pinyin-${l.id}`);
-    for (const g of ZH_GRAMMAR.filter((x) => x.level === 1)) expect(keys, g.id).toContain(`theory:grammar-${g.id}`);
-    for (const t of ZH_TEXTS.filter((x) => x.level === 1)) expect(keys, t.id).toContain(`${t.kind}:${t.id}`);
+    for (const g of ZH_GRAMMAR) expect(keys, g.id).toContain(`theory:grammar-${g.id}`);
+    for (const t of ZH_TEXTS) expect(keys, t.id).toContain(`${t.kind}:${t.id}`);
     expect(keys).toContain("quizset:mock-hsk1");
+    expect(keys).toContain("quizset:mock-hsk2");
   });
 
-  it("chữ tập viết thuộc HSK 1 (hoặc chữ số cơ bản) và không lặp", () => {
+  it("chữ tập viết không lặp và không vượt cấp HSK của tuần", () => {
     const chars = ZH_WEEKS.flatMap((w) => w.chars);
     expect(new Set(chars).size).toBe(chars.length);
-    for (const ch of chars) expect(getHanziChar(ch)?.level, ch).toBe(1);
+    for (const w of ZH_WEEKS) for (const ch of w.chars) expect(getHanziChar(ch)?.level ?? 99, ch).toBeLessThanOrEqual(w.hsk ?? 1);
   });
 
   it("làm xong một hoạt động thì tích đúng bài sớm nhất cùng khoá", () => {

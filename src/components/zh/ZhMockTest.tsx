@@ -6,7 +6,7 @@
  */
 import { useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2, Headphones, RotateCcw, Volume2, XCircle } from "lucide-react";
-import type { MockItem, MockTest } from "@/content/zh/mock/hsk1";
+import type { MockItem, MockTest } from "@/content/zh/mock";
 import { plainText } from "@/core/zh-sentence";
 import { progressActions } from "@/lib/progress";
 import { seededShuffle } from "@/lib/seeded-shuffle";
@@ -40,7 +40,7 @@ export function ZhMockTest({ test }: { test: MockTest }) {
         <p className="text-muted">
           {test.items.length} câu: {listening} câu nghe, {test.items.length - listening} câu đọc. Mỗi câu nghe được nghe tối đa {test.maxPlays} lần. Không báo đúng/sai từng câu — xem kết quả ở cuối bài. Đạt từ {test.passPercent}% là qua.
         </p>
-        <p className="rounded-xl bg-surface-2 p-3 text-sm text-muted">Bài mô phỏng cấu trúc nghe – đọc do EngQuiz soạn bằng từ vựng HSK 1, không phải đề thi chính thức.</p>
+        <p className="rounded-xl bg-surface-2 p-3 text-sm text-muted">Bài mô phỏng cấu trúc nghe – đọc do EngQuiz soạn bằng từ vựng HSK {test.level}, không phải đề thi chính thức.</p>
         <ZhVoiceNotice speech={speech} />
         <button
           type="button"

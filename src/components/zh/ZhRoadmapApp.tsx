@@ -6,7 +6,10 @@
  */
 import { useState } from "react";
 import { CalendarDays, PartyPopper, RotateCcw } from "lucide-react";
-import { ZH_PHASE_NAMES, ZH_INTRO_WEEKS } from "@/content/zh/roadmap-zh";
+import { ZH_PHASE_NAMES, ZH_INTRO_WEEKS, ZH_WEEKS } from "@/content/zh/roadmap-zh";
+
+const HSK_WEEKS = ZH_WEEKS.length - ZH_INTRO_WEEKS;
+const TOP_HSK = Math.max(...ZH_WEEKS.map((w) => w.hsk ?? 0));
 import { currentWeekNumber, type RoadmapLog } from "@/lib/roadmap";
 import { dayDone, dayTasksDone, nextOpenDay, weekDone, type RoadmapDay } from "@/lib/roadmap-days";
 import { roadmapActions, useHydrated, useRoadmapState } from "@/lib/roadmap-store";
@@ -38,7 +41,7 @@ export function ZhRoadmapApp() {
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <span className="chip bg-surface-2">Lộ trình tiếng Trung · {weeks.length} tuần</span>
-            <h1 className="mt-1 text-2xl font-extrabold">{zhSkipsIntro(profile) ? "HSK 1 (đã biết pinyin)" : "Từ con số 0 đến HSK 1"}</h1>
+            <h1 className="mt-1 text-2xl font-extrabold">{zhSkipsIntro(profile) ? `HSK 1 → HSK ${TOP_HSK} (đã biết pinyin)` : `Từ con số 0 đến HSK ${TOP_HSK}`}</h1>
             <p className="flex items-center gap-1.5 text-sm text-muted">
               <CalendarDays className="size-4" /> {current === 0 ? `Bắt đầu ${profile.startDate.split("-").reverse().join("/")}` : `Đang ở tuần ${current}/${weeks.length}`}
             </p>
@@ -86,8 +89,8 @@ function NextDay({ day, log }: { day?: RoadmapDay; log: RoadmapLog }) {
     return (
       <section className="card space-y-2 p-6 text-center">
         <PartyPopper className="mx-auto size-10 text-primary" />
-        <h2 className="text-xl font-extrabold">Bạn đã hoàn thành lộ trình HSK 1!</h2>
-        <p className="text-muted">Ôn thẻ từ vựng hằng ngày để giữ từ đã học. Lộ trình HSK 2 sẽ mở ở phần tiếp theo.</p>
+        <h2 className="text-xl font-extrabold">Bạn đã hoàn thành lộ trình đến HSK {TOP_HSK}!</h2>
+        <p className="text-muted">Ôn thẻ từ vựng hằng ngày để giữ từ đã học. Các cấp tiếp theo sẽ được thêm vào lộ trình.</p>
       </section>
     );
   }
@@ -122,13 +125,13 @@ function ZhRoadmapSetup() {
         <button type="button" onClick={() => start(false)} className="card space-y-2 p-6 text-left transition hover:shadow-lg">
           <div className="text-xl font-extrabold">Mới bắt đầu</div>
           <p className="text-sm text-muted">
-            {ZH_INTRO_WEEKS} tuần Nhập môn (pinyin, thanh điệu, nét chữ, bộ thủ) rồi 8 tuần HSK 1 — tổng 10 tuần.
+            {ZH_INTRO_WEEKS} tuần Nhập môn (pinyin, thanh điệu, nét chữ, bộ thủ) rồi {HSK_WEEKS} tuần HSK 1 → HSK {TOP_HSK} — tổng {ZH_WEEKS.length} tuần.
           </p>
           <span className="chip bg-primary-soft text-primary">Khuyên dùng nếu chưa học pinyin</span>
         </button>
         <button type="button" onClick={() => start(true)} className="card space-y-2 p-6 text-left transition hover:shadow-lg">
           <div className="text-xl font-extrabold">Đã biết pinyin</div>
-          <p className="text-sm text-muted">Vào thẳng 8 tuần HSK 1: từ vựng, ngữ pháp, hội thoại, bài đọc, nghe chép và thi thử.</p>
+          <p className="text-sm text-muted">Vào thẳng {HSK_WEEKS} tuần HSK 1 → HSK {TOP_HSK}: từ vựng, ngữ pháp, hội thoại, bài đọc, nghe chép và thi thử từng cấp.</p>
         </button>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ZH_MOCKS } from "@/content/zh/mock/hsk1";
+import { ZH_MOCKS } from "@/content/zh/mock";
 import { ZhMockTest } from "@/components/zh/ZhMockTest";
 import { GuestGate } from "@/components/auth/GuestGate";
 
