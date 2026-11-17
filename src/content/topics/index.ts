@@ -6,6 +6,8 @@ import { A2_TENSE_TOPICS } from "./a2-tenses";
 import { B1_CLAUSE_TOPICS } from "./b1-clauses";
 import { B1_STRUCTURE_TOPICS } from "./b1-structures";
 import { B1_TENSE_TOPICS } from "./b1-tenses";
+import { B2_CLAUSE_STRUCTURE_TOPICS } from "./b2-clauses-structures";
+import { B2_TENSE_CONDITIONAL_TOPICS } from "./b2-tenses-conditionals";
 import { conditionalType1 } from "./conditional-type-1";
 import { conditionalType2 } from "./conditional-type-2";
 import { conditionalType3 } from "./conditional-type-3";
@@ -35,6 +37,8 @@ const ALL: TopicContent[] = [
   ...B1_TENSE_TOPICS,
   ...B1_CLAUSE_TOPICS,
   ...B1_STRUCTURE_TOPICS,
+  ...B2_TENSE_CONDITIONAL_TOPICS,
+  ...B2_CLAUSE_STRUCTURE_TOPICS,
 ];
 
 export const TOPIC_CONTENT: Record<string, TopicContent> = Object.fromEntries(ALL.map((t) => [t.slug, t]));

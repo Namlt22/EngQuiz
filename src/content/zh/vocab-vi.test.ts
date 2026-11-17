@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { VI_LEVELS, vocabVi } from "./vocab-vi";
-import { HSK1_VI } from "./vocab-vi/hsk1";
+import { VI_BY_LEVEL, VI_LEVELS, vocabVi } from "./vocab-vi";
 import { wordsIntroducedAt } from "./vocab";
 
 describe("nghĩa tiếng Việt của từ vựng HSK", () => {
   it("mỗi cấp đã làm có nghĩa cho ĐỦ và ĐÚNG danh sách từ của cấp đó", () => {
     for (const lv of VI_LEVELS) {
       const words = wordsIntroducedAt(lv).map((w) => w.hanzi).sort();
-      const data = lv === 1 ? Object.keys(HSK1_VI).sort() : [];
+      const data = Object.keys(VI_BY_LEVEL[lv] ?? {}).sort();
       expect(data).toEqual(words);
     }
   });
