@@ -90,7 +90,7 @@ function NextDay({ day, log }: { day?: RoadmapDay; log: RoadmapLog }) {
       <section className="card space-y-2 p-6 text-center">
         <PartyPopper className="mx-auto size-10 text-primary" />
         <h2 className="text-xl font-extrabold">Bạn đã hoàn thành lộ trình đến HSK {TOP_HSK}!</h2>
-        <p className="text-muted">Ôn thẻ từ vựng hằng ngày để giữ từ đã học. Các cấp tiếp theo sẽ được thêm vào lộ trình.</p>
+        <p className="text-muted">Ôn thẻ từ vựng hằng ngày để giữ từ đã học, và làm lại các bài thi thử để chuẩn bị cho kỳ thi thật.</p>
       </section>
     );
   }
