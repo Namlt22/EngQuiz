@@ -11,6 +11,7 @@ import { resourceKey, type TaskKind } from "./roadmap-days";
 import { roadmapActions } from "./roadmap-store";
 import { cleanHanzi, sanitizeProgress } from "./learner-sanitize";
 import { dayNumber, decodeSrs, encodeSrs, isMastered, review, type Grade } from "@/core/srs";
+import { addEntry, removeEntry, reviewEntry, updateEntry, type NewEntry, type NotebookEntry } from "@/core/notebook";
 import { readJson, writeJson } from "./local-json";
 import { COURSE_CODES, courseStorageKey, currentCourse, type CourseCode } from "./course";
 import { useCourse } from "./course-client";
@@ -211,6 +212,36 @@ export const progressActions = {
       const xp = (grade === "again" ? 0 : 1) + (!isMastered(before) && isMastered(after) ? 3 : 0);
       const next = { ...s, srs: encodeSrs(map) };
       return xp ? withXp(next, xp) : next;
+    });
+  },
+
+  /**
+   * Sổ tay từ vựng (khoá hiện tại). Trả về true nếu thêm được; false nếu từ đã có, thiếu dữ liệu hoặc sổ đầy.
+   * Thêm từ không cộng XP (tránh "cày" XP bằng cách thêm từ) — XP chỉ đến từ việc ôn.
+   */
+  addToNotebook(input: NewEntry): boolean {
+    let added = false;
+    update((s) => {
+      const res = addEntry(s.notebook ?? [], input, Date.now(), dayNumber());
+      added = res.added;
+      return added ? { ...s, notebook: [...res.list] } : s;
+    });
+    return added;
+  },
+
+  editNotebookEntry(id: string, patch: Partial<Pick<NotebookEntry, "term" | "meaning" | "example">>) {
+    update((s) => ({ ...s, notebook: updateEntry(s.notebook ?? [], id, patch, Date.now()) }));
+  },
+
+  removeNotebookEntry(id: string) {
+    update((s) => ({ ...s, notebook: removeEntry(s.notebook ?? [], id, Date.now()) }));
+  },
+
+  /** Chấm một thẻ sổ tay: +1 XP khi nhớ. */
+  reviewNotebookEntry(id: string, grade: Grade) {
+    update((s) => {
+      const next = { ...s, notebook: reviewEntry(s.notebook ?? [], id, grade, dayNumber(), Date.now()) };
+      return grade === "again" ? next : withXp(next, 1);
     });
   },
 

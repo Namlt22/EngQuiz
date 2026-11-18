@@ -14,6 +14,7 @@ import {
   type RoadmapLevel,
   type RoadmapWeeks,
 } from "./roadmap";
+import { NOTEBOOK_LIMITS } from "@/core/notebook";
 import { SRS_MAX_CHARS, isValidSrs } from "@/core/srs";
 
 /** Giới hạn để một request không thể làm phình database. */
@@ -63,6 +64,18 @@ export const topicProgressSchema = z.strictObject({
 /** Điểm cao nhất của một bộ câu (nghe chép, đọc theo câu mẫu). */
 const setScoreSchema = z.strictObject({ best: percent, done: count, total: count });
 
+const notebookEntrySchema = z.strictObject({
+  id: z.string().regex(/^[a-z0-9]{6,32}$/),
+  term: z.string().min(1).max(NOTEBOOK_LIMITS.term),
+  meaning: z.string().min(1).max(NOTEBOOK_LIMITS.meaning),
+  example: z.string().max(NOTEBOOK_LIMITS.example).optional(),
+  source: z.string().max(NOTEBOOK_LIMITS.source).optional(),
+  box: z.number().int().min(0).max(5),
+  due: z.number().int().min(0).max(999_999),
+  updated: z.number().int().min(0),
+  deleted: z.literal(true).optional(),
+});
+
 export const progressSchema = z.strictObject({
   version: z.literal(1),
   topics: boundedRecord(key, topicProgressSchema, LIMITS.topics),
@@ -78,6 +91,7 @@ export const progressSchema = z.strictObject({
     .refine((s) => [...s].length <= LIMITS.hanziChars, { message: `Tối đa ${LIMITS.hanziChars} chữ` })
     .optional(),
   srs: z.string().max(SRS_MAX_CHARS).refine(isValidSrs, { message: "Dữ liệu ôn từ vựng không hợp lệ" }).optional(),
+  notebook: z.array(notebookEntrySchema).max(NOTEBOOK_LIMITS.stored).optional(),
   xp: z.number().int().min(0).max(LIMITS.maxXp),
   streak: z.number().int().min(0).max(100_000),
   lastActiveDate: dateKey.optional(),

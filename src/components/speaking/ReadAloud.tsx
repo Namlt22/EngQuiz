@@ -87,7 +87,7 @@ export function ReadAloud({ initialSetId }: { initialSetId?: string }) {
     const attempt = ++attemptRef.current;
     const at = { idx, text: sentence.text };
     setNotice(null);
-    const heard = await recognition.listen({ continuous: false });
+    const heard = await recognition.listen({ continuous: false, expected: [sentence.text] });
     if (attempt !== attemptRef.current) return;
     if (!heard) {
       setNotice(NO_SPEECH);
@@ -141,7 +141,7 @@ export function ReadAloud({ initialSetId }: { initialSetId?: string }) {
         <p className="min-h-5 text-center text-sm text-muted" aria-live="polite">
           {recognition.listening && (
             <>
-              Đang nghe… {recognition.live && <span lang="en" className="text-fg">“{recognition.live}”</span>}
+              {recognition.ready ? "Đang nghe…" : "Chuẩn bị…"} {recognition.live && <span lang="en" className="text-fg">“{recognition.live}”</span>}
             </>
           )}
         </p>

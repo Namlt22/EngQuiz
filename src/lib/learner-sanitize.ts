@@ -6,6 +6,7 @@ import { LIMITS, progressSchema, topicProgressSchema, type CourseData, type Cour
 import { EXTRA_COURSES } from "./course";
 import type { DictationProgress, ProgressState, TopicProgress } from "./progress-calc";
 import { parseLog, parseProfile } from "./roadmap";
+import { sanitizeNotebook } from "@/core/notebook";
 import { decodeSrs, encodeSrs } from "@/core/srs";
 
 /** Khóa không được dùng làm tên mục (chống prototype pollution khi gộp object). */
@@ -70,6 +71,8 @@ export function sanitizeProgress(raw: unknown): ProgressState {
   if (hanzi) state.hanzi = hanzi;
   const srs = typeof r.srs === "string" ? encodeSrs(decodeSrs(r.srs)) : "";
   if (srs) state.srs = srs;
+  const notebook = sanitizeNotebook(r.notebook);
+  if (notebook.length) state.notebook = notebook;
   return progressSchema.parse(state);
 }
 

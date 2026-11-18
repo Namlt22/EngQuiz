@@ -146,7 +146,7 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
     if (recognition.listening) return recognition.stop();
     setActive(word);
     setNotice(null);
-    const result = await recognition.listen({ continuous: false });
+    const result = await recognition.listen({ continuous: false, expected: [word] });
     if (!result) return setNotice("Chưa nghe được gì. Bấm nút, chờ chữ “Đang nghe…” rồi đọc to từ đó.");
     const score = scoreReadAloud(word, result.alternatives).score;
     setAttempts((a) => ({ ...a, [word]: { best: Math.max(a[word]?.best ?? 0, score), tries: (a[word]?.tries ?? 0) + 1 } }));
@@ -175,7 +175,7 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
           />
         ))}
       </ul>
-      {recognition.listening && <p className="text-sm text-muted">Đang nghe… {recognition.live}</p>}
+      {recognition.listening && <p className="text-sm text-muted">{recognition.ready ? "Đang nghe…" : "Chuẩn bị…"} {recognition.live}</p>}
       {(notice || recognition.error) && <p className="text-sm text-danger">{notice ?? recognition.error}</p>}
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-muted">

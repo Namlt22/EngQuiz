@@ -81,12 +81,12 @@ export function EnVocabHome() {
           <Stat icon={<BookOpen className="size-4" />} value={list.length - mastered - learning} label="Chưa học" tone="text-muted" />
         </div>
         <div className="flex flex-col gap-2">
-          <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "word" })} className="btn-primary">
+          <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "meaning" })} className="btn-primary">
             {queue.length ? `Ôn ${queue.length} thẻ (${due} đến hạn)` : "Hôm nay đã ôn xong"}
           </button>
           <div className="flex gap-2">
-            <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "meaning" })} className="btn-ghost flex-1 text-sm">
-              Nghĩa → từ
+            <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "word" })} className="btn-ghost flex-1 text-sm">
+              Từ → nghĩa
             </button>
             <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "spell" })} className="btn-ghost flex-1 text-sm">
               <Keyboard className="size-4" /> Gõ từ

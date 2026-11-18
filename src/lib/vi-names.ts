@@ -1,9 +1,9 @@
 /**
  * Tên riêng Việt Nam nằm trong câu tiếng Anh (Linh, Huế, Đà Nẵng, Nguyễn Du…).
  * Giọng đọc tiếng Anh đọc chúng như từ tiếng Anh ("Hue" → "hiu") nên người nghe không nhận ra.
- * Cách xử lý khi đọc một câu:
- *  - máy có giọng tiếng Việt → tách tên ra, đọc bằng giọng Việt với đúng dấu (vi);
- *  - không có → thay bằng cách viết phiên âm để giọng tiếng Anh đọc gần đúng (en).
+ * Cách xử lý khi đọc một câu: thay tên bằng cách viết phiên âm (en) để giọng tiếng Anh đọc gần đúng, cả câu đọc liền
+ * một lượt. Không tách tên sang giọng Việt: đổi giọng giữa câu tạo khoảng ngắt, nghe không liền mạch.
+ * splitVietnameseNames vẫn giữ để nhận diện tên (vd hiển thị), cách viết tiếng Việt nằm ở trường vi.
  * Hanoi, Saigon, Vietnam là tên tiếng Anh thông dụng → giữ nguyên, đọc giọng Anh.
  * Thêm tên mới: thêm một dòng vào VI_NAMES (cụm dài đặt trước cụm ngắn).
  */

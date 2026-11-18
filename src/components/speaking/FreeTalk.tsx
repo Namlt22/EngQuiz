@@ -170,7 +170,7 @@ export function FreeTalk({ initialPromptId, aiEnabled }: { initialPromptId?: str
         <div aria-live="polite">
           {listening && (
             <p lang="en" className="min-h-12 rounded-xl bg-surface-2 p-3 text-center">
-              {recognition.live || <span className="text-muted">Đang nghe… hãy bắt đầu nói.</span>}
+              {recognition.live || <span className="text-muted">{recognition.ready ? "Đang nghe… hãy bắt đầu nói." : "Chuẩn bị…"}</span>}
             </p>
           )}
         </div>

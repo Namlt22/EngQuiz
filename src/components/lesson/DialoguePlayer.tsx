@@ -232,7 +232,7 @@ function RolePlay({ dialogue }: { dialogue: Dialogue }) {
     const attempt = ++attemptRef.current;
     const at = { idx, text: line.en };
     setNotice(null);
-    const heard = await recognition.listen({ continuous: false });
+    const heard = await recognition.listen({ continuous: false, expected: [line.en] });
     if (attempt !== attemptRef.current) return;
     if (!heard) return setNotice(NO_SPEECH);
     const result = scoreReadAloud(at.text, heard.alternatives);
@@ -317,7 +317,7 @@ function RolePlay({ dialogue }: { dialogue: Dialogue }) {
               </button>
             )}
           </div>
-          {recognition.listening && <p className="text-sm text-muted">Đang nghe… {recognition.live}</p>}
+          {recognition.listening && <p className="text-sm text-muted">{recognition.ready ? "Đang nghe…" : "Chuẩn bị…"} {recognition.live}</p>}
           {notice && <p className="text-sm text-danger">{notice}</p>}
           {recognition.error && <p className="text-sm text-danger">{recognition.error}</p>}
           {turn && (

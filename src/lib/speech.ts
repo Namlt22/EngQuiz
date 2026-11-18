@@ -6,7 +6,7 @@
  * khi đó chỉ cần đổi phần cài đặt bên trong hook này.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { respellVietnameseNames, splitVietnameseNames } from "./vi-names";
+import { respellVietnameseNames } from "./vi-names";
 import { wakeAudio } from "./audio-keepalive";
 import { createSpeechRunner, type SpeechRunner, type SynthLike, type UtteranceLike } from "./speech-runner";
 
@@ -61,11 +61,6 @@ export function pickChineseVoices(all: SpeechSynthesisVoice[]): SpeechSynthesisV
 }
 
 // Đổi tên khóa khi chuyển hết sang giọng Mỹ: lựa chọn giọng Anh-Anh đã lưu trước đây không còn được áp dụng.
-/** Giọng tiếng Việt để đọc tên riêng Việt Nam trong câu (giọng offline trước). */
-export function pickVietnameseVoice(all: SpeechSynthesisVoice[]): SpeechSynthesisVoice | undefined {
-  const vi = all.filter((v) => v.lang.toLowerCase().startsWith("vi"));
-  return vi.find((v) => v.localService) ?? vi[0];
-}
 
 /**
  * lang: "en" (mặc định, giọng Anh-Mỹ, đọc được tên riêng Việt Nam trong câu) hoặc "zh" (giọng phổ thông).
@@ -96,7 +91,6 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [voiceId, setVoiceId] = useState<string>("");
   const [speaking, setSpeaking] = useState(false);
-  const [viVoice, setViVoice] = useState<SpeechSynthesisVoice | undefined>();
   const ownerRef = useRef(0);
   if (!ownerRef.current) ownerRef.current = ++ownerSeq;
 
@@ -113,7 +107,6 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
       const all = synth.getVoices();
       const list = pick(all);
       setVoices(list);
-      setViVoice(lang === "zh" ? undefined : pickVietnameseVoice(all));
       setVoiceId((cur) => {
         if (cur && list.some((v) => v.voiceURI === cur)) return cur;
         try {
@@ -162,7 +155,6 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
       // không để trình duyệt tự chọn giọng mặc định (thường là giọng online, chậm hơn).
       const list = voices.length ? voices : pick(synth.getVoices());
       const mainVoice = list.find((v) => v.voiceURI === voiceId) ?? list[0];
-      const vi = lang === "zh" ? undefined : (viVoice ?? pickVietnameseVoice(synth.getVoices()));
       const make = (part: string, voice: SpeechSynthesisVoice | undefined, fallbackLang: string) => {
         const u = new SpeechSynthesisUtterance(part);
         if (voice) u.voice = voice;
@@ -171,14 +163,9 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
         u.pitch = pitch;
         return u;
       };
-      // Tên riêng Việt Nam (Huế, Đà Nẵng, Linh…): đọc bằng giọng Việt nếu máy có, không thì đọc theo phiên âm.
-      const makeParts = () => {
-        if (lang === "zh") return [make(text, mainVoice, SPEECH_LANG_ZH)];
-        const segments = splitVietnameseNames(text);
-        return vi && segments.some((p) => p.lang === "vi")
-          ? segments.map((p) => (p.lang === "vi" ? make(p.text, vi, "vi-VN") : make(p.text, mainVoice, SPEECH_LANG)))
-          : [make(respellVietnameseNames(text), mainVoice, SPEECH_LANG)];
-      };
+      // Cả câu đọc liền một lượt bằng một giọng. Tên riêng Việt Nam (Huế, Đà Nẵng, Linh…) được thay bằng cách viết
+      // phiên âm để giọng tiếng Anh đọc gần đúng — không tách sang giọng Việt (đổi giọng giữa câu gây ngắt quãng).
+      const makeParts = () => [lang === "zh" ? make(text, mainVoice, SPEECH_LANG_ZH) : make(respellVietnameseNames(text), mainVoice, SPEECH_LANG)];
       currentOwner = ownerRef.current;
       getRunner().speak(makeParts as () => UtteranceLike[], {
         onStart: () => setSpeaking(true),
@@ -187,7 +174,7 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
         onError,
       });
     },
-    [supported, voices, voiceId, viVoice, lang, pick],
+    [supported, voices, voiceId, lang, pick],
   );
 
   const voiceOptions: VoiceOption[] = voices.map((v) => ({

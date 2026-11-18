@@ -1,4 +1,5 @@
 /** Kiểu dữ liệu & phép tính tiến độ (thuần, không phụ thuộc trình duyệt). */
+import type { NotebookEntry } from "@/core/notebook";
 
 export interface TopicProgress {
   theoryRead?: boolean;
@@ -32,6 +33,8 @@ export interface ProgressState {
   hanzi?: string;
   /** Khoá tiếng Trung: trạng thái ôn từ vựng (hộp Leitner), dạng chuỗi gọn — xem src/core/srs.ts. */
   srs?: string;
+  /** Sổ tay từ vựng người học tự thêm — xem src/core/notebook.ts. Bản cũ chưa có trường này. */
+  notebook?: NotebookEntry[];
   xp: number;
   streak: number;
   /** yyyy-mm-dd theo giờ địa phương */

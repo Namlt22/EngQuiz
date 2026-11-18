@@ -12,7 +12,8 @@ import { BodyTooLargeError, isSameOrigin, readBodyWithLimit } from "@/server/req
 
 export const dynamic = "force-dynamic";
 
-const MAX_BODY_BYTES = 256 * 1024;
+/** Đủ cho tiến độ cả hai khoá kèm sổ tay từ vựng đầy (≈ 300 mục mỗi khoá). */
+const MAX_BODY_BYTES = 1024 * 1024;
 const readLimiter = createRateLimiter({ limit: 60, windowMs: 60_000 });
 const writeLimiter = createRateLimiter({ limit: 30, windowMs: 60_000 });
 

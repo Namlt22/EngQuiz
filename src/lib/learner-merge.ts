@@ -7,6 +7,7 @@ import type { CourseData, CoursesData, LearnerData } from "./learner-schema";
 import { EXTRA_COURSES, type CourseCode } from "./course";
 import { daysFor } from "./course-roadmap";
 import { cleanHanzi } from "./learner-sanitize";
+import { mergeNotebook } from "@/core/notebook";
 import { mergeSrs } from "@/core/srs";
 import type { DictationProgress, ProgressState, TopicProgress } from "./progress-calc";
 import type { RoadmapLog } from "./roadmap";
@@ -52,6 +53,7 @@ export function mergeProgress(a: ProgressState, b: ProgressState): ProgressState
     ...(Object.keys(dialogues).length ? { dialogues } : {}),
     ...(a.hanzi || b.hanzi ? { hanzi: cleanHanzi((a.hanzi ?? "") + (b.hanzi ?? "")) } : {}),
     ...(a.srs || b.srs ? { srs: mergeSrs(a.srs, b.srs) } : {}),
+    ...(a.notebook?.length || b.notebook?.length ? { notebook: mergeNotebook(a.notebook ?? [], b.notebook ?? []) } : {}),
     xp: Math.max(a.xp, b.xp),
     streak: later.streak,
     ...(later.lastActiveDate ? { lastActiveDate: later.lastActiveDate } : {}),

@@ -6,6 +6,7 @@
  * Micro chỉ dùng được trên HTTPS hoặc localhost (secure context).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { heardAll } from "./speech-match";
 
 /* Kiểu tối thiểu — lib DOM của TypeScript chưa có SpeechRecognition. */
 interface RecognitionAlternative {
@@ -29,11 +30,47 @@ interface Recognition {
   onresult: ((e: RecognitionEvent) => void) | null;
   onerror: ((e: { error: string }) => void) | null;
   onend: (() => void) | null;
+  /** Micro đã thật sự bắt đầu thu (Chrome, Edge, Safari). */
+  onaudiostart?: (() => void) | null;
+  onstart?: (() => void) | null;
+  /** Chrome 139+: nhận dạng ngay trên máy (không gửi âm thanh lên máy chủ) khi đã có gói ngôn ngữ. */
+  processLocally?: boolean;
   start(): void;
   stop(): void;
   abort(): void;
 }
-type RecognitionCtor = new () => Recognition;
+type RecognitionCtor = (new () => Recognition) & {
+  /** Chrome 139+: kiểm tra có nhận dạng trên máy được không ("available" = đã có gói ngôn ngữ). */
+  available?: (opts: { langs: string[]; processLocally: boolean }) => Promise<string>;
+};
+
+/**
+ * Sau lần nói cuối cùng, chờ ngần này mili giây im lặng thì tự dừng (trình duyệt tự chờ 1,5–2 giây).
+ * Đọc một từ: ngắn; đọc câu / nói tự do: dài hơn để người học ngập ngừng giữa câu không bị cắt.
+ */
+export const END_SILENCE_MS = { word: 600, sentence: 1100 } as const;
+
+/** Câu đích ngắn (một từ / cụm ≤ 2 từ, hoặc ≤ 3 chữ Hán) → dùng khoảng im lặng ngắn. */
+export function silenceFor(expected: readonly string[] | undefined): number {
+  const short = !!expected?.length && expected.every((e) => (/\p{Script=Han}/u.test(e) ? [...e.replace(/\s/g, "")].length <= 3 : e.trim().split(/\s+/).length <= 2));
+  return short ? END_SILENCE_MS.word : END_SILENCE_MS.sentence;
+}
+
+/**
+ * Nhận dạng trên máy dùng được cho ngôn ngữ nào. Kiểm một lần khi mở trang (bất đồng bộ) và lưu kết quả
+ * để lúc bấm micro đọc ngay (processLocally phải đặt TRƯỚC khi start).
+ */
+const localChecked = new Set<string>();
+const localOk = new Set<string>();
+function checkLocalSupport(Ctor: RecognitionCtor, lang: string): void {
+  if (localChecked.has(lang) || typeof Ctor.available !== "function") return;
+  localChecked.add(lang);
+  Ctor.available({ langs: [lang], processLocally: true })
+    .then((r) => {
+      if (r === "available") localOk.add(lang);
+    })
+    .catch(() => {});
+}
 
 function getCtor(): RecognitionCtor | undefined {
   if (typeof window === "undefined") return undefined;
@@ -69,6 +106,8 @@ const ALTERNATIVES = 5;
 export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {}) {
   const [status, setStatus] = useState<RecognitionStatus>("ready");
   const [listening, setListening] = useState(false);
+  /** Micro đã mở thật sự (sau sự kiện audiostart). Trước đó là đang chuẩn bị — người học chưa nên nói. */
+  const [ready, setReady] = useState(false);
   /** Lời nói đang nhận dạng (chưa chốt + đã chốt), để hiện trực tiếp. */
   const [live, setLive] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -76,8 +115,10 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
   const cancelRef = useRef<() => void>(() => {});
 
   useEffect(() => {
-    if (!getCtor()) setStatus("unsupported");
+    const Ctor = getCtor();
+    if (!Ctor) setStatus("unsupported");
     else if (!window.isSecureContext) setStatus("insecure");
+    else checkLocalSupport(Ctor, lang);
     return () => {
       cancelRef.current();
       recRef.current?.abort();
@@ -89,7 +130,10 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
    * Trả null nếu lỗi (thông báo nằm trong `error`) hoặc không nghe được gì.
    */
   const listen = useCallback(
-    ({ continuous }: { continuous: boolean }): Promise<ListenResult | null> => {
+    /**
+     * expected: câu / từ người học cần đọc (chế độ một câu). Nghe đủ → dừng ngay, không chờ im lặng.
+     */
+    ({ continuous, expected }: { continuous: boolean; expected?: readonly string[] }): Promise<ListenResult | null> => {
       const Ctor = getCtor();
       if (!Ctor || !window.isSecureContext) {
         setError(Ctor ? "Micro chỉ dùng được trên trang https:// hoặc localhost." : "Trình duyệt này không hỗ trợ nhận dạng giọng nói.");
@@ -97,9 +141,12 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
       }
       cancelRef.current();
       recRef.current?.abort();
+      if (window.speechSynthesis?.speaking || window.speechSynthesis?.pending) window.speechSynthesis.cancel();
 
       const rec = new Ctor();
       rec.lang = lang;
+      // Có gói ngôn ngữ trên máy → nhận dạng tại chỗ (không qua mạng, nhanh hơn rõ rệt).
+      if (localOk.has(lang) && "processLocally" in rec) rec.processLocally = true;
       rec.continuous = continuous;
       rec.interimResults = true;
       rec.maxAlternatives = ALTERNATIVES;
@@ -107,6 +154,23 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
 
       const finals: string[] = [];
       let alternatives: string[] = [];
+      /** Phần đang nhận dạng dở (chưa chốt) gần nhất — dùng khi tự dừng sớm mà trình duyệt chưa kịp chốt. */
+      let interimText = "";
+      let silenceTimer = 0;
+      const zhLang = lang.toLowerCase().startsWith("zh");
+      const silenceMs = silenceFor(expected);
+      /** Chế độ một câu: tự dừng khi đã nghe đủ câu cần đọc, hoặc khi im lặng một lúc sau lần nói cuối. */
+      const scheduleEnd = (text: string) => {
+        if (continuous) return;
+        window.clearTimeout(silenceTimer);
+        if (expected?.length && heardAll(text, expected, zhLang ? "zh" : "en")) {
+          rec.stop();
+          return;
+        }
+        silenceTimer = window.setTimeout(() => {
+          if (recRef.current === rec) rec.stop();
+        }, silenceMs);
+      };
       let failed = false;
       // Bị hủy (đổi câu/đề, rời trang, bắt đầu lượt mới) → không trả kết quả, để không chấm nhầm ngữ cảnh.
       let cancelled = false;
@@ -116,9 +180,16 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
       const startedAt = performance.now();
       setError(null);
       setLive("");
+      setReady(false);
       setListening(true);
 
       return new Promise((resolve) => {
+        const markReady = () => {
+          if (recRef.current === rec) setReady(true);
+        };
+        rec.onaudiostart = markReady;
+        // Trình duyệt không có audiostart: coi như sẵn sàng khi bắt đầu.
+        if (!("onaudiostart" in rec)) rec.onstart = markReady;
         rec.onresult = (e) => {
           let interim = "";
           for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -130,7 +201,10 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
               interim += result[0].transcript;
             }
           }
-          setLive([...finals, interim.trim()].filter(Boolean).join(" "));
+          interimText = interim.trim();
+          const heardSoFar = [...finals, interimText].filter(Boolean).join(" ");
+          setLive(heardSoFar);
+          scheduleEnd(heardSoFar);
         };
         rec.onerror = (e) => {
           if (e.error === "aborted") {
@@ -138,13 +212,22 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
             return;
           }
           failed = true;
+          // Nhận dạng trên máy hỏng (gói ngôn ngữ bị gỡ…) → lần sau dùng nhận dạng qua mạng.
+          if (rec.processLocally) localOk.delete(lang);
           setError(recognitionErrorMessage(e.error));
         };
         rec.onend = () => {
+          window.clearTimeout(silenceTimer);
           // Chỉ lượt hiện tại mới được đổi trạng thái; lượt cũ vừa bị hủy kết thúc muộn thì bỏ qua.
           if (recRef.current === rec) {
             recRef.current = null;
             setListening(false);
+            setReady(false);
+          }
+          // Dừng sớm trước khi trình duyệt chốt câu → dùng phần đang nhận dạng dở.
+          if (!finals.length && interimText) {
+            finals.push(interimText);
+            alternatives = [interimText];
           }
           const transcript = finals.join(" ").trim();
           // Lỗi giữa chừng (vd mất mạng sau 2 phút nói) vẫn giữ phần đã nhận dạng; thông báo lỗi vẫn hiện.
@@ -157,6 +240,7 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
           rec.start();
         } catch (err) {
           setListening(false);
+          setReady(false);
           setError(recognitionErrorMessage(err instanceof Error ? err.name : "start-failed"));
           resolve(null);
         }
@@ -173,7 +257,8 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
     recRef.current = null;
     rec?.abort();
     setListening(false);
+    setReady(false);
   }, []);
 
-  return { status, listening, live, error, listen, stop, cancel };
+  return { status, listening, ready, live, error, listen, stop, cancel };
 }

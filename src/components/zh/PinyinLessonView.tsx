@@ -178,7 +178,7 @@ function RepeatStep({ lesson, say, onNext }: { lesson: PinyinLesson; say: Say; o
     if (recognition.listening) return recognition.stop();
     setActive(item.hanzi);
     setNotice(null);
-    const result = await recognition.listen({ continuous: false });
+    const result = await recognition.listen({ continuous: false, expected: [item.hanzi] });
     if (!result) {
       setAttempts((a) => ({ ...a, [item.hanzi]: { best: a[item.hanzi]?.best ?? 0, tries: (a[item.hanzi]?.tries ?? 0) + 1 } }));
       return setNotice("Chưa nghe được gì. Bấm nút, chờ chữ “Đang nghe…” rồi đọc to.");
@@ -240,7 +240,7 @@ function RepeatStep({ lesson, say, onNext }: { lesson: PinyinLesson; say: Say; o
       </ul>
       {recognition.listening && (
         <p className="text-sm text-muted">
-          Đang nghe… <span lang="zh-Hans">{recognition.live}</span>
+          {recognition.ready ? "Đang nghe…" : "Chuẩn bị…"} <span lang="zh-Hans">{recognition.live}</span>
         </p>
       )}
       {(notice || recognition.error) && <p className="text-sm text-danger">{notice ?? recognition.error}</p>}

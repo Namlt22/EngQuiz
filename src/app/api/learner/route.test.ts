@@ -57,7 +57,7 @@ describe("PUT /api/learner — chặn trước khi ghi", () => {
 
   it("body quá lớn → 413 (kể cả khi không khai báo content-length)", async () => {
     const { PUT } = await loadRoute();
-    const big = JSON.stringify({ ...validBody, pad: "x".repeat(300 * 1024) });
+    const big = JSON.stringify({ ...validBody, pad: "x".repeat(1100 * 1024) });
     expect((await PUT(put(big))).status).toBe(413);
     expect(saveLearner).not.toHaveBeenCalled();
   });
