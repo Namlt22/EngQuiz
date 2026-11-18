@@ -7,14 +7,14 @@
  * Điểm = số câu đúng ngay lần đầu. Kết thúc bằng ActivityResult.
  */
 import { useState } from "react";
-import Link from "next/link";
-import { CheckCircle2, Volume2, X, XCircle } from "lucide-react";
+import { CheckCircle2, Volume2, XCircle } from "lucide-react";
 import type { SentenceSet } from "@/content/sentence-practice";
 import { checkSentence, type SentenceCheck } from "@/core/sentence-practice";
 import { getProgressState, PASS_PERCENT, progressActions } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
 import { ActivityResult } from "@/components/lesson/ActivityResult";
 import { SaveWordButton } from "@/components/notebook/SaveWordButton";
+import { SessionHeader } from "@/components/ui/SessionHeader";
 
 type Phase = "typing" | "retry" | "done";
 
@@ -117,17 +117,7 @@ export function SentencePlayer({ set, listHref }: { set: SentenceSet; listHref: 
 
   return (
     <section className="mx-auto max-w-xl space-y-5">
-      <div className="flex items-center gap-3 text-sm text-muted">
-        <Link href={listHref} className="grid size-8 place-items-center rounded-lg hover:bg-surface-2 hover:text-fg" aria-label="Thoát">
-          <X className="size-5" />
-        </Link>
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
-          <div className="h-full bg-primary transition-all" style={{ width: `${(i / total) * 100}%` }} />
-        </div>
-        <span>
-          {i + 1}/{total}
-        </span>
-      </div>
+      <SessionHeader exitHref={listHref} value={((i + (phase === "done" ? 1 : 0)) / total) * 100} current={i + 1} total={total} />
 
       <div className="card space-y-4 p-5">
         <p className="text-sm font-semibold text-muted">{task.prompt}</p>

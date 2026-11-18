@@ -9,6 +9,7 @@
  */
 import { useEffect, useState } from "react";
 import { CheckCircle2, RotateCcw, Volume2, XCircle } from "lucide-react";
+import { SessionHeader } from "@/components/ui/SessionHeader";
 import { EN_POS_LABEL, getEnWord } from "@/content/vocab-en";
 import type { Grade } from "@/core/srs";
 import { progressActions } from "@/lib/progress";
@@ -92,17 +93,7 @@ export function EnFlashcardSession({ queue: initial, mode, speak, onExit }: Prop
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between text-sm text-muted">
-        <span>
-          Thẻ {i + 1}/{queue.length}
-        </span>
-        <button type="button" onClick={onExit} className="font-semibold hover:text-fg">
-          Dừng
-        </button>
-      </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-line">
-        <div className="h-full bg-primary transition-all" style={{ width: `${(i / queue.length) * 100}%` }} />
-      </div>
+      <SessionHeader onExit={onExit} value={(i / queue.length) * 100} current={i + 1} total={queue.length} />
 
       <div className="card flex min-h-72 flex-col items-center justify-center gap-3 p-6 text-center">
         {mode === "word" || revealed ? (

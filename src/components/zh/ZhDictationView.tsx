@@ -5,9 +5,9 @@
  * Hai cách gõ: pinyin (số thanh hoặc dấu thanh) — hợp với HSK 1–2; chữ Hán (dùng bộ gõ của máy).
  * Chấm từng chữ/âm tiết (src/core/zh-dictation.ts); xong bài thì ghi điểm, đạt thì lộ trình tự tích.
  */
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Eye, Snail, Volume2 } from "lucide-react";
+import { ArrowRight, Check, Eye, Snail, Volume2 } from "lucide-react";
+import { SessionHeader } from "@/components/ui/SessionHeader";
 import { ZH_TEXTS, type ZhTextLesson } from "@/content/zh/texts";
 import { gradeDictation, type DictationMode, type DictationResult } from "@/core/zh-dictation";
 import { plainText, sentencePinyin } from "@/core/zh-sentence";
@@ -94,15 +94,10 @@ export function ZhDictationView({ lesson }: { lesson: ZhTextLesson }) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      <Link href="/zh/dictation" className="inline-flex items-center gap-1 text-sm font-semibold text-muted hover:text-fg">
-        <ArrowLeft className="size-4" /> Nghe chép
-      </Link>
+      <SessionHeader exitHref="/zh/dictation" value={(i / lesson.lines.length) * 100} current={i + 1} total={lesson.lines.length} />
       <header>
-        <h1 className="text-2xl font-extrabold">Nghe chép: {lesson.title}</h1>
-        <p className="text-muted">
-          Câu {i + 1}/{lesson.lines.length}
-          {lesson.speakers && line.speaker ? ` · ${lesson.speakers[line.speaker]}` : ""}
-        </p>
+        <h1 className="text-lg font-bold">{lesson.title}</h1>
+        {lesson.speakers && line.speaker && <p className="text-muted">{lesson.speakers[line.speaker]}</p>}
       </header>
       <ZhVoiceNotice speech={speech} />
 
@@ -148,7 +143,7 @@ export function ZhDictationView({ lesson }: { lesson: ZhTextLesson }) {
         {!result ? (
           <div className="flex justify-between gap-2">
             <button type="button" onClick={() => setResult(gradeDictation(mode, line.zh, ""))} className="btn-ghost text-sm">
-              <Eye className="size-4" /> Bỏ qua, xem đáp án
+              <Eye className="size-4" /> Xem đáp án
             </button>
             <button type="button" onClick={check} disabled={!input.trim()} className="btn-primary">
               <Check className="size-4" /> Kiểm tra

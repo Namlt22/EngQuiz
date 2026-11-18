@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, BookOpen, CheckCircle2, X, XCircle } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, XCircle } from "lucide-react";
 import { CATALOG, getTopicMeta } from "@/content/catalog";
 import { dictationsForTopic } from "@/content/dictations";
 import { correctAnswerText, gradeQuestion, isResponseComplete, type QuizResponse } from "@/core/grading";
 import { PASS_PERCENT, progressActions } from "@/lib/progress";
 import type { QuizItem, QuizSet } from "@/lib/quiz-sets";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { SessionHeader } from "@/components/ui/SessionHeader";
 import { ActivityResult } from "@/components/lesson/ActivityResult";
 import { isAvailable } from "@/lib/learn";
 import { QuestionView, TYPE_LABELS, describeResponse, emptyResponse } from "./QuestionView";
@@ -99,15 +100,7 @@ export function QuizPlayer({ set }: { set: QuizSet }) {
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-7rem)] max-w-2xl flex-col">
       {/* Thanh trên cùng */}
-      <div className="flex items-center gap-3">
-        <Link href="/quiz" className="grid size-9 place-items-center rounded-xl text-muted hover:bg-surface-2 hover:text-fg" aria-label="Thoát">
-          <X className="size-5" />
-        </Link>
-        <ProgressBar value={progress} className="h-3" label="Tiến độ bài quiz" />
-        <span className="shrink-0 text-sm font-semibold text-muted">
-          {index + 1}/{items.length}
-        </span>
-      </div>
+      <SessionHeader exitHref="/quiz" value={progress} current={index + 1} total={items.length} />
 
       {/* Câu hỏi */}
       <div className="flex-1 py-8" key={`${round}-${index}`}>

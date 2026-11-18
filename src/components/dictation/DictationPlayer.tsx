@@ -1,15 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowRight, CheckCircle2, Eye, Gauge, Lightbulb, Play, RotateCcw, SkipForward, Square, X,
+  ArrowRight, CheckCircle2, Eye, Gauge, Lightbulb, Play, RotateCcw, SkipForward, Square,
 } from "lucide-react";
 import type { DictationExercise } from "@/content/types";
 import { checkDictation, maskSentence, maskWord, type DictationCheck } from "@/core/dictation";
 import { useSpeech } from "@/lib/speech";
 import { PASS_PERCENT, progressActions } from "@/lib/progress";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { SessionHeader } from "@/components/ui/SessionHeader";
 import { SpeakButton } from "@/components/ui/SpeakButton";
 import { LevelBadge } from "@/components/ui/LevelBadge";
 import { ActivityResult } from "@/components/lesson/ActivityResult";
@@ -149,15 +148,7 @@ export function DictationPlayer({ exercise }: { exercise: DictationExercise }) {
   return (
     <div className="mx-auto max-w-2xl space-y-5">
       {/* Đầu trang */}
-      <div className="flex items-center gap-3">
-        <Link href="/dictation" className="grid size-9 place-items-center rounded-xl text-muted hover:bg-surface-2 hover:text-fg" aria-label="Thoát">
-          <X className="size-5" />
-        </Link>
-        <ProgressBar value={((idx + (solved ? 1 : 0)) / total) * 100} className="h-3" barClassName="bg-success" label="Tiến độ" />
-        <span className="shrink-0 text-sm font-semibold text-muted">
-          {idx + 1}/{total}
-        </span>
-      </div>
+      <SessionHeader exitHref="/dictation" value={((idx + (solved ? 1 : 0)) / total) * 100} current={idx + 1} total={total} />
 
       <div className="flex flex-wrap items-center gap-2">
         <LevelBadge level={exercise.level} />

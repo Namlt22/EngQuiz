@@ -5,7 +5,9 @@
  * rồi xem điểm từng phần và ôn lại đáp án. Đạt passPercent thì app ghi nhận (lộ trình tự tích bài thi thử).
  */
 import { useMemo, useState } from "react";
-import { ArrowRight, CheckCircle2, Headphones, Volume2, XCircle } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight, CheckCircle2, Headphones, Volume2, XCircle } from "lucide-react";
+import { SessionHeader } from "@/components/ui/SessionHeader";
 import { ZH_MOCKS, type MockItem, type MockTest } from "@/content/zh/mock";
 import { plainText } from "@/core/zh-sentence";
 import { progressActions } from "@/lib/progress";
@@ -37,9 +39,12 @@ export function ZhMockTest({ test }: { test: MockTest }) {
     const listening = test.items.filter((q) => q.section === "listening").length;
     return (
       <section className="card mx-auto max-w-2xl space-y-4 p-6">
+        <Link href="/zh/mock" className="inline-flex items-center gap-1 text-sm font-semibold text-muted hover:text-fg">
+          <ArrowLeft className="size-4" /> Thi thử HSK
+        </Link>
         <h1 className="text-2xl font-extrabold">{test.title}</h1>
         <p className="text-muted">
-          {test.items.length} câu · {listening} nghe, {test.items.length - listening} đọc · đạt từ {test.passPercent}%
+          {test.items.length} câu · {listening} nghe, {test.items.length - listening} đọc
         </p>
         <ZhVoiceNotice speech={speech} />
         <button
@@ -77,14 +82,8 @@ export function ZhMockTest({ test }: { test: MockTest }) {
 
   return (
     <section className="mx-auto max-w-2xl space-y-4">
-      <div className="flex items-center justify-between text-sm text-muted">
-        <span className="chip bg-surface-2">
-          Phần {SECTION_LABEL[q.section]} · Câu {i + 1}/{test.items.length}
-        </span>
-      </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-line">
-        <div className="h-full bg-primary" style={{ width: `${(i / test.items.length) * 100}%` }} />
-      </div>
+      <SessionHeader exitHref="/zh/mock" value={(i / test.items.length) * 100} current={i + 1} total={test.items.length} />
+      <span className="chip bg-surface-2 text-sm text-muted">Phần {SECTION_LABEL[q.section]}</span>
       <div className="card space-y-4 p-5">
         {q.say && (
           <div className="text-center">

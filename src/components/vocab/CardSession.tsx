@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, RotateCcw, Volume2, XCircle } from "lucide-react";
 import type { Grade } from "@/core/srs";
 import type { CourseCode } from "@/lib/course";
+import { SessionHeader } from "@/components/ui/SessionHeader";
 
 export interface Card {
   /** Khoá duy nhất trong phiên (vd "vocab:apple", "nb:abc123"). */
@@ -94,17 +95,7 @@ export function CardSession({
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center gap-3 text-sm text-muted">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
-          <div className="h-full bg-primary transition-all" style={{ width: `${(i / queue.length) * 100}%` }} />
-        </div>
-        <span>
-          {i + 1}/{queue.length}
-        </span>
-        <button type="button" onClick={() => onExit({ total: i, again: stats.again })} className="font-semibold hover:text-fg">
-          Dừng
-        </button>
-      </div>
+      <SessionHeader onExit={() => onExit({ total: i, again: stats.again })} value={(i / queue.length) * 100} current={i + 1} total={queue.length} />
 
       <div className="card flex min-h-72 flex-col items-center justify-center gap-3 p-6 text-center">
         {revealed ? (
