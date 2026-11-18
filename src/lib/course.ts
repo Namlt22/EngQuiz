@@ -10,10 +10,6 @@ export interface CourseInfo {
   name: string;
   /** Chuẩn trình độ mà khoá bám theo */
   standard: string;
-  /** Chữ trên huy hiệu khoá học (không dùng cờ emoji: Windows hiện thành "GB", "CN") */
-  mark: string;
-  /** Lớp Tailwind cho huy hiệu */
-  markClass: string;
   /** Trang chủ của khoá */
   home: string;
   /** Mã ngôn ngữ cho giọng đọc / nhận dạng giọng nói */
@@ -21,8 +17,8 @@ export interface CourseInfo {
 }
 
 export const COURSES: Record<CourseCode, CourseInfo> = {
-  en: { code: "en", name: "Tiếng Anh", standard: "CEFR A1 – C1", mark: "EN", markClass: "from-indigo-500 to-violet-500", home: "/", speechLang: "en-US" },
-  zh: { code: "zh", name: "Tiếng Trung", standard: "HSK 3.0 · HSK 1 – 4", mark: "中", markClass: "from-red-500 to-amber-500", home: "/zh", speechLang: "zh-CN" },
+  en: { code: "en", name: "Tiếng Anh", standard: "CEFR A1 – C1", home: "/", speechLang: "en-US" },
+  zh: { code: "zh", name: "Tiếng Trung", standard: "HSK 3.0 · HSK 1 – 4", home: "/zh", speechLang: "zh-CN" },
 };
 
 export const COURSE_CODES = Object.keys(COURSES) as CourseCode[];

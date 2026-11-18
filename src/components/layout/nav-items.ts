@@ -1,4 +1,4 @@
-import { AudioLines, BookOpen, BookOpenText, Dumbbell, Headphones, House, Layers, MessagesSquare, Mic, PenLine, Route, type LucideIcon } from "lucide-react";
+import { AudioLines, BookOpen, BookOpenText, Bot, Dumbbell, Headphones, House, Layers, MessagesSquare, Mic, PenLine, Route, type LucideIcon } from "lucide-react";
 import type { CourseCode } from "@/lib/course";
 
 /**
@@ -39,6 +39,7 @@ export const NAV_EN: NavEntry[] = [
     label: "Luyện tập",
     icon: Dumbbell,
     items: [
+      { href: "/chat", label: "Trò chuyện AI", icon: Bot },
       { href: "/quiz", label: "Quiz", icon: PenLine },
       { href: "/dictation", label: "Nghe chép", icon: Headphones },
       { href: "/speaking", label: "Luyện nói", icon: Mic },
@@ -71,6 +72,7 @@ export const NAV_ZH: NavEntry[] = [
     label: "Luyện tập",
     icon: Dumbbell,
     items: [
+      { href: "/zh/chat", label: "Trò chuyện AI", icon: Bot },
       { href: "/zh/dialogues", label: "Hội thoại", icon: MessagesSquare },
       { href: "/zh/dictation", label: "Nghe chép", icon: Headphones },
       { href: "/zh/mock/hsk1", label: "Thi thử HSK 1", icon: PenLine },

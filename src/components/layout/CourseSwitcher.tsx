@@ -46,7 +46,7 @@ export function CourseSwitcher() {
         aria-label={`Đang học ${current.name}. Đổi ngôn ngữ`}
         onClick={() => setOpen((o) => !o)}
       >
-        <CourseMark course={course} className="size-6 text-[10px]" />
+        <CourseMark course={course} className="size-6" />
         <span className="hidden xl:inline">{current.name}</span>
         <ChevronDown className={`hidden size-4 text-muted transition sm:block ${open ? "rotate-180" : ""}`} />
       </button>
@@ -66,7 +66,7 @@ export function CourseSwitcher() {
                   onClick={() => choose(code)}
                   className={`flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition ${on ? "bg-primary-soft" : "hover:bg-surface-2"}`}
                 >
-                  <CourseMark course={code} className="size-9 text-sm" />
+                  <CourseMark course={code} className="size-9" />
                   <span className="min-w-0 flex-1">
                     <span className={`block text-sm font-semibold ${on ? "text-primary" : ""}`}>{c.name}</span>
                     <span className="block text-xs text-muted">{c.standard}</span>

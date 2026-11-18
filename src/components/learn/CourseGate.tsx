@@ -40,7 +40,7 @@ export function CoursePicker() {
               onClick={() => choose(code)}
               className="card group flex flex-col items-start gap-3 p-6 text-left transition hover:-translate-y-0.5 hover:shadow-lg"
             >
-              <CourseMark course={code} className="size-14 text-xl" />
+              <CourseMark course={code} className="size-14" />
               <span>
                 <span className="block text-xl font-extrabold">{c.name}</span>
                 <span className="block text-sm font-semibold text-primary">{c.standard}</span>
