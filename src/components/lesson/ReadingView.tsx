@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { ArrowLeft, Languages, Pause, Play } from "lucide-react";
+import { READINGS } from "@/content/readings";
 import type { ReadingPassage } from "@/content/types";
 import { progressActions } from "@/lib/progress";
 import { SPEECH_ERROR_NOTICE, useSpeech } from "@/lib/speech";
@@ -13,6 +14,8 @@ import { LessonQuiz } from "./LessonQuiz";
 const READ_RATE = 0.9;
 
 export function ReadingView({ passage }: { passage: ReadingPassage }) {
+  // Bài kế tiếp cùng cấp (hết cấp thì bài đầu của cấp sau).
+  const nextReading = READINGS[READINGS.findIndex((r) => r.id === passage.id) + 1];
   const [showVi, setShowVi] = useState(false);
   const [playing, setPlaying] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -110,6 +113,7 @@ export function ReadingView({ passage }: { passage: ReadingPassage }) {
         title="Câu hỏi đọc hiểu"
         questions={passage.questions}
         onFinish={({ percent, correct, total }) => progressActions.recordReading(passage.id, percent, correct, total)}
+        nextLink={nextReading ? { label: nextReading.title, href: `/reading/${nextReading.id}` } : undefined}
       />
     </div>
   );

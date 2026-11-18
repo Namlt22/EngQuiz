@@ -5,11 +5,13 @@
  * Đạt PASS_PERCENT thì app tự ghi nhận bài (lộ trình tự tích), người học không tự đánh dấu.
  */
 import { useMemo, useState } from "react";
-import { ArrowRight, CheckCircle2, RotateCcw, Undo2, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, Undo2, XCircle } from "lucide-react";
 import type { ZhQuestion } from "@/content/zh/grammar";
 import { sameOrder, tokenize } from "@/core/zh-sentence";
 import { PASS_PERCENT } from "@/lib/progress-calc";
 import { ZhText, hasHan } from "./ZhText";
+import type { StepLinkInput } from "@/lib/next-step";
+import { ActivityResult } from "@/components/lesson/ActivityResult";
 
 type Rng = () => number;
 
@@ -33,7 +35,17 @@ function tilesFor(answer: string): string[] {
   return out;
 }
 
-export function ZhGrammarQuiz({ questions, showPinyin, onFinish }: { questions: ZhQuestion[]; showPinyin: boolean; onFinish: (percent: number) => void }) {
+export function ZhGrammarQuiz({
+  questions,
+  showPinyin,
+  onFinish,
+  nextLink,
+}: {
+  questions: ZhQuestion[];
+  showPinyin: boolean;
+  onFinish: (percent: number) => void;
+  nextLink?: StepLinkInput;
+}) {
   const [round, setRound] = useState(0);
   const [i, setI] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -44,24 +56,18 @@ export function ZhGrammarQuiz({ questions, showPinyin, onFinish }: { questions: 
     const percent = Math.round((correct / questions.length) * 100);
     const passed = percent >= PASS_PERCENT;
     return (
-      <div className="card space-y-3 p-6 text-center" role="status">
-        <p className="text-3xl font-extrabold">{percent}%</p>
-        <p className="text-muted">
-          Đúng {correct}/{questions.length}. {passed ? "Bài đã được ghi nhận." : `Cần từ ${PASS_PERCENT}% — đọc lại phần lý thuyết rồi làm lại.`}
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            setRound((r) => r + 1);
-            setI(0);
-            setCorrect(0);
-            setResult(null);
-          }}
-          className="btn-ghost mx-auto"
-        >
-          <RotateCcw className="size-4" /> Làm lại
-        </button>
-      </div>
+      <ActivityResult
+        passed={passed}
+        percent={percent}
+        detail={`${correct}/${questions.length}`}
+        onRetry={() => {
+          setRound((r) => r + 1);
+          setI(0);
+          setCorrect(0);
+          setResult(null);
+        }}
+        next={nextLink}
+      />
     );
   }
 

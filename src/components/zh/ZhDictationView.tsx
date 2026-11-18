@@ -8,10 +8,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Eye, Snail, Volume2 } from "lucide-react";
-import type { ZhTextLesson } from "@/content/zh/texts";
+import { ZH_TEXTS, type ZhTextLesson } from "@/content/zh/texts";
 import { gradeDictation, type DictationMode, type DictationResult } from "@/core/zh-dictation";
 import { plainText, sentencePinyin } from "@/core/zh-sentence";
-import { progressActions } from "@/lib/progress";
+import { PASS_PERCENT, progressActions } from "@/lib/progress";
+import { ActivityResult } from "@/components/lesson/ActivityResult";
 import { useSpeech } from "@/lib/speech";
 import { ZhVoiceNotice } from "./ZhVoiceNotice";
 
@@ -28,6 +29,7 @@ function readMode(): DictationMode {
 }
 
 export function ZhDictationView({ lesson }: { lesson: ZhTextLesson }) {
+  const following = ZH_TEXTS[ZH_TEXTS.findIndex((t) => t.id === lesson.id) + 1];
   const speech = useSpeech({ lang: "zh" });
   const [mode, setMode] = useState<DictationMode>("pinyin");
   // Đọc cách gõ đã chọn sau khi hydrate (đọc trong lúc render sẽ lệch với bản dựng ở server).
@@ -75,26 +77,17 @@ export function ZhDictationView({ lesson }: { lesson: ZhTextLesson }) {
   if (i >= lesson.lines.length) {
     const percent = Math.round(scores.reduce((a, b) => a + (b ?? 0), 0) / lesson.lines.length);
     return (
-      <div className="mx-auto max-w-2xl space-y-4">
-        <section className="card space-y-3 p-6 text-center" role="status">
-          <p className="text-3xl font-extrabold">{percent}%</p>
-          <p className="text-muted">Điểm trung bình {lesson.lines.length} câu. Kết quả đã được lưu.</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setI(0);
-                setScores([]);
-              }}
-              className="btn-ghost"
-            >
-              Làm lại
-            </button>
-            <Link href="/zh/dictation" className="btn-primary">
-              Bài khác
-            </Link>
-          </div>
-        </section>
+      <div className="mx-auto max-w-2xl">
+        <ActivityResult
+          passed={percent >= PASS_PERCENT}
+          percent={percent}
+          onRetry={() => {
+            setI(0);
+            setScores([]);
+          }}
+          reviewLink={{ label: "Xem lại bài", href: `/zh/${lesson.kind === "dialogue" ? "dialogues" : "reading"}/${lesson.id}` }}
+          next={following ? { label: following.title, href: `/zh/dictation/${following.id}` } : undefined}
+        />
       </div>
     );
   }

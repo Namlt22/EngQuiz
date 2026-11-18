@@ -7,8 +7,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sparkles, X } from "lucide-react";
-import { NAV_BY_COURSE, isActive, isEntryActive, type NavGroup } from "./nav-items";
+import { X } from "lucide-react";
+import { NAV_BY_COURSE, isActive, isEntryActive, isSessionRoute, type NavGroup } from "./nav-items";
 import { useCourse } from "@/lib/course-client";
 
 function GroupSheet({ group, pathname, onClose }: { group: NavGroup; pathname: string; onClose: () => void }) {
@@ -54,8 +54,7 @@ export function BottomNav() {
   const nav = NAV_BY_COURSE[useCourse()];
   useEffect(() => setOpenGroup(null), [pathname]);
 
-  const inSession = /^\/(quiz|dictation)\/.+/.test(pathname);
-  if (inSession) return null;
+  if (isSessionRoute(pathname)) return null;
 
   const tab = (active: boolean) =>
     `flex w-full flex-col items-center gap-1 whitespace-nowrap py-2.5 text-[11px] font-semibold ${active ? "text-primary" : "text-muted"}`;
@@ -68,8 +67,7 @@ export function BottomNav() {
         className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
         aria-label="Điều hướng"
       >
-        {/* Số tab = số mục của khoá đang học + "Gói AI" */}
-        <ul className="grid" style={{ gridTemplateColumns: `repeat(${nav.length + 1}, minmax(0, 1fr))` }}>
+        <ul className="grid" style={{ gridTemplateColumns: `repeat(${nav.length}, minmax(0, 1fr))` }}>
           {nav.map((entry) => {
             const active = isEntryActive(entry, pathname) || openGroup === entry.label;
             const Icon = entry.icon;
@@ -95,12 +93,6 @@ export function BottomNav() {
               </li>
             );
           })}
-          <li>
-            <Link href="/pricing" className={tab(isActive("/pricing", pathname))}>
-              <Sparkles className="size-5" />
-              Gói AI
-            </Link>
-          </li>
         </ul>
       </nav>
     </>

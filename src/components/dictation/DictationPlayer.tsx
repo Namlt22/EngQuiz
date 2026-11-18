@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowRight, BookOpen, CheckCircle2, Eye, Gauge, Headphones, Lightbulb, Play, RotateCcw, SkipForward, Square, Trophy, X,
+  ArrowRight, CheckCircle2, Eye, Gauge, Lightbulb, Play, RotateCcw, SkipForward, Square, X,
 } from "lucide-react";
 import type { DictationExercise } from "@/content/types";
 import { checkDictation, maskSentence, maskWord, type DictationCheck } from "@/core/dictation";
@@ -12,6 +12,10 @@ import { PASS_PERCENT, progressActions } from "@/lib/progress";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SpeakButton } from "@/components/ui/SpeakButton";
 import { LevelBadge } from "@/components/ui/LevelBadge";
+import { ActivityResult } from "@/components/lesson/ActivityResult";
+import { CATALOG } from "@/content/catalog";
+import { DICTATIONS } from "@/content/dictations";
+import { isAvailable } from "@/lib/learn";
 
 interface SentenceResult {
   /** Độ chính xác ở lần kiểm tra ĐẦU TIÊN (0..1) — phản ánh đúng khả năng nghe. */
@@ -384,36 +388,28 @@ function DictationSummary({
   }, [exercise, percent]);
 
   const passed = percent >= PASS_PERCENT;
-  const verdict = useMemo(
-    () => (percent >= 95 ? "Đôi tai vàng! 👂✨" : passed ? "Rất tốt! Bạn nghe khá chuẩn." : percent >= 50 ? "Khá ổn, luyện thêm chút nữa nhé." : "Đừng nản — nghe chậm (0.75x) và thử lại."),
-    [percent, passed],
-  );
+  // Bước tiếp: chủ điểm kế tiếp (bài theo chủ điểm) hoặc bài nghe chép kế tiếp cùng loại.
+  const nextLink = useMemo(() => {
+    if (exercise.topicSlug) {
+      const i = CATALOG.findIndex((t) => t.slug === exercise.topicSlug);
+      const t = CATALOG.slice(i + 1).find((x) => isAvailable(x.slug));
+      return t ? { label: t.title, href: `/grammar/${t.slug}` } : undefined;
+    }
+    const same = DICTATIONS.filter((d) => d.kind === exercise.kind);
+    const n = same[same.findIndex((d) => d.id === exercise.id) + 1];
+    return n ? { label: n.title, href: `/dictation/${n.id}` } : undefined;
+  }, [exercise]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <section className="card animate-pop-in overflow-hidden text-center">
-        <div className={`bg-gradient-to-br p-8 text-white ${passed ? "from-emerald-500 to-teal-500" : "from-indigo-500 to-violet-500"}`}>
-          <Trophy className="mx-auto size-12" />
-          <div className="mt-3 text-5xl font-black">{percent}%</div>
-          <p className="mt-1 text-white/90">
-            Chính xác ở lần kiểm tra đầu · {perfect}/{exercise.sentences.length} câu hoàn hảo
-          </p>
-          <p className="mt-3 font-semibold">{verdict}</p>
-        </div>
-        <div className="flex flex-wrap justify-center gap-2 p-4">
-          <button type="button" onClick={onRestart} className="btn-primary">
-            <RotateCcw className="size-4" /> Làm lại
-          </button>
-          {exercise.topicSlug && (
-            <Link href={`/grammar/${exercise.topicSlug}`} className="btn-ghost">
-              <BookOpen className="size-4" /> Lý thuyết
-            </Link>
-          )}
-          <Link href="/dictation" className="btn-ghost">
-            <Headphones className="size-4" /> Bài khác
-          </Link>
-        </div>
-      </section>
+      <ActivityResult
+        passed={passed}
+        percent={percent}
+        detail={`${perfect}/${exercise.sentences.length}`}
+        onRetry={onRestart}
+        reviewLink={exercise.topicSlug ? { label: "Xem lại lý thuyết", href: `/grammar/${exercise.topicSlug}` } : undefined}
+        next={nextLink}
+      />
 
       <section className="card divide-y divide-line">
         <h2 className="p-4 font-bold">Toàn bộ nội dung</h2>

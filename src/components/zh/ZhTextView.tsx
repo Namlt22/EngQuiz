@@ -7,7 +7,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, Headphones, Pause, Play, Volume2 } from "lucide-react";
-import type { ZhTextLesson } from "@/content/zh/texts";
+import { ZH_DIALOGUES, ZH_READINGS, type ZhTextLesson } from "@/content/zh/texts";
 import { plainText, tokenize, type ZhToken } from "@/core/zh-sentence";
 import { progressActions } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
@@ -26,6 +26,8 @@ export function ZhTextView({ lesson }: { lesson: ZhTextLesson }) {
   const [playing, setPlaying] = useState<number | null>(null);
   const [gloss, setGloss] = useState<ZhToken | null>(null);
   const isDialogue = lesson.kind === "dialogue";
+  const sameKind = isDialogue ? ZH_DIALOGUES : ZH_READINGS;
+  const following = sameKind[sameKind.findIndex((t) => t.id === lesson.id) + 1];
   const back = isDialogue ? { href: "/zh/dialogues", label: "Hội thoại" } : { href: "/zh/reading", label: "Bài đọc" };
 
   function speakLine(i: number, chain: boolean) {
@@ -105,7 +107,12 @@ export function ZhTextView({ lesson }: { lesson: ZhTextLesson }) {
 
       <section className="space-y-3">
         <h2 className="text-lg font-extrabold">Câu hỏi đọc hiểu</h2>
-        <ZhTextQuiz questions={lesson.questions} onFinish={finish} />
+        <ZhTextQuiz
+          questions={lesson.questions}
+          onFinish={finish}
+          nextLink={{ label: "Nghe chép bài này", href: `/zh/dictation/${lesson.id}` }}
+          secondary={following ? { label: following.title, href: `/zh/${isDialogue ? "dialogues" : "reading"}/${following.id}` } : undefined}
+        />
       </section>
 
       <Link href={`/zh/dictation/${lesson.id}`} className="card flex items-center gap-3 p-4 transition hover:shadow-md">

@@ -5,14 +5,15 @@
  * rồi xem điểm từng phần và ôn lại đáp án. Đạt passPercent thì app ghi nhận (lộ trình tự tích bài thi thử).
  */
 import { useMemo, useState } from "react";
-import { ArrowRight, CheckCircle2, Headphones, RotateCcw, Volume2, XCircle } from "lucide-react";
-import type { MockItem, MockTest } from "@/content/zh/mock";
+import { ArrowRight, CheckCircle2, Headphones, Volume2, XCircle } from "lucide-react";
+import { ZH_MOCKS, type MockItem, type MockTest } from "@/content/zh/mock";
 import { plainText } from "@/core/zh-sentence";
 import { progressActions } from "@/lib/progress";
 import { seededShuffle } from "@/lib/seeded-shuffle";
 import { useSpeech } from "@/lib/speech";
 import { ZhText, hasHan } from "./ZhText";
 import { ZhVoiceNotice } from "./ZhVoiceNotice";
+import { ActivityResult } from "@/components/lesson/ActivityResult";
 
 const MOCK_XP = 30;
 const SECTION_LABEL: Record<MockItem["section"], string> = { listening: "Nghe", reading: "Đọc" };
@@ -111,6 +112,7 @@ function MockResult({ test, answers, onRetry }: { test: MockTest; answers: strin
   const correct = test.items.filter((_, k) => ok(k)).length;
   const percent = Math.round((correct / test.items.length) * 100);
   const passed = percent >= test.passPercent;
+  const nextTest = Object.values(ZH_MOCKS).find((t) => t.level === test.level + 1);
   const bySection = (["listening", "reading"] as const).map((sec) => {
     const idx = test.items.map((q, k) => (q.section === sec ? k : -1)).filter((k) => k >= 0);
     return { sec, total: idx.length, right: idx.filter(ok).length };
@@ -118,23 +120,13 @@ function MockResult({ test, answers, onRetry }: { test: MockTest; answers: strin
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      <section className="card space-y-3 p-6 text-center" role="status">
-        <p className="text-4xl font-extrabold">{percent}%</p>
-        <p className={`font-bold ${passed ? "text-success" : "text-danger"}`}>{passed ? `Đạt! (từ ${test.passPercent}%) — bài thi thử đã được ghi nhận.` : `Chưa đạt (cần ${test.passPercent}%).`}</p>
-        <div className="flex justify-center gap-6 text-sm">
-          {bySection.map((s) => (
-            <div key={s.sec}>
-              <div className="font-bold">
-                {s.right}/{s.total}
-              </div>
-              <div className="text-muted">{SECTION_LABEL[s.sec]}</div>
-            </div>
-          ))}
-        </div>
-        <button type="button" onClick={onRetry} className="btn-ghost mx-auto">
-          <RotateCcw className="size-4" /> Làm lại (thứ tự đáp án mới)
-        </button>
-      </section>
+      <ActivityResult
+        passed={passed}
+        percent={percent}
+        detail={bySection.map((s) => `${SECTION_LABEL[s.sec]} ${s.right}/${s.total}`).join(" · ")}
+        onRetry={onRetry}
+        next={nextTest ? { label: nextTest.title, href: `/zh/mock/${nextTest.id}` } : undefined}
+      />
       <section className="space-y-2">
         <h2 className="font-bold">Xem lại đáp án</h2>
         {test.items.map((q, k) => (

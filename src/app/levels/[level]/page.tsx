@@ -25,8 +25,8 @@ export default async function LevelPage({ params }: { params: Promise<{ level: s
   return (
     <div className="space-y-6">
       <section className={`rounded-3xl bg-gradient-to-br p-6 text-white shadow-lg md:p-8 ${level.gradient}`}>
-        <Link href="/levels" className="inline-flex items-center gap-1 text-sm font-medium text-white/80 hover:text-white">
-          <ChevronLeft className="size-4" /> Tất cả cấp độ
+        <Link href="/grammar" className="inline-flex items-center gap-1 text-sm font-medium text-white/80 hover:text-white">
+          <ChevronLeft className="size-4" /> Ngữ pháp
         </Link>
         <div className="mt-3 flex items-center gap-4">
           <span className="grid size-16 place-items-center rounded-2xl bg-white/20 text-2xl font-black">{level.code}</span>

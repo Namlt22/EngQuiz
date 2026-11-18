@@ -64,7 +64,12 @@ export function ZhGrammarView({ lesson }: { lesson: ZhGrammarLesson }) {
 
       <section className="space-y-3">
         <h2 className="text-lg font-extrabold">Bài tập</h2>
-        <ZhGrammarQuiz questions={lesson.quiz} showPinyin={pinyin} onFinish={(percent) => percent >= 80 && progressActions.recordZhLesson("grammar", lesson.id, percent, LESSON_XP)} />
+        <ZhGrammarQuiz
+          questions={lesson.quiz}
+          showPinyin={pinyin}
+          onFinish={(percent) => percent >= 80 && progressActions.recordZhLesson("grammar", lesson.id, percent, LESSON_XP)}
+          nextLink={next ? { label: next.title, href: `/zh/grammar/${next.id}` } : undefined}
+        />
       </section>
 
       {next && (

@@ -2,13 +2,12 @@ import { AudioLines, BookOpen, BookOpenText, Bot, Dumbbell, Headphones, House, L
 import type { CourseCode } from "@/lib/course";
 
 /**
- * Điều hướng chính, dùng chung cho header (máy tính) và thanh tab dưới (điện thoại).
- * 10 trang được gom thành 4 mục để header không bị chật: Trang chủ · Lộ trình · Học ▾ · Luyện tập ▾.
+ * Điều hướng chính, dùng chung cho header (máy tính) và thanh tab dưới (điện thoại) — docs/REDESIGN.md mục 2.
+ * Cả hai khoá cùng khung: Hôm nay · Lộ trình · Học ▾ · Luyện ▾.
  */
 export interface NavLink {
   href: string;
   label: string;
-  /** Mô tả ngắn hiện trong menu thả xuống */
   icon: LucideIcon;
 }
 
@@ -21,68 +20,77 @@ export interface NavGroup {
 export type NavEntry = ({ kind: "link" } & NavLink) | ({ kind: "group" } & NavGroup);
 
 export const NAV_EN: NavEntry[] = [
-  { kind: "link", href: "/", label: "Trang chủ", icon: House },
+  { kind: "link", href: "/", label: "Hôm nay", icon: House },
   { kind: "link", href: "/roadmap", label: "Lộ trình", icon: Route },
   {
     kind: "group",
     label: "Học",
     icon: BookOpen,
     items: [
-      { href: "/levels", label: "Cấp độ", icon: Layers },
-      { href: "/grammar", label: "Lý thuyết", icon: BookOpen },
+      { href: "/grammar", label: "Ngữ pháp", icon: BookOpen },
       { href: "/vocab", label: "Từ vựng", icon: Layers },
       { href: "/ipa", label: "Phát âm", icon: AudioLines },
       { href: "/reading", label: "Đọc hiểu", icon: BookOpenText },
+      { href: "/dialogues", label: "Hội thoại", icon: MessagesSquare },
     ],
   },
   {
     kind: "group",
-    label: "Luyện tập",
+    label: "Luyện",
     icon: Dumbbell,
     items: [
-      { href: "/chat", label: "Trò chuyện AI", icon: Bot },
       { href: "/quiz", label: "Quiz", icon: PenLine },
       { href: "/dictation", label: "Nghe chép", icon: Headphones },
       { href: "/speaking", label: "Luyện nói", icon: Mic },
-      { href: "/dialogues", label: "Hội thoại", icon: MessagesSquare },
+      { href: "/chat", label: "Trò chuyện AI", icon: Bot },
     ],
   },
 ];
 
-/**
- * Khoá tiếng Trung — chỉ liệt kê trang đã có nội dung; các phần pinyin, Hán tự, từ vựng…
- * được thêm vào đây khi xây xong (docs/PLAN-ZH.md mục 7).
- */
 export const NAV_ZH: NavEntry[] = [
-  { kind: "link", href: "/zh", label: "Trang chủ", icon: House },
+  { kind: "link", href: "/zh", label: "Hôm nay", icon: House },
   { kind: "link", href: "/zh/roadmap", label: "Lộ trình", icon: Route },
   {
     kind: "group",
     label: "Học",
     icon: BookOpen,
     items: [
-      { href: "/zh/pinyin", label: "Pinyin & thanh điệu", icon: AudioLines },
+      { href: "/zh/pinyin", label: "Pinyin", icon: AudioLines },
       { href: "/zh/hanzi", label: "Hán tự", icon: PenLine },
       { href: "/zh/vocab", label: "Từ vựng HSK", icon: Layers },
       { href: "/zh/grammar", label: "Ngữ pháp", icon: BookOpenText },
       { href: "/zh/reading", label: "Bài đọc", icon: BookOpen },
+      { href: "/zh/dialogues", label: "Hội thoại", icon: MessagesSquare },
     ],
   },
   {
     kind: "group",
-    label: "Luyện tập",
+    label: "Luyện",
     icon: Dumbbell,
     items: [
-      { href: "/zh/chat", label: "Trò chuyện AI", icon: Bot },
-      { href: "/zh/dialogues", label: "Hội thoại", icon: MessagesSquare },
       { href: "/zh/dictation", label: "Nghe chép", icon: Headphones },
-      { href: "/zh/mock/hsk1", label: "Thi thử HSK 1", icon: PenLine },
-      { href: "/zh/mock/hsk2", label: "Thi thử HSK 2", icon: PenLine },
-      { href: "/zh/mock/hsk3", label: "Thi thử HSK 3", icon: PenLine },
-      { href: "/zh/mock/hsk4", label: "Thi thử HSK 4", icon: PenLine },
+      { href: "/zh/mock", label: "Thi thử HSK", icon: PenLine },
+      { href: "/zh/chat", label: "Trò chuyện AI", icon: Bot },
     ],
   },
 ];
+
+/**
+ * Màn hình đang làm bài: thanh tab dưới ẩn để không che nút (docs/REDESIGN.md mục 2.2).
+ * "/review" và "/sentences/…" là trang sắp có; khai báo trước để không phải sửa lại.
+ */
+export const SESSION_ROUTES: readonly RegExp[] = [
+  /^\/quiz\/.+/,
+  /^\/dictation\/.+/,
+  /^\/zh\/dictation\/.+/,
+  /^\/zh\/mock\/.+/,
+  /^\/review\/?$/,
+  /^\/zh\/review\/?$/,
+  /^\/sentences\/.+/,
+  /^\/zh\/sentences\/.+/,
+];
+
+export const isSessionRoute = (pathname: string) => SESSION_ROUTES.some((re) => re.test(pathname));
 
 export const NAV_BY_COURSE: Record<CourseCode, NavEntry[]> = { en: NAV_EN, zh: NAV_ZH };
 

@@ -51,7 +51,14 @@ export function GrammarLibrary({ topics, available }: { topics: TopicMeta[]; ava
         />
       </div>
 
-      <p className="text-sm text-muted">{filtered.length} chủ điểm</p>
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <span className="text-muted">{filtered.length} chủ điểm</span>
+        {level !== "ALL" && (
+          <Link href={`/levels/${level.toLowerCase()}`} className="font-semibold text-primary hover:underline">
+            Học theo thứ tự {level} →
+          </Link>
+        )}
+      </div>
 
       <ul className="grid gap-3 sm:grid-cols-2">
         {filtered.map((t) => {

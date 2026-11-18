@@ -1,10 +1,10 @@
-import { HomeDashboard } from "@/components/learn/HomeDashboard";
 import { CourseGate } from "@/components/learn/CourseGate";
+import { TodayHub } from "@/components/learn/TodayHub";
 
 export default function HomePage() {
   return (
     <CourseGate>
-      <HomeDashboard />
+      <TodayHub course="en" />
     </CourseGate>
   );
 }

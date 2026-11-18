@@ -40,7 +40,8 @@ export function RoadmapReturnBar() {
   const done = taskDone(log, task);
 
   return (
-    <div className={`border-b ${done ? "border-success/30 bg-success/10" : "border-primary/20 bg-primary-soft"}`} role="status">
+    // Ẩn khi màn hình kết quả (ActivityResult) đang hiện: nút "bước tiếp theo" ở đó đã dẫn về lộ trình.
+    <div className={`border-b [body[data-result]_&]:hidden ${done ? "border-success/30 bg-success/10" : "border-primary/20 bg-primary-soft"}`} role="status">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2 text-sm">
         {done ? <CheckCircle2 className="size-5 shrink-0 text-success" /> : <Route className="size-5 shrink-0 text-primary" />}
         <span className="min-w-0 flex-1 truncate">

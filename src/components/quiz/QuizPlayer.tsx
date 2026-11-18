@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, BookOpen, CheckCircle2, Headphones, RotateCcw, Trophy, X, XCircle } from "lucide-react";
-import { getTopicMeta } from "@/content/catalog";
+import { ArrowRight, BookOpen, CheckCircle2, X, XCircle } from "lucide-react";
+import { CATALOG, getTopicMeta } from "@/content/catalog";
 import { dictationsForTopic } from "@/content/dictations";
 import { correctAnswerText, gradeQuestion, isResponseComplete, type QuizResponse } from "@/core/grading";
 import { PASS_PERCENT, progressActions } from "@/lib/progress";
 import type { QuizItem, QuizSet } from "@/lib/quiz-sets";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { ActivityResult } from "@/components/lesson/ActivityResult";
+import { isAvailable } from "@/lib/learn";
 import { QuestionView, TYPE_LABELS, describeResponse, emptyResponse } from "./QuestionView";
 
 interface Answered {
@@ -211,39 +213,20 @@ function QuizResult({
   const passed = percent >= PASS_PERCENT;
   const topicSlug = set.kind === "topic" ? byTopic[0][0] : undefined;
   const dictation = topicSlug ? dictationsForTopic(topicSlug)[0] : undefined;
+  // Chủ điểm kế tiếp (theo thứ tự cấp độ) đã có bài.
+  const followingTopic = topicSlug ? CATALOG.slice(CATALOG.findIndex((t) => t.slug === topicSlug) + 1).find((t) => isAvailable(t.slug)) : undefined;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <section className="card animate-pop-in overflow-hidden text-center">
-        <div className={`bg-gradient-to-br p-8 text-white ${passed ? "from-emerald-500 to-teal-500" : "from-indigo-500 to-violet-500"}`}>
-          <Trophy className="mx-auto size-12" />
-          <div className="mt-3 text-5xl font-black">{percent}%</div>
-          <p className="mt-1 text-white/90">
-            Đúng {correct}/{total} câu {isRetryRound && "(vòng làm lại)"}
-          </p>
-          <p className="mt-3 font-semibold">
-            {passed ? "Tuyệt vời! Bạn đã nắm chắc phần này 🎉" : `Cố lên! Đạt ${PASS_PERCENT}% để hoàn thành chủ điểm.`}
-          </p>
-        </div>
-        <div className="flex flex-wrap justify-center gap-2 p-4">
-          {wrong.length > 0 && (
-            <button type="button" onClick={() => onRestart(true)} className="btn-primary">
-              <RotateCcw className="size-4" /> Làm lại {wrong.length} câu sai
-            </button>
-          )}
-          <button type="button" onClick={() => onRestart(false)} className="btn-ghost">
-            <RotateCcw className="size-4" /> Làm lại từ đầu
-          </button>
-          {dictation && (
-            <Link href={`/dictation/${dictation.id}`} className="btn-ghost">
-              <Headphones className="size-4" /> Nghe & chép
-            </Link>
-          )}
-          <Link href={set.level ? `/levels/${set.level.toLowerCase()}` : "/quiz"} className="btn-ghost">
-            Về lộ trình
-          </Link>
-        </div>
-      </section>
+      <ActivityResult
+        passed={passed}
+        percent={percent}
+        detail={`${correct}/${total}${isRetryRound ? " · vòng làm lại" : ""}`}
+        onRetry={() => onRestart(wrong.length > 0)}
+        reviewLink={topicSlug ? { label: "Xem lại lý thuyết", href: `/grammar/${topicSlug}` } : undefined}
+        next={dictation ? { label: "Nghe chép", href: `/dictation/${dictation.id}` } : followingTopic ? { label: followingTopic.title, href: `/grammar/${followingTopic.slug}` } : undefined}
+        secondary={dictation && followingTopic ? { label: followingTopic.title, href: `/grammar/${followingTopic.slug}` } : undefined}
+      />
 
       {byTopic.length > 1 && (
         <section className="card p-5">

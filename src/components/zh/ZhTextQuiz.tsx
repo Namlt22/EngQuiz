@@ -2,12 +2,24 @@
 
 /** Câu hỏi đọc hiểu cuối bài đọc / hội thoại. Dữ liệu để đáp án đúng ở vị trí đầu; ở đây xáo thứ tự khi hiển thị. */
 import { useMemo, useState } from "react";
-import { ArrowRight, CheckCircle2, RotateCcw, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, XCircle } from "lucide-react";
 import type { ZhTextQuestion } from "@/content/zh/texts";
 import { PASS_PERCENT } from "@/lib/progress-calc";
 import { seededShuffle } from "@/lib/seeded-shuffle";
+import type { StepLinkInput } from "@/lib/next-step";
+import { ActivityResult } from "@/components/lesson/ActivityResult";
 
-export function ZhTextQuiz({ questions, onFinish }: { questions: ZhTextQuestion[]; onFinish: (percent: number, correct: number, total: number) => void }) {
+export function ZhTextQuiz({
+  questions,
+  onFinish,
+  nextLink,
+  secondary,
+}: {
+  questions: ZhTextQuestion[];
+  onFinish: (percent: number, correct: number, total: number) => void;
+  nextLink?: StepLinkInput;
+  secondary?: StepLinkInput;
+}) {
   const [round, setRound] = useState(0);
   const [i, setI] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
@@ -17,24 +29,19 @@ export function ZhTextQuiz({ questions, onFinish }: { questions: ZhTextQuestion[
   if (i >= questions.length) {
     const percent = Math.round((correct / questions.length) * 100);
     return (
-      <div className="card space-y-3 p-6 text-center" role="status">
-        <p className="text-3xl font-extrabold">{percent}%</p>
-        <p className="text-muted">
-          Đúng {correct}/{questions.length}. {percent >= PASS_PERCENT ? "Bài đã được ghi nhận." : `Cần từ ${PASS_PERCENT}% — nghe và đọc lại bài rồi thử lại.`}
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            setRound((r) => r + 1);
-            setI(0);
-            setCorrect(0);
-            setPicked(null);
-          }}
-          className="btn-ghost mx-auto"
-        >
-          <RotateCcw className="size-4" /> Làm lại
-        </button>
-      </div>
+      <ActivityResult
+        passed={percent >= PASS_PERCENT}
+        percent={percent}
+        detail={`${correct}/${questions.length}`}
+        onRetry={() => {
+          setRound((r) => r + 1);
+          setI(0);
+          setCorrect(0);
+          setPicked(null);
+        }}
+        next={nextLink}
+        secondary={secondary}
+      />
     );
   }
 
