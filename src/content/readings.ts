@@ -1,7 +1,8 @@
 /**
- * Bài đọc hiểu (Reading) A1–B1. Mỗi bài: các đoạn văn kèm bản dịch, từ vựng, câu hỏi đọc hiểu.
+ * Bài đọc hiểu (Reading) A1–C1 (B1 bổ sung, B2, C1 ở src/content/readings-upper.ts). Mỗi bài: các đoạn văn kèm bản dịch, từ vựng, câu hỏi đọc hiểu.
  * Câu hỏi dùng chung kiểu Question với Quiz nên được chấm bằng cùng bộ chấm (src/core/grading.ts).
  */
+import { READINGS_UPPER } from "./readings-upper";
 import type { ReadingPassage } from "./types";
 
 export const READINGS: ReadingPassage[] = [
@@ -238,6 +239,7 @@ export const READINGS: ReadingPassage[] = [
       { id: "rd-pl-6", type: "mcq", prompt: "Which is NOT mentioned as a way to help?", options: ["Carrying your own bag", "Using a water bottle", "Using paper or bamboo straws", "Burning plastic at home"], answer: 3, explanation: "Bài không nhắc đến việc đốt nhựa." },
     ],
   },
+  ...READINGS_UPPER,
 ];
 
 export function getReading(id: string): ReadingPassage | undefined {

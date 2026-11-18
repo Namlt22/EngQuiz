@@ -4,7 +4,7 @@ import { LessonList } from "@/components/lesson/LessonList";
 
 export const metadata: Metadata = {
   title: "Đọc hiểu (Reading)",
-  description: "Bài đọc tiếng Anh A1–B1 theo chủ đề, có bản dịch, từ vựng, âm thanh và câu hỏi đọc hiểu tự chấm.",
+  description: "Bài đọc tiếng Anh A1–C1 theo chủ đề, có bản dịch, từ vựng, âm thanh và câu hỏi đọc hiểu tự chấm.",
 };
 
 export default function ReadingIndexPage() {
