@@ -6,16 +6,17 @@
  */
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, Ear, PartyPopper, RotateCcw, Snail, Volume2, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, Ear, RotateCcw, Snail, Volume2, XCircle } from "lucide-react";
 import { IPA_GROUP_INFO, IPA_SOUNDS, type IpaExample, type IpaSound } from "@/content/ipa";
 import { LISTEN_PASS_PERCENT, LISTEN_ROUNDS, buildListenRounds, listenPercent, wordDone, type ListenRound, type WordAttempt } from "@/core/ipa-lesson";
 import { READ_ALOUD_PASS, scoreReadAloud } from "@/core/speaking";
 import { useIpaSoundPlayer } from "@/lib/ipa-player";
-import { progressActions } from "@/lib/progress";
+import { getProgressState, progressActions } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
 import { useSpeechRecognition } from "@/lib/speech-recognition";
 import { RecordButton } from "@/components/speaking/RecordButton";
 import { scoreTone } from "@/components/speaking/ScoreBadge";
+import { ActivityResult } from "@/components/lesson/ActivityResult";
 
 type Step = 1 | 2 | 3 | "done";
 const STEPS = ["Nghe & quan sát", "Đọc theo", "Nghe phân biệt"] as const;
@@ -27,12 +28,15 @@ export function SoundLesson({ sound }: { sound: IpaSound }) {
   const play = useIpaSoundPlayer(speech.speak, preload);
   const [step, setStep] = useState<Step>(1);
   const [listenScore, setListenScore] = useState(0);
+  const [gainedXp, setGainedXp] = useState(0);
   const info = IPA_GROUP_INFO[sound.group];
 
   function finish(percent: number) {
     setListenScore(percent);
+    const before = getProgressState("en").xp;
     progressActions.markSound(sound.id);
     progressActions.addXp(LESSON_XP);
+    setGainedXp(getProgressState("en").xp - before);
     setStep("done");
   }
 
@@ -54,7 +58,7 @@ export function SoundLesson({ sound }: { sound: IpaSound }) {
       {step === 1 && <ObserveStep sound={sound} onPlay={() => play(sound)} onNext={() => setStep(2)} />}
       {step === 2 && <RepeatStep sound={sound} speak={speech.speak} onNext={() => setStep(3)} />}
       {step === 3 && <ListenStep sound={sound} speak={speech.speak} onPass={finish} />}
-      {step === "done" && <DoneCard sound={sound} percent={listenScore} />}
+      {step === "done" && <DoneCard sound={sound} percent={listenScore} xp={gainedXp} onRetry={() => setStep(1)} />}
     </div>
   );
 }
@@ -358,24 +362,17 @@ function ListenStep({ sound, speak, onPass }: { sound: IpaSound; speak: (t: stri
 
 /* ---------------- Hoàn thành ---------------- */
 
-function DoneCard({ sound, percent }: { sound: IpaSound; percent: number }) {
+function DoneCard({ sound, percent, xp, onRetry }: { sound: IpaSound; percent: number; xp: number; onRetry: () => void }) {
   const idx = IPA_SOUNDS.findIndex((s) => s.id === sound.id);
   const next = IPA_SOUNDS[(idx + 1) % IPA_SOUNDS.length];
   return (
-    <section className="card animate-pop-in space-y-4 p-6 text-center" role="status">
-      <PartyPopper className="mx-auto size-10 text-primary" />
-      <h2 className="text-xl font-extrabold">Hoàn thành bài phát âm /{sound.symbol}/</h2>
-      <p className="text-muted">
-        Nghe phân biệt đúng {percent}%. Bài đã được ghi nhận — nếu bài này nằm trong lộ trình, nó đã tự được tích. +{LESSON_XP} XP
-      </p>
-      <div className="flex flex-wrap justify-center gap-2">
-        <Link href={`/ipa/${next.id}`} className="btn-primary">
-          Âm tiếp theo /{next.symbol}/ <ArrowRight className="size-4" />
-        </Link>
-        <Link href="/ipa" className="btn-ghost">
-          Bảng IPA
-        </Link>
-      </div>
-    </section>
+    <ActivityResult
+      passed
+      percent={percent}
+      xp={xp}
+      onRetry={onRetry}
+      next={{ label: `Âm tiếp theo /${next.symbol}/`, href: `/ipa/${next.id}` }}
+      secondary={{ label: "Bảng IPA", href: "/ipa" }}
+    />
   );
 }

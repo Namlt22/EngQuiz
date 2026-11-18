@@ -12,7 +12,8 @@ import type { LevelCode } from "@/content/types";
 import { MASTERED_BOX, buildQueue, dayNumber, decodeSrs } from "@/core/srs";
 import { useProgress } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
-import { EnFlashcardSession, type EnCardMode } from "./EnFlashcardSession";
+import { vocabCard } from "@/lib/vocab-cards";
+import { CardSession, type Card, type CardMode } from "./CardSession";
 import { SaveWordButton } from "@/components/notebook/SaveWordButton";
 
 export function EnVocabHome() {
@@ -24,7 +25,7 @@ export function EnVocabHome() {
   const { speak } = useSpeech();
   const progress = useProgress();
   const srs = useMemo(() => decodeSrs(progress.srs), [progress.srs]);
-  const [session, setSession] = useState<{ queue: string[]; mode: EnCardMode } | null>(null);
+  const [session, setSession] = useState<{ queue: string[]; mode: CardMode } | null>(null);
 
   const words = (topic ? [topic] : topics).flatMap((t) => t.words);
   const list = words.map((w) => w[0]);
@@ -42,7 +43,7 @@ export function EnVocabHome() {
   if (session) {
     return (
       <div className="mx-auto max-w-xl">
-        <EnFlashcardSession queue={session.queue} mode={session.mode} speak={(t, rate) => speak(t, rate)} onExit={() => setSession(null)} />
+        <CardSession cards={session.queue.map((w) => vocabCard(w, "en")).filter((c): c is Card => c !== null)} mode={session.mode} course="en" speak={(t) => speak(t, 0.9)} onExit={() => setSession(null)} />
       </div>
     );
   }
@@ -86,10 +87,10 @@ export function EnVocabHome() {
             {queue.length ? `Ôn ${queue.length} thẻ (${due} đến hạn)` : "Hôm nay đã ôn xong"}
           </button>
           <div className="flex gap-2">
-            <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "word" })} className="btn-ghost flex-1 text-sm">
+            <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "term" })} className="btn-ghost flex-1 text-sm">
               Từ → nghĩa
             </button>
-            <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "spell" })} className="btn-ghost flex-1 text-sm">
+            <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "type" })} className="btn-ghost flex-1 text-sm">
               <Keyboard className="size-4" /> Gõ từ
             </button>
           </div>

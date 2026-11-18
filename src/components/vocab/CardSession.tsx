@@ -1,28 +1,47 @@
 "use client";
 
 /**
- * Phiên ôn thẻ dùng chung (Sổ tay, Ôn thẻ hôm nay). Mỗi thẻ tự mang hàm chấm của nguồn nó (bộ từ chuẩn hay Sổ tay).
- *  - "meaning": mặt trước là nghĩa tiếng Việt → lật xem từ, phiên âm, ví dụ → tự chấm Quên / Nhớ / Dễ;
- *  - "type":    nghe + xem nghĩa → gõ lại từ; máy chấm (đúng = Nhớ, sai = Quên).
+ * Phiên ôn thẻ dùng chung (Từ vựng EN/HSK, Sổ tay, Ôn thẻ hôm nay). Mỗi thẻ tự mang hàm chấm của nguồn nó.
+ *  - "term":    mặt trước là từ → lật xem cách đọc, nghĩa → tự chấm Quên / Nhớ / Dễ;
+ *  - "meaning": mặt trước là nghĩa tiếng Việt → lật xem từ → tự chấm;
+ *  - "listen":  chỉ nghe → lật xem từ và nghĩa → tự chấm;
+ *  - "type":    nghe + xem nghĩa → gõ lại từ; máy chấm (đúng = Nhớ, sai = Quên);
+ *  - "reading": xem từ → gõ cách đọc (pinyin), thẻ phải có `checkReading`; máy chấm từng âm tiết.
  * Thẻ "Quên" được đưa xuống cuối phiên để ôn lại một lần.
  */
 import { useEffect, useState } from "react";
-import { CheckCircle2, RotateCcw, Volume2, XCircle } from "lucide-react";
+import { CheckCircle2, Ear, RotateCcw, Volume2, XCircle } from "lucide-react";
+import type { NewEntry } from "@/core/notebook";
 import type { Grade } from "@/core/srs";
+import type { CharMark } from "@/core/zh-dictation";
 import type { CourseCode } from "@/lib/course";
+import { SaveWordButton } from "@/components/notebook/SaveWordButton";
 import { SessionHeader } from "@/components/ui/SessionHeader";
 
+export interface ReadingCheck {
+  correct: boolean;
+  marks: CharMark[];
+}
+
 export interface Card {
-  /** Khoá duy nhất trong phiên (vd "vocab:apple", "nb:abc123"). */
+  /** Khoá duy nhất trong phiên (vd "v:apple", "nb:abc123"). */
   id: string;
   term: string;
   meaning: string;
   reading?: string;
   example?: string;
+  /** Nhãn từ loại ngắn, hiện trước nghĩa (vd "danh từ"). */
+  tag?: string;
+  /** Dòng phụ dưới cách đọc (vd "đọc là …", "Hán-Việt: …"). */
+  notes?: string[];
+  /** Có thì mặt sau hiện ngôi sao lưu vào Sổ tay (thẻ đã ở Sổ tay thì bỏ trống). */
+  save?: NewEntry;
+  /** Chấm kiểu "reading". */
+  checkReading?: (typed: string) => ReadingCheck;
   grade: (g: Grade) => void;
 }
 
-export type CardMode = "meaning" | "type";
+export type CardMode = "term" | "meaning" | "listen" | "type" | "reading";
 
 /** So khớp từ gõ vào: không phân biệt hoa thường, bỏ khoảng trắng / dấu câu thừa, ’ = '. */
 export function sameTerm(typed: string, term: string, course: CourseCode): boolean {
@@ -32,6 +51,8 @@ export function sameTerm(typed: string, term: string, course: CourseCode): boole
       : s.trim().toLowerCase().replace(/[’`]/g, "'").replace(/[.!?,]+$/g, "").replace(/\s+/g, " ");
   return norm(typed) !== "" && norm(typed) === norm(term);
 }
+
+const TYPED_MODES: readonly CardMode[] = ["type", "reading"];
 
 export function CardSession({
   cards: initial,
@@ -44,19 +65,20 @@ export function CardSession({
   mode: CardMode;
   course: CourseCode;
   speak: (text: string) => void;
+  /** `total` = số thẻ đã ôn; bằng số thẻ của phiên khi ôn hết. */
   onExit: (stats: { total: number; again: number }) => void;
 }) {
   const [queue, setQueue] = useState(initial);
   const [i, setI] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [typed, setTyped] = useState("");
-  const [checked, setChecked] = useState<boolean | null>(null);
+  const [checked, setChecked] = useState<ReadingCheck | null>(null);
   const [requeued, setRequeued] = useState<Set<string>>(new Set());
   const [stats, setStats] = useState({ again: 0, good: 0, easy: 0 });
 
-  // Kiểu gõ: đọc to từ khi thẻ mới hiện ra.
+  // Kiểu nghe / gõ từ: đọc to từ khi thẻ mới hiện ra.
   useEffect(() => {
-    if (mode === "type" && i < queue.length) speak(queue[i].term);
+    if ((mode === "type" || mode === "listen") && i < queue.length) speak(queue[i].term);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ đọc khi sang thẻ mới
   }, [i, mode]);
 
@@ -78,7 +100,9 @@ export function CardSession({
   }
 
   const card = queue[i];
+  const typing = TYPED_MODES.includes(mode);
   const revealed = flipped || checked !== null;
+  const termClass = course === "zh" ? "text-6xl font-medium" : "text-4xl font-extrabold";
 
   function next(g: Grade) {
     card.grade(g);
@@ -93,53 +117,102 @@ export function CardSession({
     setI((n) => n + 1);
   }
 
+  function check() {
+    if (!typed.trim()) return;
+    const result =
+      mode === "reading" && card.checkReading ? card.checkReading(typed) : { correct: sameTerm(typed, card.term, course), marks: [] };
+    setChecked(result);
+    speak(card.term);
+  }
+
+  function front() {
+    if (mode === "term" || mode === "reading") {
+      return (
+        <span lang={lang} className={termClass}>
+          {card.term}
+        </span>
+      );
+    }
+    if (mode === "listen") {
+      return (
+        <button type="button" onClick={() => speak(card.term)} className="grid size-24 place-items-center rounded-full bg-primary-soft text-primary" aria-label="Nghe lại">
+          <Ear className="size-10" />
+        </button>
+      );
+    }
+    return (
+      <>
+        <span className="text-2xl font-bold">{card.meaning}</span>
+        {mode === "type" && (
+          <button type="button" onClick={() => speak(card.term)} className="btn-ghost" aria-label="Nghe lại">
+            <Volume2 className="size-4" />
+          </button>
+        )}
+      </>
+    );
+  }
+
+  function back() {
+    return (
+      <>
+        <span lang={lang} className={termClass}>
+          {card.term}
+        </span>
+        {card.save && <SaveWordButton entry={card.save} />}
+        <button type="button" onClick={() => speak(card.term)} className={`inline-flex items-center gap-1.5 text-primary ${course === "zh" ? "text-2xl font-bold" : "font-mono text-xl"}`}>
+          <Volume2 className="size-5" /> {card.reading}
+        </button>
+        {card.notes?.map((n) => (
+          <div key={n} className="text-sm text-muted">
+            {n}
+          </div>
+        ))}
+        <div className="text-lg">
+          {card.tag && <span className="mr-1 text-xs text-muted">({card.tag})</span>}
+          {card.meaning}
+        </div>
+        {card.example && (
+          <button type="button" onClick={() => speak(card.example!)} lang={lang} className="flex items-center gap-1.5 text-sm italic text-muted hover:text-fg">
+            <Volume2 className="size-3.5 shrink-0" /> {card.example}
+          </button>
+        )}
+      </>
+    );
+  }
+
   return (
     <section className="space-y-4">
       <SessionHeader onExit={() => onExit({ total: i, again: stats.again })} value={(i / queue.length) * 100} current={i + 1} total={queue.length} />
 
       <div className="card flex min-h-72 flex-col items-center justify-center gap-3 p-6 text-center">
-        {revealed ? (
-          <>
-            <span lang={lang} className={course === "zh" ? "text-5xl font-medium" : "text-4xl font-extrabold"}>
-              {card.term}
-            </span>
-            <button type="button" onClick={() => speak(card.term)} className="inline-flex items-center gap-1.5 text-lg text-primary">
-              <Volume2 className="size-5" /> {card.reading}
-            </button>
-            <div className="text-lg">{card.meaning}</div>
-            {card.example && (
-              <button type="button" onClick={() => speak(card.example!)} lang={lang} className="flex items-center gap-1.5 text-sm italic text-muted hover:text-fg">
-                <Volume2 className="size-3.5 shrink-0" /> {card.example}
-              </button>
-            )}
-            {checked !== null && (
-              <p className={`flex items-center gap-1.5 font-semibold ${checked ? "text-success" : "text-danger"}`}>
-                {checked ? <CheckCircle2 className="size-5" /> : <XCircle className="size-5" />}
-                {checked ? "Chính xác" : typed}
-              </p>
-            )}
-          </>
-        ) : (
-          <>
-            <span className="text-2xl font-bold">{card.meaning}</span>
-            {mode === "type" && (
-              <button type="button" onClick={() => speak(card.term)} className="btn-ghost" aria-label="Nghe lại">
-                <Volume2 className="size-4" />
-              </button>
-            )}
-          </>
+        {revealed ? back() : front()}
+        {checked && checked.marks.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-1.5" aria-label="Kết quả từng âm tiết">
+            {checked.marks.map((m, k) => (
+              <span
+                key={k}
+                className={`chip font-semibold ${m.score === 1 ? "bg-success/10 text-success" : m.score > 0 ? "bg-warning-soft text-warning" : "bg-danger-soft text-danger"}`}
+              >
+                {m.char} {m.syllable}
+              </span>
+            ))}
+          </div>
+        )}
+        {checked && (
+          <p className={`flex items-center gap-1.5 font-semibold ${checked.correct ? "text-success" : "text-danger"}`}>
+            {checked.correct ? <CheckCircle2 className="size-5" /> : <XCircle className="size-5" />}
+            {checked.correct ? "Chính xác" : typed}
+          </p>
         )}
       </div>
 
-      {mode === "type" ? (
+      {typing ? (
         checked === null ? (
           <form
             className="flex gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              if (!typed.trim()) return;
-              setChecked(sameTerm(typed, card.term, course));
-              speak(card.term);
+              check();
             }}
           >
             <input
@@ -149,16 +222,17 @@ export function CardSession({
               autoCapitalize="off"
               autoComplete="off"
               spellCheck={false}
-              lang={lang}
+              lang={mode === "reading" ? "en" : lang}
+              placeholder={mode === "reading" ? "ni3 hao3" : undefined}
               className="input flex-1"
-              aria-label="Gõ từ"
+              aria-label={mode === "reading" ? "Gõ pinyin" : "Gõ từ"}
             />
             <button type="submit" disabled={!typed.trim()} className="btn-primary">
               Kiểm tra
             </button>
           </form>
         ) : (
-          <button type="button" onClick={() => next(checked ? "good" : "again")} className="btn-primary w-full py-3 text-base" autoFocus>
+          <button type="button" onClick={() => next(checked.correct ? "good" : "again")} className="btn-primary w-full py-3 text-base" autoFocus>
             Tiếp
           </button>
         )

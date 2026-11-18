@@ -8,28 +8,18 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
-import { getEnWord } from "@/content/vocab-en";
-import { getHskWord } from "@/content/zh/vocab";
-import { vocabVi } from "@/content/zh/vocab-vi";
 import { dayNumber } from "@/core/srs";
 import type { CourseCode } from "@/lib/course";
 import { progressActions, useProgress } from "@/lib/progress";
 import { buildReviewQueue, type ReviewItem } from "@/lib/review-queue";
 import { useHydrated } from "@/lib/roadmap-store";
 import { useSpeech } from "@/lib/speech";
+import { vocabCard } from "@/lib/vocab-cards";
 import { notebookCard } from "@/components/notebook/NotebookHome";
 import { CardSession, type Card, type CardMode } from "./CardSession";
 
 function toCard(item: ReviewItem, course: CourseCode): Card | null {
-  if (item.kind === "notebook") return notebookCard(item.entry);
-  const grade: Card["grade"] = (g) => progressActions.reviewWord(item.word, g);
-  if (course === "zh") {
-    const w = getHskWord(item.word);
-    const vi = vocabVi(item.word);
-    return w && vi ? { id: `v:${item.word}`, term: w.hanzi, meaning: vi[1], reading: w.pinyin, grade } : null;
-  }
-  const w = getEnWord(item.word);
-  return w ? { id: `v:${item.word}`, term: w[0], meaning: w[3], reading: w[2], example: w[4], grade } : null;
+  return item.kind === "notebook" ? notebookCard(item.entry) : vocabCard(item.word, course);
 }
 
 export function ReviewHome({ course }: { course: CourseCode }) {

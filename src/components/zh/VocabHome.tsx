@@ -12,9 +12,10 @@ import { wordsIntroducedAt } from "@/content/zh/vocab";
 import { POS_LABEL, VI_LEVELS, vocabVi } from "@/content/zh/vocab-vi";
 import { applySandhi } from "@/core/pinyin";
 import { MASTERED_BOX, buildQueue, dayNumber, decodeSrs } from "@/core/srs";
-import { useProgress } from "@/lib/progress";
+import { progressActions, useProgress } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
-import { FlashcardSession, type CardMode } from "./FlashcardSession";
+import { vocabCard } from "@/lib/vocab-cards";
+import { CardSession, type Card, type CardMode } from "@/components/vocab/CardSession";
 import { SaveWordButton } from "@/components/notebook/SaveWordButton";
 import { ZhVoiceNotice } from "./ZhVoiceNotice";
 
@@ -48,7 +49,17 @@ export function VocabHome() {
   if (session) {
     return (
       <div className="mx-auto max-w-xl">
-        <FlashcardSession queue={session.queue} mode={session.mode} speak={speak} onExit={() => setSession(null)} />
+        <CardSession
+          cards={session.queue.map((w) => vocabCard(w, "zh")).filter((c): c is Card => c !== null)}
+          mode={session.mode}
+          course="zh"
+          speak={speak}
+          onExit={({ total }) => {
+            // Ôn hết lượt → báo lộ trình đã ôn từ vựng hôm nay.
+            if (total >= session.queue.length) progressActions.finishVocabSession();
+            setSession(null);
+          }}
+        />
       </div>
     );
   }
@@ -84,7 +95,7 @@ export function VocabHome() {
             <Stat icon={<BookOpen className="size-4" />} value={list.length - mastered - learning} label="Chưa học" tone="text-muted" />
           </div>
           <div className="flex flex-col gap-2">
-            <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "hanzi" })} className="btn-primary">
+            <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "term" })} className="btn-primary">
               {queue.length ? `Ôn ${queue.length} thẻ (${due} đến hạn)` : "Hôm nay đã ôn xong"}
             </button>
             <div className="grid grid-cols-3 gap-2">
@@ -94,7 +105,7 @@ export function VocabHome() {
               <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "listen" })} className="btn-ghost px-2 text-sm">
                 <Ear className="size-4" /> Nghe
               </button>
-              <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "pinyin" })} className="btn-ghost px-2 text-sm">
+              <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "reading" })} className="btn-ghost px-2 text-sm">
                 <Keyboard className="size-4" /> Gõ pinyin
               </button>
             </div>

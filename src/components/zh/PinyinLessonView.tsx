@@ -6,16 +6,17 @@
  */
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, Ear, PartyPopper, RotateCcw, Snail, Volume2, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, Ear, RotateCcw, Snail, Volume2, XCircle } from "lucide-react";
 import { PINYIN_GROUP_INFO, PINYIN_LESSONS, type PinyinItem, type PinyinLesson } from "@/content/zh/pinyin-lessons";
 import { charReadings } from "@/content/zh/vocab";
 import { applySandhi, toneOf } from "@/core/pinyin";
 import { PASS_PERCENT, buildDrill, drillPercent, itemDone, scoreSpoken, type Attempt, type DrillRound } from "@/core/pinyin-lesson";
-import { progressActions } from "@/lib/progress";
+import { getProgressState, progressActions } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
 import { useSpeechRecognition } from "@/lib/speech-recognition";
 import { RecordButton } from "@/components/speaking/RecordButton";
 import { scoreTone } from "@/components/speaking/ScoreBadge";
+import { ActivityResult } from "@/components/lesson/ActivityResult";
 import { ToneCurve } from "./ToneCurve";
 import { ZhVoiceNotice } from "./ZhVoiceNotice";
 
@@ -31,11 +32,14 @@ export function PinyinLessonView({ lesson }: { lesson: PinyinLesson }) {
   const say: Say = (hanzi, rate = NORMAL_RATE) => speech.speak(hanzi, rate);
   const [step, setStep] = useState<Step>(1);
   const [score, setScore] = useState(0);
+  const [gainedXp, setGainedXp] = useState(0);
   const info = PINYIN_GROUP_INFO[lesson.group];
 
   function finish(percent: number) {
     setScore(percent);
+    const before = getProgressState("zh").xp;
     progressActions.recordZhLesson("pinyin", lesson.id, percent, LESSON_XP);
+    setGainedXp(getProgressState("zh").xp - before);
     setStep("done");
   }
 
@@ -54,7 +58,7 @@ export function PinyinLessonView({ lesson }: { lesson: PinyinLesson }) {
       {step === 1 && <ObserveStep lesson={lesson} say={say} onNext={() => setStep(2)} />}
       {step === 2 && <RepeatStep lesson={lesson} say={say} onNext={() => setStep(3)} />}
       {step === 3 && <DrillStep lesson={lesson} say={say} onPass={finish} />}
-      {step === "done" && <DoneCard lesson={lesson} percent={score} />}
+      {step === "done" && <DoneCard lesson={lesson} percent={score} xp={gainedXp} onRetry={() => setStep(1)} />}
     </div>
   );
 }
@@ -377,24 +381,9 @@ function DrillStep({ lesson, say, onPass }: { lesson: PinyinLesson; say: Say; on
 
 /* ---------------- Hoàn thành ---------------- */
 
-function DoneCard({ lesson, percent }: { lesson: PinyinLesson; percent: number }) {
+function DoneCard({ lesson, percent, xp, onRetry }: { lesson: PinyinLesson; percent: number; xp: number; onRetry: () => void }) {
   const idx = PINYIN_LESSONS.findIndex((l) => l.id === lesson.id);
   const next = PINYIN_LESSONS[idx + 1];
-  return (
-    <section className="card animate-pop-in space-y-4 p-6 text-center" role="status">
-      <PartyPopper className="mx-auto size-10 text-primary" />
-      <h2 className="text-xl font-extrabold">Hoàn thành: {lesson.title}</h2>
-      <p className="text-muted">Luyện tai đúng {percent}%. Bài đã được ghi nhận. +{LESSON_XP} XP (lần đầu)</p>
-      <div className="flex flex-wrap justify-center gap-2">
-        {next && (
-          <Link href={`/zh/pinyin/${next.id}`} className="btn-primary">
-            Bài tiếp: {next.title} <ArrowRight className="size-4" />
-          </Link>
-        )}
-        <Link href="/zh/pinyin" className="btn-ghost">
-          Danh sách bài
-        </Link>
-      </div>
-    </section>
-  );
+  const list = { label: "Danh sách bài", href: "/zh/pinyin" };
+  return <ActivityResult passed percent={percent} xp={xp} onRetry={onRetry} next={next ? { label: `Bài tiếp: ${next.title}`, href: `/zh/pinyin/${next.id}` } : list} secondary={next ? list : undefined} />;
 }
