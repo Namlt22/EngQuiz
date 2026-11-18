@@ -57,7 +57,11 @@ export function buildQueue(words: readonly string[], srs: SrsMap, today: number,
 
 /* ---------------- Mã hoá chuỗi lưu trữ ---------------- */
 
-const ENTRY = /^(\p{Script=Han}{1,8}),([0-5]),(\d{1,6})$/u;
+/**
+ * Khoá của một thẻ: từ tiếng Trung (1–8 chữ Hán) hoặc từ / cụm từ tiếng Anh viết thường (2–30 ký tự: chữ, dấu cách,
+ * gạch nối, nháy đơn; bắt đầu và kết thúc bằng chữ). Không chứa "," hay ";" nên không phá chuỗi lưu.
+ */
+const ENTRY = /^(\p{Script=Han}{1,8}|[a-z][a-z' -]{0,28}[a-z]),([0-5]),(\d{1,6})$/u;
 
 export function decodeSrs(raw: string | undefined): SrsMap {
   const map: SrsMap = new Map();

@@ -106,6 +106,6 @@ describe("dữ liệu ôn từ vựng (srs)", () => {
   });
 
   it("sanitize bỏ mục hỏng", () => {
-    expect(sanitizeLearnerData({ ...course(), progress: { ...progress(), srs: "爱,2,1;xx,1,1" } }).progress.srs).toBe("爱,2,1");
+    expect(sanitizeLearnerData({ ...course(), progress: { ...progress(), srs: "爱,2,1;XX,1,1;x,1,1" } }).progress.srs).toBe("爱,2,1");
   });
 });

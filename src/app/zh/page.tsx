@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AudioLines, BookOpen, Brush, Headphones, Layers, MessagesSquare, PenLine, Route } from "lucide-react";
+import { AudioLines, BookOpen, Bot, Brush, Headphones, Layers, MessagesSquare, PenLine, Route } from "lucide-react";
 import { HSK_INFO, HSK_LEVELS, ZH_INTRO_STAGE } from "@/content/zh/hsk-levels";
 
 /** Lối tắt tới các phần của khoá tiếng Trung — chỉ icon + tên. */
@@ -8,6 +8,7 @@ const MODULES = [
   { icon: Brush, title: "Hán tự", href: "/zh/hanzi" },
   { icon: Layers, title: "Từ vựng", href: "/zh/vocab" },
   { icon: BookOpen, title: "Ngữ pháp", href: "/zh/grammar" },
+  { icon: Bot, title: "Trò chuyện AI", href: "/zh/chat" },
   { icon: MessagesSquare, title: "Hội thoại", href: "/zh/dialogues" },
   { icon: Headphones, title: "Nghe chép", href: "/zh/dictation" },
   { icon: PenLine, title: "Thi thử", href: "/zh/mock/hsk1" },
@@ -43,7 +44,7 @@ export default function ZhHomePage() {
 
       <section>
         <h2 className="mb-3 text-xl font-bold">Luyện tập</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {MODULES.map(({ icon: Icon, title, href }) => (
             <Link key={href} href={href} className="card flex flex-col items-center gap-2 p-4 text-center transition hover:-translate-y-0.5 hover:shadow-md">
               <span className="grid size-10 place-items-center rounded-xl bg-surface-2 text-primary">

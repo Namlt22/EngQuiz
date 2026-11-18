@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, AudioLines, BookOpen, Flame, Headphones, PenLine, Sparkles, Star, Trophy } from "lucide-react";
+import { ArrowRight, AudioLines, BookOpen, Bot, Flame, Headphones, Layers, PenLine, Sparkles, Star, Trophy } from "lucide-react";
 import { LEVELS } from "@/content/levels";
 import { levelStats, nextTopic } from "@/lib/learn";
 import { useProgress } from "@/lib/progress";
@@ -10,6 +10,8 @@ import { RoadmapTeaser } from "@/components/roadmap/RoadmapTeaser";
 
 /** Lối tắt tới các phần luyện tập — chỉ icon + tên, không mô tả. */
 const SHORTCUTS = [
+  { href: "/chat", label: "Trò chuyện AI", icon: Bot, tone: "from-rose-500 to-pink-500" },
+  { href: "/vocab", label: "Từ vựng", icon: Layers, tone: "from-lime-500 to-green-600" },
   { href: "/grammar", label: "Lý thuyết", icon: BookOpen, tone: "from-sky-500 to-indigo-500" },
   { href: "/quiz", label: "Quiz", icon: PenLine, tone: "from-violet-500 to-fuchsia-500" },
   { href: "/dictation", label: "Nghe chép", icon: Headphones, tone: "from-emerald-500 to-teal-500" },
@@ -94,7 +96,7 @@ export function HomeDashboard() {
 
       <section>
         <h2 className="mb-3 text-xl font-bold">Luyện tập</h2>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
           {SHORTCUTS.map(({ href, label, icon: Icon, tone }) => (
             <Link key={href} href={href} className="card group flex items-center gap-3 p-4 transition hover:-translate-y-0.5 hover:shadow-md">
               <span className={`grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-white ${tone}`}>

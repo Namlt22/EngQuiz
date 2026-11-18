@@ -47,11 +47,24 @@ describe("chuỗi lưu trữ", () => {
   });
 
   it("bỏ mục sai định dạng khi giải mã; kiểm tra hợp lệ", () => {
-    expect(decodeSrs("爱,2,20000;abc,1,1;好,9,1").size).toBe(1);
+    expect(decodeSrs("爱,2,20000;ABC,1,1;好,9,1;get-up,9,1").size).toBe(1);
     expect(isValidSrs("爱,2,20000;好,1,20001")).toBe(true);
     expect(isValidSrs("爱,2,20000;爱,1,20001")).toBe(false);
     expect(isValidSrs("x,1,1")).toBe(false);
     expect(isValidSrs("")).toBe(true);
+  });
+
+  it("nhận cả từ / cụm từ tiếng Anh viết thường (khoá tiếng Anh)", () => {
+    const map = new Map([
+      ["get up", { box: 1, due: 20_000 }],
+      ["mother-in-law", { box: 3, due: 20_010 }],
+      ["don't", { box: 2, due: 20_005 }],
+    ]);
+    expect(decodeSrs(encodeSrs(map))).toEqual(map);
+    expect(isValidSrs("get up,1,20000;apple,2,20001")).toBe(true);
+    expect(isValidSrs("Apple,2,20001")).toBe(false);
+    expect(isValidSrs("apple ,2,20001")).toBe(false);
+    expect(isValidSrs("a,2,20001")).toBe(false);
   });
 
   it("gộp hai máy: giữ hộp cao hơn, cùng hộp lấy hạn muộn hơn", () => {

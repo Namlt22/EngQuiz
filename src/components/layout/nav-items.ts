@@ -30,6 +30,7 @@ export const NAV_EN: NavEntry[] = [
     items: [
       { href: "/levels", label: "Cấp độ", icon: Layers },
       { href: "/grammar", label: "Lý thuyết", icon: BookOpen },
+      { href: "/vocab", label: "Từ vựng", icon: Layers },
       { href: "/ipa", label: "Phát âm", icon: AudioLines },
       { href: "/reading", label: "Đọc hiểu", icon: BookOpenText },
     ],
