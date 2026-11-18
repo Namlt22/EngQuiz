@@ -1,4 +1,4 @@
-import { AudioLines, BookOpen, BookOpenText, Bot, Dumbbell, Headphones, House, Layers, MessagesSquare, Mic, NotebookPen, PenLine, Repeat, Route, type LucideIcon } from "lucide-react";
+import { AudioLines, BookOpen, BookOpenText, Bot, Dumbbell, Headphones, House, Layers, MessageSquareText, MessagesSquare, Mic, NotebookPen, PenLine, Repeat, Route, type LucideIcon } from "lucide-react";
 import type { CourseCode } from "@/lib/course";
 
 /**
@@ -41,6 +41,7 @@ export const NAV_EN: NavEntry[] = [
     items: [
       { href: "/review", label: "Ôn thẻ hôm nay", icon: Repeat },
       { href: "/quiz", label: "Quiz", icon: PenLine },
+      { href: "/sentences", label: "Đặt câu", icon: MessageSquareText },
       { href: "/dictation", label: "Nghe chép", icon: Headphones },
       { href: "/speaking", label: "Luyện nói", icon: Mic },
       { href: "/chat", label: "Trò chuyện AI", icon: Bot },
@@ -71,6 +72,7 @@ export const NAV_ZH: NavEntry[] = [
     icon: Dumbbell,
     items: [
       { href: "/zh/review", label: "Ôn thẻ hôm nay", icon: Repeat },
+      { href: "/zh/sentences", label: "Đặt câu", icon: MessageSquareText },
       { href: "/zh/dictation", label: "Nghe chép", icon: Headphones },
       { href: "/zh/mock", label: "Thi thử HSK", icon: PenLine },
       { href: "/zh/chat", label: "Trò chuyện AI", icon: Bot },
@@ -81,7 +83,6 @@ export const NAV_ZH: NavEntry[] = [
 
 /**
  * Màn hình đang làm bài: thanh tab dưới ẩn để không che nút (docs/REDESIGN.md mục 2.2).
- * "/review" và "/sentences/…" là trang sắp có; khai báo trước để không phải sửa lại.
  */
 export const SESSION_ROUTES: readonly RegExp[] = [
   /^\/quiz\/.+/,

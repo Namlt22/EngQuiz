@@ -11,11 +11,12 @@ import { getDialogue } from "@/content/dialogues";
 import { getDictation } from "@/content/dictations";
 import { IPA_MAP } from "@/content/ipa";
 import { getReading } from "@/content/readings";
+import { getSentenceSet, sentenceSetsFor } from "@/content/sentence-practice";
 import { promptIdByText } from "@/content/speaking-prompts";
 import { getQuizSet, topicSetId } from "./quiz-sets";
 import { SESSIONS_PER_WEEK, type Roadmap, type RoadmapLog, type RoadmapWeek } from "./roadmap";
 
-export type TaskKind = "theory" | "quiz" | "dictation" | "read" | "sound" | "talk" | "quizset" | "reading" | "dialogue";
+export type TaskKind = "theory" | "quiz" | "dictation" | "read" | "sound" | "talk" | "quizset" | "reading" | "dialogue" | "sentence";
 
 export interface RoadmapTask {
   /** Duy nhất trong lộ trình: "tuần-ngày-thứ tự" */
@@ -49,7 +50,7 @@ export const DAYS_PER_WEEK = SESSIONS_PER_WEEK + 1;
 export const resourceKey = (kind: TaskKind, ref: string) => `${kind}:${ref}`;
 
 const MIN_TASKS_PER_DAY = 2;
-const MINUTES: Record<TaskKind, number> = { theory: 10, quiz: 8, dictation: 12, read: 10, sound: 5, talk: 8, quizset: 15, reading: 12, dialogue: 12 };
+const MINUTES: Record<TaskKind, number> = { theory: 10, quiz: 8, dictation: 12, read: 10, sound: 5, talk: 8, quizset: 15, reading: 12, dialogue: 12, sentence: 8 };
 
 type Draft = Omit<RoadmapTask, "id">;
 
@@ -98,7 +99,23 @@ function draft(kind: TaskKind, ref: string, review = false): Draft | null {
       const d = getDialogue(ref);
       return d ? { ...base, title: `Hội thoại: ${d.title}`, hint: "Nhập vai rồi làm bài tập hội thoại, đạt từ 80%", href: `/dialogues/${ref}` } : null;
     }
+    case "sentence":
+      return sentenceDraft(ref);
   }
+}
+
+/** Nhiệm vụ "Đặt câu" (dùng cho cả hai khoá — id bộ câu đã gồm tiền tố khoá). */
+export function sentenceDraft(setId: string): Draft | null {
+  const set = getSentenceSet(setId);
+  if (!set) return null;
+  const href = `${set.course === "zh" ? "/zh" : ""}/sentences/${set.id}`;
+  return { kind: "sentence", key: resourceKey("sentence", set.id), minutes: MINUTES.sentence, title: `Đặt câu: ${set.title}`, hint: "Đạt từ 80% trở lên", href };
+}
+
+/** Bộ đặt câu của tuần thứ `week` (1-based) trong lộ trình tiếng Anh: lần lượt theo cấp độ, hết thì quay vòng. */
+export function enSentenceSetForWeek(week: number): string {
+  const sets = sentenceSetsFor("en");
+  return sets[(week - 1) % sets.length].id;
 }
 
 /**
@@ -169,11 +186,15 @@ export function weekStudyDays(week: RoadmapWeek): Draft[][] {
     ...week.prompts.map((p) => draft("talk", p, true)),
   ].filter((t): t is Draft => t !== null);
   let next = 0;
-  return days.map((raw) => {
+  const out = days.map((raw) => {
     const list = raw.filter((t): t is Draft => t !== null);
     while (list.length < MIN_TASKS_PER_DAY && fillers.length) list.push(fillers[next++ % fillers.length]);
     return list;
   });
+  // Ngày 6 — thêm một bộ Đặt câu, đặt CUỐI ngày để id các bài có sẵn không đổi (xem settleAddedTasks).
+  const sentence = sentenceDraft(enSentenceSetForWeek(week.n));
+  if (sentence) out[SESSIONS_PER_WEEK - 1].push(sentence);
+  return out;
 }
 
 /** Toàn bộ ngày học của lộ trình (7 ngày mỗi tuần). */
@@ -255,9 +276,31 @@ export function completeResource(days: RoadmapDay[], log: RoadmapLog, key: strin
  * Bài không còn trong lịch mới thì bỏ; các mục khác của nhật ký (số giây nói…) giữ nguyên.
  */
 export function remapTasks(oldDays: RoadmapDay[], newDays: RoadmapDay[], log: RoadmapLog): RoadmapLog {
-  let next: RoadmapLog = { ...log, tasks: {} };
+  const markers = Object.fromEntries(Object.entries(log.tasks).filter(([id]) => id.startsWith(MARKER_PREFIX)));
+  let next: RoadmapLog = { ...log, tasks: markers };
   for (const task of oldDays.flatMap((d) => d.tasks)) {
     if (taskDone(log, task)) next = completeResource(newDays, next, task.key);
   }
   return next;
+}
+
+/* ---------------- Bài mới thêm vào lộ trình có sẵn ---------------- */
+
+/** Mục đánh dấu trong log.tasks (không phải id bài): "đã chuyển dữ liệu cho đợt thêm bài này". */
+const MARKER_PREFIX = "v:";
+export const SENTENCE_TASKS_MARKER = `${MARKER_PREFIX}sentence-tasks`;
+
+/**
+ * Lộ trình vừa được thêm bài Đặt câu (cuối một số ngày). Ngày người học ĐÃ XONG trước đợt thêm
+ * không được mở lại: bài mới ở ngày đó coi như đã xong. Ngày chưa xong thì phải làm cả bài mới.
+ * Chỉ chạy một lần cho mỗi nhật ký (đánh dấu SENTENCE_TASKS_MARKER, đồng bộ cùng nhật ký giữa các máy).
+ */
+export function settleAddedTasks(days: RoadmapDay[], log: RoadmapLog): RoadmapLog {
+  if (log.tasks[SENTENCE_TASKS_MARKER]) return log;
+  const tasks: Record<string, boolean> = { ...log.tasks, [SENTENCE_TASKS_MARKER]: true };
+  for (const day of days) {
+    const old = day.tasks.filter((t) => t.kind !== "sentence");
+    if (old.length && old.every((t) => taskDone(log, t))) day.tasks.filter((t) => t.kind === "sentence").forEach((t) => (tasks[t.id] = true));
+  }
+  return { ...log, tasks };
 }

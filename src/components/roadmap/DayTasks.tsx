@@ -2,7 +2,7 @@
 
 /** Danh sách bài của một ngày học: mỗi bài một dòng, bấm "Học" là vào đúng trang; xong thì tự hiện dấu tích. */
 import Link from "next/link";
-import { AudioLines, BookOpen, BookOpenText, Check, Headphones, Layers, MessagesSquare, Mic, PenLine, Repeat, Volume2 } from "lucide-react";
+import { AudioLines, BookOpen, BookOpenText, Check, Headphones, Layers, MessageSquareText, MessagesSquare, Mic, PenLine, Repeat, Volume2 } from "lucide-react";
 import type { RoadmapLog } from "@/lib/roadmap";
 import { taskDone, type RoadmapDay, type TaskKind } from "@/lib/roadmap-days";
 import { saveReturnTarget } from "@/lib/roadmap-return";
@@ -18,6 +18,7 @@ export const TASK_ICONS: Record<TaskKind, typeof BookOpen> = {
   talk: Mic,
   reading: BookOpenText,
   dialogue: MessagesSquare,
+  sentence: MessageSquareText,
 };
 
 export const dayMinutes = (day: RoadmapDay) => day.tasks.reduce((sum, t) => sum + t.minutes, 0);

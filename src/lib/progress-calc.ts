@@ -29,6 +29,8 @@ export interface ProgressState {
   reading?: Record<string, DictationProgress>;
   /** Bài hội thoại: điểm bài tập cao nhất, theo id bài. Bản cũ chưa có trường này. */
   dialogues?: Record<string, DictationProgress>;
+  /** Luyện đặt câu: điểm cao nhất, theo id bộ câu. Bản cũ chưa có trường này. */
+  sentences?: Record<string, DictationProgress>;
   /** Khoá tiếng Trung: các chữ Hán đã tự viết đúng ở bài tô chữ, nối thành một chuỗi (gọn hơn một record mỗi chữ). */
   hanzi?: string;
   /** Khoá tiếng Trung: trạng thái ôn từ vựng (hộp Leitner), dạng chuỗi gọn — xem src/core/srs.ts. */

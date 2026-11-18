@@ -67,6 +67,8 @@ export function sanitizeProgress(raw: unknown): ProgressState {
   if (Object.keys(reading).length) state.reading = reading;
   const dialogues = pick(r.dialogues, LIMITS.lessons, cleanDictation);
   if (Object.keys(dialogues).length) state.dialogues = dialogues;
+  const sentences = pick(r.sentences, LIMITS.lessons, cleanDictation);
+  if (Object.keys(sentences).length) state.sentences = sentences;
   const hanzi = cleanHanzi(r.hanzi);
   if (hanzi) state.hanzi = hanzi;
   const srs = typeof r.srs === "string" ? encodeSrs(decodeSrs(r.srs)) : "";

@@ -89,7 +89,7 @@ function patchTopic(s: ProgressState, slug: string, patch: (t: TopicProgress) =>
 const LESSON_XP_PER_CORRECT = 2;
 
 /** Lưu điểm cao nhất của một bài đọc / hội thoại; XP = số câu đúng VƯỢT lần tốt nhất trước (làm lại không cộng lặp). */
-function recordLesson(s: ProgressState, field: "reading" | "dialogues", id: string, percent: number, correct: number, total: number): ProgressState {
+function recordLesson(s: ProgressState, field: "reading" | "dialogues" | "sentences", id: string, percent: number, correct: number, total: number): ProgressState {
   const prev = s[field]?.[id];
   const prevCorrect = prev ? Math.round((prev.best / 100) * prev.total) : 0;
   const best = Math.max(prev?.best ?? 0, percent);
@@ -170,6 +170,12 @@ export const progressActions = {
   recordDialogue(id: string, percent: number, correct: number, total: number) {
     if (percent >= PASS_PERCENT) done("dialogue", id);
     update((s) => recordLesson(s, "dialogues", id, percent, correct, total));
+  },
+
+  /** Làm xong một bộ luyện đặt câu: điểm = số câu đúng ngay lần đầu; XP chỉ cộng phần vượt lần tốt nhất. */
+  recordSentenceSet(id: string, percent: number, correct: number, total: number) {
+    if (percent >= PASS_PERCENT) done("sentence", id);
+    update((s) => recordLesson(s, "sentences", id, percent, correct, total));
   },
 
   /** Làm xong quiz tổng hợp (không thuộc một chủ điểm). */

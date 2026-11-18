@@ -43,6 +43,7 @@ export function mergeProgress(a: ProgressState, b: ProgressState): ProgressState
   const speaking = mergeKeys(a.speaking ?? {}, b.speaking ?? {}, mergeDictation);
   const reading = mergeKeys(a.reading ?? {}, b.reading ?? {}, mergeDictation);
   const dialogues = mergeKeys(a.dialogues ?? {}, b.dialogues ?? {}, mergeDictation);
+  const sentences = mergeKeys(a.sentences ?? {}, b.sentences ?? {}, mergeDictation);
   return {
     version: 1,
     topics: mergeKeys(a.topics, b.topics, mergeTopic),
@@ -51,6 +52,7 @@ export function mergeProgress(a: ProgressState, b: ProgressState): ProgressState
     ...(Object.keys(speaking).length ? { speaking } : {}),
     ...(Object.keys(reading).length ? { reading } : {}),
     ...(Object.keys(dialogues).length ? { dialogues } : {}),
+    ...(Object.keys(sentences).length ? { sentences } : {}),
     ...(a.hanzi || b.hanzi ? { hanzi: cleanHanzi((a.hanzi ?? "") + (b.hanzi ?? "")) } : {}),
     ...(a.srs || b.srs ? { srs: mergeSrs(a.srs, b.srs) } : {}),
     ...(a.notebook?.length || b.notebook?.length ? { notebook: mergeNotebook(a.notebook ?? [], b.notebook ?? []) } : {}),

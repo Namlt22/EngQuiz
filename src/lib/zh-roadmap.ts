@@ -12,7 +12,8 @@ import { ZH_GRAMMAR_MAP } from "@/content/zh/grammar";
 import { ZH_TEXT_MAP } from "@/content/zh/texts";
 import { ZH_INTRO_WEEKS, ZH_WEEKS, type ZhWeekPlan } from "@/content/zh/roadmap-zh";
 import type { RoadmapProfile, RoadmapWeek } from "./roadmap";
-import { DAYS_PER_WEEK, resourceKey, type RoadmapDay, type RoadmapTask, type TaskKind } from "./roadmap-days";
+import { sentenceSetsFor } from "@/content/sentence-practice";
+import { DAYS_PER_WEEK, resourceKey, sentenceDraft, type RoadmapDay, type RoadmapTask, type TaskKind } from "./roadmap-days";
 
 type Draft = Omit<RoadmapTask, "id">;
 
@@ -45,6 +46,19 @@ const vocabTask = (hsk: number) => task("quizset", "zh-vocab", `Ôn thẻ từ v
 const charTask = (ch: string) => task("quiz", `hanzi-${ch}`, `Tập viết chữ ${ch}`, "Tự viết đúng thứ tự nét (sai không quá 3 lần)", `/zh/hanzi/${ch.codePointAt(0)!.toString(16)}`, 5);
 const radicalsTask = () => task("quiz", "hanzi-radicals", "Chữ Hán: nét, thứ tự nét, bộ thủ", "Đọc bài, qua bài kiểm tra bộ thủ (từ 75%)", "/zh/hanzi", 15);
 const mockTask = (id: string) => task("quizset", `mock-${id}`, `Thi thử ${id.toUpperCase()}`, "Làm hết bài thi, đạt từ 60%", `/zh/mock/${id}`, 25);
+
+/**
+ * Bộ đặt câu cho một tuần HSK: các bộ cùng cấp HSK lần lượt theo thứ tự tuần trong cấp đó, hết thì quay vòng;
+ * cấp chưa có bộ riêng thì dùng các bộ của cấp cao nhất đang có. Tuần nhập môn (pinyin) không có.
+ */
+export function zhSentenceSetFor(hsk: number | undefined, nthWeekOfLevel: number): string | undefined {
+  if (!hsk) return undefined;
+  const all = sentenceSetsFor("zh");
+  const levels = [...new Set(all.map((s) => Number(s.level.replace(/\D/g, ""))))].filter((l) => l <= hsk);
+  if (!levels.length) return undefined;
+  const sets = all.filter((s) => s.level === `HSK ${Math.max(...levels)}`);
+  return sets[nthWeekOfLevel % sets.length].id;
+}
 
 /** Chia tài nguyên của một tuần thành 6 ngày học. */
 function studyDays(w: ZhWeekPlan): Draft[][] {
@@ -119,7 +133,13 @@ export function buildZhRoadmap(profile: RoadmapProfile): ZhRoadmap {
   const days: RoadmapDay[] = [];
   plans.forEach((w, wi) => {
     const week = wi + 1;
-    const drafts = [...studyDays(w), checkpoint(w)];
+    const study = studyDays(w);
+    // Ngày 6 — thêm một bộ Đặt câu ở CUỐI ngày (id các bài có sẵn không đổi, xem settleAddedTasks).
+    const nth = plans.slice(0, wi).filter((p) => p.phase !== 1 && p.hsk === w.hsk).length;
+    const setId = w.phase === 1 ? undefined : zhSentenceSetFor(w.hsk, nth);
+    const sentence = setId ? sentenceDraft(setId) : null;
+    if (sentence) study[DAYS_PER_WEEK - 2].push(sentence);
+    const drafts = [...study, checkpoint(w)];
     drafts.forEach((tasks, di) => {
       const day = di + 1;
       days.push({

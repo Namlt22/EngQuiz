@@ -124,3 +124,23 @@ describe("tiến độ bài đọc & hội thoại (reading, dialogues)", () => 
     expect(mergeProgress(base, base)).not.toHaveProperty("reading");
   });
 });
+
+describe("tiến độ luyện đặt câu (sentences)", () => {
+  const base = { version: 1 as const, topics: {}, dictations: {}, xp: 0, streak: 0, activity: {} };
+
+  it("giữ mục hợp lệ, bỏ mục sai; schema của server chấp nhận", () => {
+    const p = sanitizeProgress({ ...base, sentences: { "en-yes-no": { best: 75, done: 6, total: 8 }, bad: { best: 200 } } });
+    expect(p.sentences).toEqual({ "en-yes-no": { best: 75, done: 6, total: 8 } });
+    expect(progressSchema.safeParse(p).success).toBe(true);
+    expect(sanitizeProgress(base)).not.toHaveProperty("sentences");
+  });
+
+  it("gộp hai máy: lấy điểm cao nhất mỗi bộ; không thêm trường rỗng", () => {
+    const merged = mergeProgress(
+      { ...base, sentences: { s: { best: 50, done: 4, total: 8 } } },
+      { ...base, sentences: { s: { best: 100, done: 8, total: 8 } } },
+    );
+    expect(merged.sentences).toEqual({ s: { best: 100, done: 8, total: 8 } });
+    expect(mergeProgress(base, base)).not.toHaveProperty("sentences");
+  });
+});

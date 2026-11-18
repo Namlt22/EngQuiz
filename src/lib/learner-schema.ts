@@ -86,6 +86,7 @@ export const progressSchema = z.strictObject({
   // Tùy chọn như speaking: bản ghi trước khi có Reading / Hội thoại không có hai trường này.
   reading: boundedRecord(key, setScoreSchema, LIMITS.lessons).optional(),
   dialogues: boundedRecord(key, setScoreSchema, LIMITS.lessons).optional(),
+  sentences: boundedRecord(key, setScoreSchema, LIMITS.lessons).optional(),
   hanzi: z
     .string()
     .regex(/^\p{Script=Han}*$/u, { message: "Chỉ gồm chữ Hán" })

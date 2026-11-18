@@ -8,7 +8,7 @@
 import { useSyncExternalStore } from "react";
 import { EMPTY_LOG, parseLog, parseProfile, type RoadmapLog, type RoadmapProfile } from "./roadmap";
 import { daysFor } from "./course-roadmap";
-import { completeResource, recordSpeakingSeconds, remapTasks } from "./roadmap-days";
+import { completeResource, recordSpeakingSeconds, remapTasks, settleAddedTasks } from "./roadmap-days";
 import { readReturnTarget } from "./roadmap-return";
 import { readJson, writeJson } from "./local-json";
 import { COURSE_CODES, courseStorageKey, currentCourse, type CourseCode } from "./course";
@@ -30,10 +30,20 @@ function load(course: CourseCode): RoadmapState {
   if (typeof window === "undefined") return EMPTY;
   let s = states.get(course);
   if (!s) {
-    s = readJson(storageKey(course), parseState, EMPTY);
+    s = settled(readJson(storageKey(course), parseState, EMPTY), course);
     states.set(course, s);
   }
   return s;
+}
+
+/** Bài mới thêm vào lộ trình không mở lại ngày đã xong (chạy một lần cho mỗi nhật ký, lưu ngay nếu có đổi). */
+function settled(state: RoadmapState, course: CourseCode): RoadmapState {
+  if (!state.profile) return state;
+  const log = settleAddedTasks(daysFor(course, state.profile), state.log);
+  if (log === state.log) return state;
+  const next = { ...state, log };
+  writeJson(storageKey(course), next);
+  return next;
 }
 
 function parseState(raw: unknown): RoadmapState {
@@ -76,7 +86,7 @@ export const roadmapActions = {
     const state = load(course);
     const old = state.profile;
     const log = old ? remapTasks(daysFor(course, old), daysFor(course, profile), state.log) : state.log;
-    update((s) => ({ ...s, profile, log }), course);
+    update((s) => settled({ ...s, profile, log }, course), course);
   },
   /** Vừa ghi âm một lần nói tự do dài `seconds` giây → cập nhật kỷ lục nói liên tục của tuần đang học. */
   recordSpeakingSeconds(seconds: number) {
@@ -99,7 +109,7 @@ export function getRoadmapState(course: CourseCode = "en"): RoadmapState {
 
 /** Thay toàn bộ hồ sơ + nhật ký của một khoá học (dữ liệu đã gộp từ server). */
 export function replaceRoadmapState(next: RoadmapState, course: CourseCode = "en") {
-  update(() => next, course);
+  update(() => settled(next, course), course);
 }
 
 /** Xoá lộ trình của mọi khoá học trên máy (đăng xuất). */
