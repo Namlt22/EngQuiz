@@ -12,7 +12,6 @@ export default function IpaPage() {
     <div className="space-y-6">
       <header className="max-w-3xl">
         <h1 className="text-2xl font-extrabold md:text-3xl">Bảng phiên âm IPA</h1>
-        <p className="mt-2 text-sm text-muted">Bấm từng âm để nghe và xem khẩu hình.</p>
       </header>
       <IpaExplorer />
     </div>

@@ -12,7 +12,6 @@ export default function ZhChatPage() {
     <div className="space-y-4">
       <header>
         <h1 className="text-2xl font-extrabold md:text-3xl">Trò chuyện cùng AI</h1>
-        <p className="mt-1 text-sm text-muted">Gõ chữ Hán, pinyin hoặc nói · AI sửa lỗi từng câu.</p>
       </header>
       <AiChat course="zh" aiEnabled={isAiConfigured()} />
     </div>

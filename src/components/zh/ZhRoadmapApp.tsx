@@ -117,21 +117,18 @@ function ZhRoadmapSetup() {
       <SaveToAccountHint />
       <header className="space-y-2">
         <h1 className="text-2xl font-extrabold md:text-3xl">Lộ trình tiếng Trung</h1>
-        <p className="max-w-2xl text-muted">
-          Mỗi tuần 6 ngày học (khoảng 40–50 phút/ngày) và 1 ngày kiểm tra. Bài trong ngày tự hoàn thành khi bạn làm xong — không cần tự đánh dấu.
-        </p>
       </header>
       <div className="grid gap-4 md:grid-cols-2">
         <button type="button" onClick={() => start(false)} className="card space-y-2 p-6 text-left transition hover:shadow-lg">
           <div className="text-xl font-extrabold">Mới bắt đầu</div>
           <p className="text-sm text-muted">
-            {ZH_INTRO_WEEKS} tuần Nhập môn (pinyin, thanh điệu, nét chữ, bộ thủ) rồi {HSK_WEEKS} tuần HSK 1 → HSK {TOP_HSK} — tổng {ZH_WEEKS.length} tuần.
+            {ZH_WEEKS.length} tuần · Nhập môn → HSK {TOP_HSK}
           </p>
           <span className="chip bg-primary-soft text-primary">Khuyên dùng nếu chưa học pinyin</span>
         </button>
         <button type="button" onClick={() => start(true)} className="card space-y-2 p-6 text-left transition hover:shadow-lg">
           <div className="text-xl font-extrabold">Đã biết pinyin</div>
-          <p className="text-sm text-muted">Vào thẳng {HSK_WEEKS} tuần HSK 1 → HSK {TOP_HSK}: từ vựng, ngữ pháp, hội thoại, bài đọc, nghe chép và thi thử từng cấp.</p>
+          <p className="text-sm text-muted">{HSK_WEEKS} tuần · HSK 1 → HSK {TOP_HSK}</p>
         </button>
       </div>
     </div>

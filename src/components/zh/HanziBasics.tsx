@@ -25,7 +25,6 @@ export function HanziBasics() {
       <header className="space-y-2">
         <span className="chip bg-surface-2">Chặng 0 · Nhập môn</span>
         <h1 className="text-2xl font-extrabold md:text-3xl">Chữ Hán: nét, thứ tự nét, bộ thủ</h1>
-        <p className="text-sm text-muted">8 nét cơ bản · quy tắc thứ tự nét · bộ thủ gợi nghĩa.</p>
       </header>
 
       <section className="space-y-3">
@@ -85,9 +84,6 @@ export function HanziBasics() {
             <RadicalCard key={r.form} r={r} />
           ))}
         </div>
-        <p className="text-xs text-muted">
-          Bộ thủ ở đây được dạy như thành phần gợi nghĩa. Cách xếp chữ vào bộ trong từ điển (Khang Hy hay bảng bộ thủ giản thể) có chỗ khác nhau.
-        </p>
       </section>
 
       <section className="space-y-3">

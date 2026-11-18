@@ -251,7 +251,6 @@ function RolePlay({ dialogue }: { dialogue: Dialogue }) {
     return (
       <section className="card space-y-4 p-5 text-center">
         <h2 className="text-lg font-bold">Bạn muốn nói lời của ai?</h2>
-        <p className="text-sm text-muted">Máy đọc lời nhân vật kia. Đến lượt bạn, câu tiếng Anh được che đi — nhìn bản dịch rồi tự nói.</p>
         <div className="flex flex-wrap justify-center gap-2">
           {dialogue.speakers.map((name, i) => (
             <button key={name} type="button" onClick={() => start(i as 0 | 1)} className="btn-primary">

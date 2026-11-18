@@ -31,7 +31,6 @@ export function TheoryFooter({ slug, dictationId }: { slug: string; dictationId?
         <CheckCircle2 className={`size-5 ${read ? "text-success" : "text-muted"}`} />
         {read ? "Đã đọc xong lý thuyết (+5 XP)" : "Đọc đến đây là xong phần lý thuyết"}
       </div>
-      <p className="mt-1 text-sm text-muted">Bước tiếp theo: luyện ngay để nhớ lâu hơn.</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <Link href={`/quiz/topic-${slug}`} className="btn-primary py-3">
           <PenLine className="size-4" /> Làm Quiz

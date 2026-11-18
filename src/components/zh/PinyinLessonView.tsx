@@ -10,7 +10,7 @@ import { AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, Ear, PartyPo
 import { PINYIN_GROUP_INFO, PINYIN_LESSONS, type PinyinItem, type PinyinLesson } from "@/content/zh/pinyin-lessons";
 import { charReadings } from "@/content/zh/vocab";
 import { applySandhi, toneOf } from "@/core/pinyin";
-import { MAX_TRIES, PASS_PERCENT, READ_PASS, buildDrill, drillPercent, itemDone, scoreSpoken, type Attempt, type DrillRound } from "@/core/pinyin-lesson";
+import { PASS_PERCENT, buildDrill, drillPercent, itemDone, scoreSpoken, type Attempt, type DrillRound } from "@/core/pinyin-lesson";
 import { progressActions } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
 import { useSpeechRecognition } from "@/lib/speech-recognition";
@@ -191,8 +191,8 @@ function RepeatStep({ lesson, say, onNext }: { lesson: PinyinLesson; say: Say; o
     <section className="card space-y-4 p-5 md:p-6">
       <p className="text-sm text-muted">
         {canRecord
-          ? `Nghe mẫu rồi bấm micro đọc to. Máy nghe tiếng phổ thông và so âm + thanh; đạt ${READ_PASS}% là xong (thử ${MAX_TRIES} lần thì được qua).`
-          : "Trình duyệt này chưa dùng được micro, nên ở bước này bạn nghe từng âm và đọc to theo. Dùng Chrome hoặc Edge để được máy chấm."}
+          ? "Nghe mẫu rồi bấm micro đọc to."
+          : "Nghe từng âm và đọc to theo (cần Chrome hoặc Edge để máy chấm)."}
       </p>
       <ul className="space-y-2">
         {lesson.items.map((item) => {

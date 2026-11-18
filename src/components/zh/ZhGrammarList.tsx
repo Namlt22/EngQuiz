@@ -10,13 +10,11 @@ import { useProgress } from "@/lib/progress";
 export function ZhGrammarList() {
   const topics = useProgress().topics;
   const levels = HSK_LEVELS.filter((lv) => grammarAtLevel(lv).length > 0);
-  const nextLevel = HSK_LEVELS.find((lv) => !levels.includes(lv));
 
   return (
     <div className="space-y-8">
       <header className="space-y-2">
         <h1 className="text-2xl font-extrabold md:text-3xl">Ngữ pháp HSK</h1>
-        <p className="text-sm text-muted">Làm bài tập đạt từ 80% là hoàn thành bài.</p>
       </header>
       {levels.map((lv) => {
         const lessons = grammarAtLevel(lv);
@@ -53,7 +51,6 @@ export function ZhGrammarList() {
           </section>
         );
       })}
-      {nextLevel && <p className="text-sm text-muted">Ngữ pháp HSK {nextLevel}–4 sẽ mở theo từng chặng của lộ trình.</p>}
     </div>
   );
 }

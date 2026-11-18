@@ -38,9 +38,8 @@ export function ZhMockTest({ test }: { test: MockTest }) {
       <section className="card mx-auto max-w-2xl space-y-4 p-6">
         <h1 className="text-2xl font-extrabold">{test.title}</h1>
         <p className="text-muted">
-          {test.items.length} câu: {listening} câu nghe, {test.items.length - listening} câu đọc. Mỗi câu nghe được nghe tối đa {test.maxPlays} lần. Không báo đúng/sai từng câu — xem kết quả ở cuối bài. Đạt từ {test.passPercent}% là qua.
+          {test.items.length} câu · {listening} nghe, {test.items.length - listening} đọc · đạt từ {test.passPercent}%
         </p>
-        <p className="rounded-xl bg-surface-2 p-3 text-sm text-muted">Bài mô phỏng cấu trúc nghe – đọc do EngQuiz soạn bằng từ vựng HSK {test.level}, không phải đề thi chính thức.</p>
         <ZhVoiceNotice speech={speech} />
         <button
           type="button"

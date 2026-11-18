@@ -98,9 +98,6 @@ function GuestWall() {
           Đã có tài khoản? Đăng nhập
         </Link>
       </div>
-      <p className="text-xs text-muted">
-        Muốn AI chấm & sửa bài nói? Xem <Link href="/pricing" className="font-semibold text-primary hover:underline">các gói AI</Link>.
-      </p>
     </div>
   );
 }

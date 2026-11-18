@@ -31,7 +31,7 @@ export function FeedbackView({
       <p className="flex items-start gap-2 rounded-xl bg-surface-2 p-3 text-sm text-muted">
         <Bot className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
         <span>
-          <b className="text-fg">Do AI tạo</b> (Claude của Anthropic). Điểm và câu sửa có thể sai, chỉ để tham khảo khi tự luyện, không phải điểm thi chính thức.{" "}
+          <b className="text-fg">Do AI tạo</b>, có thể sai ·{" "}
           <Link href="/legal/ai" className="font-semibold text-primary hover:underline">
             Điều khoản AI
           </Link>

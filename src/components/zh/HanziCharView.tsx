@@ -83,7 +83,6 @@ export function HanziCharView({ info }: { info: HanziChar }) {
               })}
             </ul>
             {info.words.length > MAX_WORDS && <p className="mt-1 text-xs text-muted">và {info.words.length - MAX_WORDS} từ khác.</p>}
-            {!vocabVi(info.words[0]?.hanzi ?? "") && <p className="mt-2 text-xs text-muted">Nghĩa tiếng Việt của từ HSK {info.level} sẽ có khi tới chặng này trong lộ trình.</p>}
           </div>
         </section>
       </div>
@@ -102,13 +101,6 @@ export function HanziCharView({ info }: { info: HanziChar }) {
           </Link>
         )}
       </nav>
-      <p className="text-center text-xs text-muted">
-        Dữ liệu nét chữ: Make Me a Hanzi, từ phông của Arphic Technology (
-        <a href="/hanzi/ARPHICPL.TXT" className="underline" target="_blank" rel="noopener noreferrer">
-          Arphic Public License
-        </a>
-        ).
-      </p>
     </div>
   );
 }

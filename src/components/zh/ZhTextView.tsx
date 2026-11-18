@@ -80,7 +80,6 @@ export function ZhTextView({ lesson }: { lesson: ZhTextLesson }) {
           <input type="checkbox" checked={translate} onChange={(e) => setTranslate(e.target.checked)} className="size-4" /> Bản dịch
         </label>
       </div>
-      <p className="text-xs text-muted">Chạm vào một từ để xem nghĩa.</p>
 
       <section className={isDialogue ? "space-y-3" : "card space-y-3 p-5"}>
         {lesson.lines.map((line, i) => {

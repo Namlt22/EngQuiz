@@ -50,7 +50,6 @@ export function EnVocabHome() {
     <div className="space-y-5">
       <header>
         <h1 className="text-2xl font-extrabold md:text-3xl">Từ vựng</h1>
-        <p className="mt-1 text-sm text-muted">600 từ theo chủ đề · ôn lặp lại ngắt quãng.</p>
       </header>
 
       <div role="tablist" aria-label="Cấp độ" className="flex flex-wrap gap-2">

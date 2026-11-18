@@ -37,7 +37,7 @@ export function HanziGrid() {
         ))}
       </div>
       <p className="text-sm text-muted">
-        Đã viết được {doneCount}/{chars.length} chữ mới của HSK {level}. Bấm một chữ để xem cách viết và tự viết.
+        Đã viết {doneCount}/{chars.length} chữ
       </p>
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(3.25rem,1fr))] gap-1.5">
         {chars.map((c) => {

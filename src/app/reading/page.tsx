@@ -12,7 +12,6 @@ export default function ReadingIndexPage() {
     <div className="space-y-6">
       <header className="max-w-3xl">
         <h1 className="text-2xl font-extrabold md:text-3xl">Đọc hiểu</h1>
-        <p className="mt-2 text-sm text-muted">Trả lời đúng từ 80% là hoàn thành bài.</p>
       </header>
       <LessonList
         basePath="/reading"

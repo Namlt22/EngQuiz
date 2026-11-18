@@ -256,8 +256,7 @@ function DaySheet({ day, week, log, onClose }: { day: RoadmapDay; week: RoadmapW
               Day {day.n} · {label}
             </h2>
             <p className="text-sm text-muted">
-              {day.tasks.length} bài · khoảng {dayMinutes(day)} phút
-              {day.kind === "checkpoint" ? " · xong bài kiểm tra là đạt cột mốc tuần" : ""}
+              {day.tasks.length} bài · ~{dayMinutes(day)} phút
             </p>
           </div>
           <button type="button" onClick={onClose} autoFocus className="grid size-9 shrink-0 place-items-center rounded-xl text-muted hover:bg-surface-2" aria-label="Đóng">
@@ -271,7 +270,6 @@ function DaySheet({ day, week, log, onClose }: { day: RoadmapDay; week: RoadmapW
           </span>
         </div>
         <DayTasks day={day} log={log} />
-        <p className="text-xs text-muted">Không cần tự đánh dấu: học xong bài nào, EngQuiz tự ghi nhận bài đó.</p>
       </div>
     </div>
   );

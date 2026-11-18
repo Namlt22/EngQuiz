@@ -12,7 +12,7 @@ export function SaveToAccountHint({ callbackUrl = "/roadmap" }: { callbackUrl?: 
     <div className="card flex flex-wrap items-center gap-3 p-4 text-sm">
       <CloudOff className="size-5 shrink-0 text-warning" />
       <span className="min-w-0 flex-1">
-        Bạn chưa đăng nhập nên tiến độ chỉ lưu trên trình duyệt này. Đăng nhập để lưu vào tài khoản và học tiếp trên máy khác.
+        Đăng nhập để lưu tiến độ.
       </span>
       <Link href={`/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="btn-primary py-2">
         Đăng nhập

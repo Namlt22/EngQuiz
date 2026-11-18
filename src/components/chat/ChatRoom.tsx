@@ -203,7 +203,7 @@ export function ChatRoom({ course, choice, onExit }: { course: CourseCode; choic
       )}
       {recognition.error && <p className="text-sm text-danger">{recognition.error}</p>}
       <p className="text-xs text-muted">
-        Tin nhắn được gửi tới AI Claude (Anthropic, Hoa Kỳ) để trả lời; EngQuiz không lưu lại. Đừng gửi thông tin cá nhân nhạy cảm.{" "}
+        Không gửi thông tin cá nhân nhạy cảm ·{" "}
         <Link href="/legal/ai" className="font-semibold text-primary hover:underline">
           Điều khoản AI
         </Link>

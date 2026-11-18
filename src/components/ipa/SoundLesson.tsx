@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, Ear, PartyPopper, RotateCcw, Snail, Volume2, XCircle } from "lucide-react";
 import { IPA_GROUP_INFO, IPA_SOUNDS, type IpaExample, type IpaSound } from "@/content/ipa";
-import { LISTEN_PASS_PERCENT, LISTEN_ROUNDS, MAX_WORD_TRIES, buildListenRounds, listenPercent, wordDone, type ListenRound, type WordAttempt } from "@/core/ipa-lesson";
+import { LISTEN_PASS_PERCENT, LISTEN_ROUNDS, buildListenRounds, listenPercent, wordDone, type ListenRound, type WordAttempt } from "@/core/ipa-lesson";
 import { READ_ALOUD_PASS, scoreReadAloud } from "@/core/speaking";
 import { useIpaSoundPlayer } from "@/lib/ipa-player";
 import { progressActions } from "@/lib/progress";
@@ -156,8 +156,8 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
     <section className="card space-y-4 p-5 md:p-6">
       <p className="text-sm text-muted">
         {canRecord
-          ? `Nghe từng từ rồi bấm micro đọc to. Mỗi từ đạt ${READ_ALOUD_PASS}% là xong (máy nghe từ đơn đôi khi nhầm — thử ${MAX_WORD_TRIES} lần thì được qua).`
-          : "Trình duyệt này chưa dùng được micro, nên ở bước này bạn nghe từng từ và đọc to theo. Dùng Chrome hoặc Edge để được máy chấm điểm."}
+          ? "Nghe từng từ rồi bấm micro đọc to."
+          : "Nghe từng từ và đọc to theo (cần Chrome hoặc Edge để máy chấm)."}
       </p>
       <ul className="space-y-2">
         {sound.examples.map((e) => (

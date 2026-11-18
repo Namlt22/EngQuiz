@@ -14,7 +14,6 @@ export default function QuizIndexPage() {
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-extrabold md:text-3xl">Quiz ngữ pháp</h1>
-        <p className="mt-1 text-sm text-muted">7 dạng bài, có giải thích sau mỗi câu.</p>
       </header>
       <QuizSetList sets={sets} />
     </div>

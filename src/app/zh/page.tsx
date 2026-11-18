@@ -55,17 +55,6 @@ export default function ZhHomePage() {
           ))}
         </div>
       </section>
-
-      <p className="text-center text-xs text-muted">
-        Từ vựng & pinyin:{" "}
-        <a href="https://github.com/bezlant/hsk-3-vocabulary" className="underline" target="_blank" rel="noopener noreferrer">
-          HSKStory
-        </a>{" "}
-        / CC-CEDICT ·{" "}
-        <a href="https://creativecommons.org/licenses/by-sa/4.0/" className="underline" target="_blank" rel="noopener noreferrer">
-          CC BY-SA 4.0
-        </a>
-      </p>
     </div>
   );
 }

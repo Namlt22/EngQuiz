@@ -179,7 +179,7 @@ export function DictationPlayer({ exercise }: { exercise: DictationExercise }) {
               <Play className="ml-1 size-9" fill="currentColor" />
             </button>
             <p className="font-semibold">Bấm để bắt đầu nghe</p>
-            <p className="max-w-sm text-sm text-muted">{exercise.description} Nghe từng câu và gõ lại chính xác những gì bạn nghe được.</p>
+            <p className="max-w-sm text-sm text-muted">{exercise.description}</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4">
@@ -329,11 +329,6 @@ export function DictationPlayer({ exercise }: { exercise: DictationExercise }) {
             </section>
           )}
 
-          <p className="text-center text-xs text-muted">
-            <kbd className="rounded border border-line px-1.5 py-0.5 font-mono">Ctrl</kbd> +{" "}
-            <kbd className="rounded border border-line px-1.5 py-0.5 font-mono">Space</kbd> nghe lại ·{" "}
-            <kbd className="rounded border border-line px-1.5 py-0.5 font-mono">Enter</kbd> kiểm tra / câu tiếp
-          </p>
         </>
       )}
     </div>

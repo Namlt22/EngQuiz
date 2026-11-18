@@ -242,9 +242,6 @@ function AttemptResult({ score, onSpeakWord }: { score: SentenceScore; onSpeakWo
           Từ thừa: <span lang="en">{last.check.extras.join(", ")}</span>
         </p>
       )}
-      <p className="text-xs text-muted">
-        Xanh: đúng · Vàng: gần đúng · Đỏ: máy nghe thành từ khác · Gạch ngang: bị thiếu. Bấm vào từ để nghe cách đọc.
-      </p>
     </div>
   );
 }

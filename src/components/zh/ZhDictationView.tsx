@@ -173,8 +173,6 @@ export function ZhDictationView({ lesson }: { lesson: ZhTextLesson }) {
               ))}
             </div>
             <p className="text-center text-sm text-muted">
-              Xanh: đúng · Vàng: đúng âm, sai thanh · Đỏ: sai hoặc thiếu
-              <br />
               {sentencePinyin(line.zh)} — {line.vi}
             </p>
             <div className="flex justify-end">

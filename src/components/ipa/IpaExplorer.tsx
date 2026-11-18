@@ -8,7 +8,7 @@ import {
 import {
   ENDING_RULES, IPA_CHART, IPA_GROUP_INFO, IPA_MAP, IPA_SOUNDS, READING_RULES, type IpaExample, type IpaGroup, type IpaSound,
 } from "@/content/ipa";
-import { commonsFileUrl, ipaAudioSrc, IPA_RECORDINGS, LICENSE_URL, SYNTHESIZED_DIPHTHONGS, SYNTHESIZED_VOICE } from "@/content/ipa-audio";
+import { ipaAudioSrc } from "@/content/ipa-audio";
 import { useSpeech } from "@/lib/speech";
 import { useIpaSoundPlayer } from "@/lib/ipa-player";
 
@@ -100,7 +100,6 @@ export function IpaExplorer() {
 
         <ReadingGuide />
         <MinimalPairPractice />
-        <AudioCredits />
       </div>
     </PlaySoundCtx.Provider>
     </SpeakCtx.Provider>
@@ -190,45 +189,6 @@ function PlaySoundButton({ sound }: { sound: IpaSound }) {
   );
 }
 
-/* ---------------- Ghi nguồn file ghi âm (giấy phép CC BY-SA yêu cầu) ---------------- */
-
-function AudioCredits() {
-  return (
-    <details className="card p-4 text-sm text-muted md:p-5">
-      <summary className="cursor-pointer font-semibold text-fg">Nguồn file ghi âm</summary>
-      <p className="mt-2">
-        Âm đứng riêng lấy từ Wikimedia Commons (đã chuyển sang mp3, cắt khoảng lặng, cân bằng âm lượng). Đây là bản ghi âm IPA chuẩn quốc tế:
-        không thể hiện độ dài ngắn và âm tắc được đọc kèm nguyên âm /a/. Hãy nghe thêm từ ví dụ để biết âm trong tiếng Anh thật.
-      </p>
-      <p className="mt-2">
-        8 nguyên âm đôi ({SYNTHESIZED_DIPHTHONGS.map((id) => `/${IPA_MAP[id]?.symbol}/`).join(" ")}) và hai cặp /ɪ/ – /iː/, /ʊ/ – /uː/ được tạo bằng giọng đọc máy{" "}
-        {SYNTHESIZED_VOICE}; âm dài được kéo dài để nghe rõ khác âm ngắn. Theo giọng Mỹ, /ɪə/, /eə/, /ʊə/ có thêm âm r (như here, hair, tour).
-      </p>
-      <ul className="mt-2 grid gap-x-6 gap-y-1 sm:grid-cols-2">
-        {IPA_RECORDINGS.map((r) => {
-          const licenseUrl = LICENSE_URL[r.license];
-          return (
-            <li key={r.id}>
-              <span className="font-ipa text-fg">/{IPA_MAP[r.id]?.symbol}/</span>{" "}
-              <a href={commonsFileUrl(r.file)} target="_blank" rel="noopener noreferrer" className="underline hover:text-fg">
-                {r.file}
-              </a>
-              {r.author && ` · ${r.author}`} ·{" "}
-              {licenseUrl ? (
-                <a href={licenseUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-fg">
-                  {r.license}
-                </a>
-              ) : (
-                r.license
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </details>
-  );
-}
-
 /* ---------------- Chi tiết một âm ---------------- */
 
 function EmptyDetail() {
@@ -311,7 +271,6 @@ function SoundDetail({ sound, onClose, onSelect }: { sound: IpaSound; onClose: (
             <PairButton e={sound.pair.a} highlight />
             <PairButton e={sound.pair.b} />
           </div>
-          <p className="mt-2 text-xs text-muted">Nghe lần lượt hai từ để nhận ra sự khác biệt.</p>
         </section>
       )}
     </div>
@@ -510,7 +469,6 @@ function MinimalPairPractice() {
           <h2 className="flex items-center gap-2 text-xl font-bold">
             <Ear className="size-5" /> Luyện nghe phân biệt cặp âm
           </h2>
-          <p className="text-sm text-white/85">Nghe một từ và chọn đúng từ bạn nghe được. {pairs.length} cặp từ dễ nhầm.</p>
         </div>
         <span className="chip w-fit bg-white/20 text-white">
           Đúng {score.correct}/{score.total}

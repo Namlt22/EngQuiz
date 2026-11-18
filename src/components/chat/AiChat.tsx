@@ -5,8 +5,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { LogIn } from "lucide-react";
-import { AI_DAILY_LIMIT, AI_TRIAL_TURNS } from "@/lib/plans";
-import { CHAT_LIMITS } from "@/lib/ai-chat";
 import type { CourseCode } from "@/lib/course";
 import { ChatPicker, type ChatChoice } from "./ChatPicker";
 import { ChatRoom } from "./ChatRoom";
@@ -30,7 +28,7 @@ export function AiChat({ course, aiEnabled }: { course: CourseCode; aiEnabled: b
         <Link href={`/signin?callbackUrl=${encodeURIComponent(here)}`} className="card flex items-center gap-3 p-4 transition hover:shadow-md">
           <LogIn className="size-5 text-primary" />
           <span className="flex-1 text-sm">
-            <b>Đăng nhập để trò chuyện cùng AI.</b> Tài khoản miễn phí có {AI_TRIAL_TURNS} cuộc dùng thử; gói AI tối đa {AI_DAILY_LIMIT} cuộc mỗi ngày.
+            <b>Đăng nhập để trò chuyện cùng AI.</b>
           </span>
         </Link>
       )}
@@ -38,7 +36,6 @@ export function AiChat({ course, aiEnabled }: { course: CourseCode; aiEnabled: b
         <ChatRoom key={`${choice.scenario?.id ?? "free"}-${choice.level}`} course={course} choice={choice} onExit={() => setChoice(null)} />
       ) : (
         <>
-          <p className="text-sm text-muted">Mỗi cuộc trò chuyện tính 1 lượt AI, tối đa {CHAT_LIMITS.maxLearnerTurns} tin.</p>
           <ChatPicker course={course} onPick={setChoice} />
         </>
       )}

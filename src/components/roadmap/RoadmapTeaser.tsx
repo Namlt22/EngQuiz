@@ -18,7 +18,6 @@ export function RoadmapTeaser() {
         <Icon />
         <div className="flex-1">
           <h2 className="text-lg font-bold">Tạo lộ trình của bạn</h2>
-          <p className="text-sm text-muted">6 câu hỏi → lịch học từng ngày.</p>
         </div>
         <ArrowRight className="size-5 text-muted transition group-hover:translate-x-1" />
       </Link>

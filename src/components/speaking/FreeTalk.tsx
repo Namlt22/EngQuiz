@@ -319,8 +319,7 @@ function AiAction({ phase, take, aiEnabled, onAsk }: { phase: Phase; take: Liste
 function AiDataNotice() {
   return (
     <p className="text-xs text-muted">
-      Bấm nút này, phần chữ ở trên cùng đề nói sẽ được gửi tới AI Claude (Anthropic, Hoa Kỳ) để chấm. EngQuiz không lưu lại nội dung này. Đừng nói thông tin
-      cá nhân nhạy cảm như số giấy tờ, sức khoẻ, tài khoản ngân hàng.{" "}
+      Không nói thông tin cá nhân nhạy cảm ·{" "}
       <Link href="/legal/ai" className="font-semibold text-primary hover:underline">
         Điều khoản AI
       </Link>

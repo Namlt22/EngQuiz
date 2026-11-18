@@ -146,7 +146,6 @@ function NextDayCard({ day, log }: { day?: RoadmapDay; log: RoadmapLog }) {
     );
   }
   const count = dayTasksDone(log, day);
-  const checkpoint = day.kind === "checkpoint";
   return (
     <section className="card space-y-4 p-5 md:p-6">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -156,10 +155,7 @@ function NextDayCard({ day, log }: { day?: RoadmapDay; log: RoadmapLog }) {
             Day {day.n} · {dayInfo(day).label}
           </h2>
           <p className="text-sm text-muted">
-            {day.tasks.length} bài · khoảng {dayMinutes(day)} phút.{" "}
-            {checkpoint
-              ? "Bài kiểm tra cuối tuần được chấm tự động — đạt hết là bạn đạt cột mốc của tuần."
-              : `Học lần lượt từng bài; bài nào xong EngQuiz tự ghi nhận, đủ bài là xong Day ${day.n}.`}
+            {day.tasks.length} bài · ~{dayMinutes(day)} phút
           </p>
         </div>
         <span className="font-mono text-sm font-bold text-primary">
@@ -177,7 +173,6 @@ function RescuePhrases() {
     <section className="card space-y-3 p-5">
       <div>
         <h2 className="text-lg font-bold">20 câu cứu nguy — thuộc trong tuần đầu</h2>
-        <p className="text-sm text-muted">Dùng khi không nghe kịp, quên từ hoặc cần thêm thời gian nghĩ.</p>
       </div>
       <ul className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2" lang="en">
         {RESCUE_PHRASES.map((p) => (

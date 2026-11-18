@@ -56,7 +56,6 @@ export function VocabHome() {
     <div className="space-y-6">
       <header className="space-y-2">
         <h1 className="text-2xl font-extrabold md:text-3xl">Từ vựng HSK</h1>
-        <p className="text-sm text-muted">Thẻ ôn lặp lại ngắt quãng: quên thì gặp lại sớm, nhớ thì lâu sau.</p>
       </header>
 
       <div role="tablist" aria-label="Cấp HSK" className="flex flex-wrap gap-2">

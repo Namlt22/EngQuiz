@@ -25,7 +25,6 @@ export function ChatPicker({ course, onPick }: { course: CourseCode; onPick: (c:
           </span>
           <div>
             <h2 className="font-bold">Trò chuyện tự do</h2>
-            <p className="text-sm text-muted">Nói về bất kỳ chủ đề nào, AI sửa lỗi từng câu.</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">

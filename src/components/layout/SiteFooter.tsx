@@ -17,6 +17,9 @@ export function SiteFooter() {
             {d.title}
           </Link>
         ))}
+        <Link href="/credits" className="hover:text-fg hover:underline">
+          Nguồn dữ liệu
+        </Link>
       </nav>
     </footer>
   );
