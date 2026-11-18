@@ -32,17 +32,14 @@ function GroupSheet({ group, pathname, onClose }: { group: NavGroup; pathname: s
             <X className="size-4" />
           </button>
         </div>
-        {group.items.map(({ href, label, hint, icon: Icon }) => {
+        {group.items.map(({ href, label, icon: Icon }) => {
           const on = isActive(href, pathname);
           return (
             <Link key={href} href={href} role="menuitem" className={`flex items-center gap-3 rounded-xl p-2.5 ${on ? "bg-primary-soft" : "active:bg-surface-2"}`}>
               <span className={`grid size-10 shrink-0 place-items-center rounded-lg ${on ? "bg-primary text-primary-fg" : "bg-surface-2 text-primary"}`}>
                 <Icon className="size-5" />
               </span>
-              <span className="min-w-0">
-                <span className={`block font-semibold ${on ? "text-primary" : ""}`}>{label}</span>
-                {hint && <span className="block text-xs text-muted">{hint}</span>}
-              </span>
+              <span className={`min-w-0 font-semibold ${on ? "text-primary" : ""}`}>{label}</span>
             </Link>
           );
         })}

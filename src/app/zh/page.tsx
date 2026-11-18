@@ -1,124 +1,84 @@
 import Link from "next/link";
-import { ArrowLeftRight, AudioLines, BookOpen, Brush, Headphones, Layers, MessagesSquare, Mic, PenLine, Route } from "lucide-react";
+import { AudioLines, BookOpen, Brush, Headphones, Layers, MessagesSquare, PenLine, Route } from "lucide-react";
 import { HSK_INFO, HSK_LEVELS, ZH_INTRO_STAGE } from "@/content/zh/hsk-levels";
 
-/** Các phần của khoá tiếng Trung, theo thứ tự xây dựng (docs/PLAN-ZH.md mục 7). */
-const MODULES: { icon: typeof AudioLines; title: string; hint: string; href?: string }[] = [
-  { icon: AudioLines, title: "Pinyin & thanh điệu", hint: "Thanh mẫu, vận mẫu, 4 thanh, biến điệu 3-3, 不, 一", href: "/zh/pinyin" },
-  { icon: Brush, title: "Hán tự", hint: "Nét, quy tắc thứ tự nét, bộ thủ; tập viết 1 096 chữ HSK 1–4 có hoạt hình nét", href: "/zh/hanzi" },
-  { icon: Layers, title: "Từ vựng HSK", hint: "Thẻ ghi nhớ ôn lặp lại ngắt quãng; HSK 1–2 có nghĩa tiếng Việt và âm Hán-Việt", href: "/zh/vocab" },
-  { icon: BookOpen, title: "Ngữ pháp", hint: "Theo danh mục điểm ngữ pháp của chuẩn HSK 3.0; HSK 1–2 có 23 bài kèm bài tập", href: "/zh/grammar" },
-  { icon: PenLine, title: "Quiz & thi thử", hint: "Sắp xếp câu, chọn thanh, chọn chữ, mô phỏng cấu trúc đề" },
-  { icon: Headphones, title: "Nghe chép", hint: "Gõ pinyin (HSK 1–2) hoặc chữ Hán, chấm theo từng chữ", href: "/zh/dictation" },
-  { icon: MessagesSquare, title: "Đọc & hội thoại", hint: "Bật/tắt pinyin, chạm từ để xem nghĩa; HSK 1–2 có 10 bài đọc, 14 hội thoại", href: "/zh/dialogues" },
-  { icon: Mic, title: "Luyện nói", hint: "Đọc theo mẫu, nhận dạng giọng nói tiếng phổ thông" },
-];
+/** Lối tắt tới các phần của khoá tiếng Trung — chỉ icon + tên. */
+const MODULES = [
+  { icon: AudioLines, title: "Pinyin", href: "/zh/pinyin" },
+  { icon: Brush, title: "Hán tự", href: "/zh/hanzi" },
+  { icon: Layers, title: "Từ vựng", href: "/zh/vocab" },
+  { icon: BookOpen, title: "Ngữ pháp", href: "/zh/grammar" },
+  { icon: MessagesSquare, title: "Hội thoại", href: "/zh/dialogues" },
+  { icon: Headphones, title: "Nghe chép", href: "/zh/dictation" },
+  { icon: PenLine, title: "Thi thử", href: "/zh/mock/hsk1" },
+] as const;
 
 export default function ZhHomePage() {
   return (
-    <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-600 via-rose-600 to-amber-500 p-6 text-white shadow-xl shadow-rose-500/20 md:p-10">
-        <div className="pointer-events-none absolute -right-10 -top-6 select-none text-[11rem] font-black leading-none text-white/10" lang="zh-Hans" aria-hidden="true">
+    <div className="space-y-6">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-600 via-rose-600 to-amber-500 p-6 text-white shadow-xl shadow-rose-500/20 md:p-8">
+        <div className="pointer-events-none absolute -right-8 -top-6 select-none text-[9rem] font-black leading-none text-white/10" lang="zh-Hans" aria-hidden="true">
           学
         </div>
         <div className="relative max-w-2xl">
-          <span className="chip mb-4 bg-white/15 text-white">中 · Tiếng Trung · chuẩn HSK 3.0</span>
-          <h1 className="text-3xl font-extrabold leading-tight md:text-5xl">
-            Từ pinyin đầu tiên
-            <br />
-            đến HSK 4.
-          </h1>
-          <p className="mt-4 max-w-xl text-base text-white/85 md:text-lg">
-            Lộ trình khoảng 40 tuần, mỗi ngày 45 phút: thanh điệu → Hán tự → từ vựng → ngữ pháp → nghe, nói, đọc. Bám đề cương thi HSK mới (kỳ thi đầu tiên 13/12/2026).
-          </p>
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Link href="/zh/roadmap" className="btn bg-white text-rose-700 hover:bg-rose-50">
-              <Route className="size-4" /> Bắt đầu lộ trình
-            </Link>
-            <span className="text-sm text-white/80">Đã mở đủ lộ trình: Nhập môn và HSK 1 → HSK 4.</span>
-          </div>
+          <span className="chip mb-3 bg-white/15 text-white">中 · HSK 3.0</span>
+          <h1 className="text-3xl font-extrabold leading-tight md:text-4xl">Từ pinyin đầu tiên đến HSK 4.</h1>
+          <p className="mt-2 text-white/85">40 tuần · 45 phút mỗi ngày</p>
+          <Link href="/zh/roadmap" className="btn mt-5 bg-white text-rose-700 hover:bg-rose-50">
+            <Route className="size-4" /> Bắt đầu lộ trình
+          </Link>
         </div>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-xl font-extrabold">Lộ trình HSK</h2>
-        <ol className="space-y-3">
-          <li className="card flex items-start gap-4 p-5">
-            <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-slate-500 to-slate-700 text-lg font-black text-white">0</span>
-            <div className="min-w-0">
-              <div className="font-bold">
-                {ZH_INTRO_STAGE.name} <span className="text-sm font-semibold text-muted">· tuần {ZH_INTRO_STAGE.weeks.join("–")}</span>
-              </div>
-              <p className="text-sm text-muted">{ZH_INTRO_STAGE.canDo}</p>
-            </div>
-          </li>
+      <section>
+        <h2 className="mb-3 text-xl font-bold">Lộ trình</h2>
+        <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <Stage badge="0" gradient="from-slate-500 to-slate-700" name={ZH_INTRO_STAGE.name} weeks={ZH_INTRO_STAGE.weeks} detail="Pinyin, nét" />
           {HSK_LEVELS.map((lv) => {
             const info = HSK_INFO[lv];
-            return (
-              <li key={lv} className="card flex items-start gap-4 p-5">
-                <span className={`grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-lg font-black text-white ${info.gradient}`}>{lv}</span>
-                <div className="min-w-0 flex-1">
-                  <div className="font-bold">
-                    {info.name} <span className="text-sm font-semibold text-muted">· tuần {info.weeks.join("–")}</span>
-                  </div>
-                  <p className="text-sm text-muted">{info.canDo}</p>
-                  <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
-                    <span className="chip bg-surface-2">{info.words.toLocaleString("vi-VN")} từ (cộng dồn)</span>
-                    <span className="chip bg-surface-2">{info.chars.toLocaleString("vi-VN")} chữ Hán</span>
-                    <span className="chip bg-surface-2">+{info.grammarPoints} điểm ngữ pháp</span>
-                  </div>
-                </div>
-              </li>
-            );
+            return <Stage key={lv} badge={String(lv)} gradient={info.gradient} name={`HSK ${lv}`} weeks={info.weeks} detail={`${info.words.toLocaleString("vi-VN")} từ`} />;
           })}
         </ol>
-        <p className="text-xs text-muted">
-          Số từ theo đề cương thi HSK mới (11/2025); số chữ Hán và điểm ngữ pháp theo tiêu chuẩn GF 0025-2021. Danh mục từ và pinyin:{" "}
-          <a href="https://github.com/bezlant/hsk-3-vocabulary" className="underline" target="_blank" rel="noopener noreferrer">
-            HSKStory
-          </a>{" "}
-          / CC-CEDICT, giấy phép{" "}
-          <a href="https://creativecommons.org/licenses/by-sa/4.0/" className="underline" target="_blank" rel="noopener noreferrer">
-            CC BY-SA 4.0
-          </a>
-          .
-        </p>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-xl font-extrabold">Các phần của khoá học</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {MODULES.map(({ icon: Icon, title, hint, href }) => {
-            const body = (
-              <>
-                <span className="grid size-10 place-items-center rounded-xl bg-surface-2 text-primary">
-                  <Icon className="size-5" />
-                </span>
-                <div className="font-bold">{title}</div>
-                <p className="text-sm text-muted">{hint}</p>
-                {href ? (
-                  <span className="chip bg-primary-soft text-primary">Học ngay →</span>
-                ) : (
-                  <span className="chip bg-surface-2 text-muted">Đang xây dựng</span>
-                )}
-              </>
-            );
-            return href ? (
-              <Link key={title} href={href} className="card space-y-2 p-4 transition hover:shadow-md">
-                {body}
-              </Link>
-            ) : (
-              <div key={title} className="card space-y-2 p-4">
-                {body}
-              </div>
-            );
-          })}
+      <section>
+        <h2 className="mb-3 text-xl font-bold">Luyện tập</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+          {MODULES.map(({ icon: Icon, title, href }) => (
+            <Link key={href} href={href} className="card flex flex-col items-center gap-2 p-4 text-center transition hover:-translate-y-0.5 hover:shadow-md">
+              <span className="grid size-10 place-items-center rounded-xl bg-surface-2 text-primary">
+                <Icon className="size-5" />
+              </span>
+              <span className="text-sm font-bold">{title}</span>
+            </Link>
+          ))}
         </div>
       </section>
 
-      <p className="flex items-center justify-center gap-1.5 text-center text-sm text-muted">
-        <ArrowLeftRight className="size-4" /> Muốn học tiếng Anh? Đổi ngôn ngữ ở nút cạnh logo.
+      <p className="text-center text-xs text-muted">
+        Từ vựng & pinyin:{" "}
+        <a href="https://github.com/bezlant/hsk-3-vocabulary" className="underline" target="_blank" rel="noopener noreferrer">
+          HSKStory
+        </a>{" "}
+        / CC-CEDICT ·{" "}
+        <a href="https://creativecommons.org/licenses/by-sa/4.0/" className="underline" target="_blank" rel="noopener noreferrer">
+          CC BY-SA 4.0
+        </a>
       </p>
     </div>
+  );
+}
+
+function Stage({ badge, gradient, name, weeks, detail }: { badge: string; gradient: string; name: string; weeks: [number, number]; detail: string }) {
+  return (
+    <li className="card flex items-center gap-3 p-3">
+      <span className={`grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-lg font-black text-white ${gradient}`}>{badge}</span>
+      <div className="min-w-0">
+        <div className="font-bold">{name}</div>
+        <div className="text-xs text-muted">
+          Tuần {weeks.join("–")} · {detail}
+        </div>
+      </div>
+    </li>
   );
 }

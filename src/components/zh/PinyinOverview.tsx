@@ -31,10 +31,7 @@ export function PinyinOverview() {
       <header className="space-y-2">
         <span className="chip bg-surface-2">Chặng 0 · Nhập môn</span>
         <h1 className="text-2xl font-extrabold md:text-3xl">Pinyin & thanh điệu</h1>
-        <p className="max-w-2xl text-muted">
-          Pinyin là cách ghi âm tiếng phổ thông bằng chữ Latin. Mỗi âm tiết gồm <b>thanh mẫu</b> (phụ âm đầu) + <b>vận mẫu</b> (vần) +{" "}
-          <b>thanh điệu</b>: <span lang="zh-Hans">妈</span> = m + a + thanh 1 → <b>mā</b>. Cùng một âm, đổi thanh là đổi nghĩa.
-        </p>
+        <p className="text-sm text-muted">Âm tiết = thanh mẫu + vận mẫu + thanh điệu · <span lang="zh-Hans">妈</span> = m + a + thanh 1 → <b>mā</b></p>
       </header>
 
       <ZhVoiceNotice speech={speech} />

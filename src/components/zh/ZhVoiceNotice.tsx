@@ -29,18 +29,20 @@ export function ZhVoiceNotice({ speech }: { speech: Speech }) {
 
   if (!speech.supported || speech.voiceOptions.length === 0) {
     return (
-      <div role="alert" className="flex gap-2 rounded-2xl border border-warning/30 bg-warning-soft p-3 text-sm leading-relaxed">
-        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
-        <div>
-          <b>Máy chưa có giọng đọc tiếng Trung</b>, nên âm mẫu có thể không phát được.
-          <ul className="mt-1 list-disc pl-4 text-muted">
-            {INSTALL_TIPS.map((t) => (
-              <li key={t}>{t}</li>
-            ))}
-            <li>Hoặc dùng Chrome / Edge mới nhất (có sẵn giọng tiếng Trung trực tuyến).</li>
-          </ul>
-        </div>
-      </div>
+      <details role="alert" className="rounded-xl border border-warning/30 bg-warning-soft px-3 py-2 text-sm">
+        <summary className="flex cursor-pointer items-center gap-2">
+          <AlertTriangle className="size-4 shrink-0 text-warning" />
+          <span>
+            <b>Chưa có giọng đọc tiếng Trung</b> · <span className="text-muted underline">Cách cài</span>
+          </span>
+        </summary>
+        <ul className="mt-2 list-disc pl-5 leading-relaxed text-muted">
+          {INSTALL_TIPS.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+          <li>Hoặc dùng Chrome / Edge mới nhất (có sẵn giọng tiếng Trung trực tuyến).</li>
+        </ul>
+      </details>
     );
   }
 

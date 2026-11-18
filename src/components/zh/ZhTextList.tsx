@@ -44,7 +44,6 @@ export function ZhTextList({ kind }: { kind: ZhTextListKind }) {
     <div className="space-y-6">
       <header className="space-y-2">
         <h1 className="text-2xl font-extrabold md:text-3xl">{meta.title}</h1>
-        <p className="max-w-2xl text-muted">{meta.intro}</p>
       </header>
       {[...new Set(meta.items.map((t) => t.level))].map((level) => (
         <section key={level} className="space-y-3">

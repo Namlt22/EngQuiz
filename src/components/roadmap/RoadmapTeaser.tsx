@@ -17,8 +17,8 @@ export function RoadmapTeaser() {
       <Link href="/roadmap" className="card group flex items-center gap-4 p-5 transition hover:shadow-md md:p-6">
         <Icon />
         <div className="flex-1">
-          <h2 className="text-lg font-bold">Tạo lộ trình nói tiếng Anh cho riêng bạn</h2>
-          <p className="text-sm text-muted">Trả lời 6 câu hỏi về trình độ, mục tiêu và thời gian rảnh, EngQuiz xếp cho bạn bài học từng ngày. Học xong bài nào, hệ thống tự ghi nhận và chấm cột mốc mỗi tuần.</p>
+          <h2 className="text-lg font-bold">Tạo lộ trình của bạn</h2>
+          <p className="text-sm text-muted">6 câu hỏi → lịch học từng ngày.</p>
         </div>
         <ArrowRight className="size-5 text-muted transition group-hover:translate-x-1" />
       </Link>

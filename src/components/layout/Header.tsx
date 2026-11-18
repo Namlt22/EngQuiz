@@ -49,23 +49,20 @@ function NavDropdown({ group, pathname }: { group: NavGroup; pathname: string })
       </button>
       {open && (
         <div className="absolute left-0 top-full z-50 pt-2">
-          <div role="menu" className="card w-72 space-y-1 p-2 animate-pop-in">
-            {group.items.map(({ href, label, hint, icon: Icon }) => {
+          <div role="menu" className="card w-60 space-y-0.5 p-2 animate-pop-in">
+            {group.items.map(({ href, label, icon: Icon }) => {
               const on = isActive(href, pathname);
               return (
                 <Link
                   key={href}
                   href={href}
                   role="menuitem"
-                  className={`flex items-start gap-3 rounded-xl p-2.5 transition ${on ? "bg-primary-soft" : "hover:bg-surface-2"}`}
+                  className={`flex items-center gap-3 rounded-xl p-2 transition ${on ? "bg-primary-soft" : "hover:bg-surface-2"}`}
                 >
-                  <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${on ? "bg-primary text-primary-fg" : "bg-surface-2 text-primary"}`}>
+                  <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${on ? "bg-primary text-primary-fg" : "bg-surface-2 text-primary"}`}>
                     <Icon className="size-[18px]" />
                   </span>
-                  <span className="min-w-0">
-                    <span className={`block text-sm font-semibold ${on ? "text-primary" : ""}`}>{label}</span>
-                    {hint && <span className="block text-xs text-muted">{hint}</span>}
-                  </span>
+                  <span className={`min-w-0 text-sm font-semibold ${on ? "text-primary" : ""}`}>{label}</span>
                 </Link>
               );
             })}

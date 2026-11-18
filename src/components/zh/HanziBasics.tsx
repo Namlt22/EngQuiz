@@ -25,10 +25,7 @@ export function HanziBasics() {
       <header className="space-y-2">
         <span className="chip bg-surface-2">Chặng 0 · Nhập môn</span>
         <h1 className="text-2xl font-extrabold md:text-3xl">Chữ Hán: nét, thứ tự nét, bộ thủ</h1>
-        <p className="max-w-2xl text-muted">
-          Mọi chữ Hán đều ghép từ 8 loại nét cơ bản, viết theo vài quy tắc cố định. Phần lớn chữ có một <b>bộ thủ</b> gợi nghĩa — ví dụ chữ có{" "}
-          <span lang="zh-Hans">氵</span> thường liên quan đến nước. Nắm được ba điều này thì nhớ chữ nhanh hơn nhiều so với học thuộc từng nét.
-        </p>
+        <p className="text-sm text-muted">8 nét cơ bản · quy tắc thứ tự nét · bộ thủ gợi nghĩa.</p>
       </header>
 
       <section className="space-y-3">

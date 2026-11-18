@@ -19,10 +19,7 @@ export default async function SpeakingPage({ searchParams }: { searchParams: Pro
       <div className="space-y-6">
         <header className="max-w-3xl">
           <h1 className="text-2xl font-extrabold md:text-3xl">Luyện nói</h1>
-          <p className="mt-2 text-muted">
-            <b className="text-fg">Đọc theo câu mẫu</b>: nghe câu, đọc to, máy chấm từng từ nghe được. <b className="text-fg">Nói tự do</b>: trả lời
-            câu hỏi của lộ trình, AI chấm ngữ pháp, từ vựng, độ trôi chảy và sửa từng lỗi kèm giải thích tiếng Việt.
-          </p>
+          <p className="mt-2 text-sm text-muted">Đọc theo câu mẫu · Nói tự do có AI chấm và sửa lỗi.</p>
         </header>
         <SpeakingApp
           initialTab={tab}

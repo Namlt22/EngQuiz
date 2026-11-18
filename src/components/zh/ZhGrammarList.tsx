@@ -16,9 +16,7 @@ export function ZhGrammarList() {
     <div className="space-y-8">
       <header className="space-y-2">
         <h1 className="text-2xl font-extrabold md:text-3xl">Ngữ pháp HSK</h1>
-        <p className="max-w-2xl text-muted">
-          Bám danh mục điểm ngữ pháp của chuẩn HSK 3.0. Mỗi bài có công thức, ví dụ (chỉ dùng từ trong cấp), lỗi người Việt hay mắc và bài tập. Làm bài tập đạt từ 80% thì bài được ghi nhận.
-        </p>
+        <p className="text-sm text-muted">Làm bài tập đạt từ 80% là hoàn thành bài.</p>
       </header>
       {levels.map((lv) => {
         const lessons = grammarAtLevel(lv);

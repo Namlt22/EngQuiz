@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle, CheckCircle2, Ear, Lightbulb, MousePointerClick, RefreshCw, Snail, Volume2, X, XCircle,
+  AlertTriangle, CheckCircle2, Ear, Lightbulb, RefreshCw, Snail, Volume2, X, XCircle,
 } from "lucide-react";
 import {
   ENDING_RULES, IPA_CHART, IPA_GROUP_INFO, IPA_MAP, IPA_SOUNDS, READING_RULES, type IpaExample, type IpaGroup, type IpaSound,
@@ -81,11 +81,8 @@ export function IpaExplorer() {
           {/* Bảng */}
           <div className="space-y-6">
             <ChartBlock title="Nguyên âm đơn" subtitle="12 âm · ngắn và dài" rows={IPA_CHART.monophthongs} cols={4} selected={selected} onSelect={select} />
-            <ChartBlock title="Nguyên âm đôi" subtitle="8 âm · trượt từ âm này sang âm kia" rows={IPA_CHART.diphthongs} cols={3} selected={selected} onSelect={select} />
-            <ChartBlock title="Phụ âm" subtitle="24 âm · phần lớn đi theo cặp vô thanh – hữu thanh" rows={IPA_CHART.consonants} cols={8} selected={selected} onSelect={select} />
-            <p className="flex items-center gap-2 text-sm text-muted">
-              <MousePointerClick className="size-4" /> Bấm vào một âm để nghe âm đó và xem cách đọc. Từ ví dụ được đọc bằng giọng Anh-Mỹ.
-            </p>
+            <ChartBlock title="Nguyên âm đôi" subtitle="8 âm" rows={IPA_CHART.diphthongs} cols={3} selected={selected} onSelect={select} />
+            <ChartBlock title="Phụ âm" subtitle="24 âm" rows={IPA_CHART.consonants} cols={8} selected={selected} onSelect={select} />
           </div>
 
           {/* Chi tiết: cột phải trên desktop, bottom sheet trên điện thoại */}
@@ -204,8 +201,8 @@ function AudioCredits() {
         không thể hiện độ dài ngắn và âm tắc được đọc kèm nguyên âm /a/. Hãy nghe thêm từ ví dụ để biết âm trong tiếng Anh thật.
       </p>
       <p className="mt-2">
-        8 nguyên âm đôi ({SYNTHESIZED_DIPHTHONGS.map((id) => `/${IPA_MAP[id]?.symbol}/`).join(" ")}) không có bản ghi đứng riêng trên Commons nên
-        được tạo bằng giọng đọc máy {SYNTHESIZED_VOICE}. Theo giọng Mỹ, /ɪə/, /eə/, /ʊə/ có thêm âm r (như here, hair, tour).
+        8 nguyên âm đôi ({SYNTHESIZED_DIPHTHONGS.map((id) => `/${IPA_MAP[id]?.symbol}/`).join(" ")}) và hai cặp /ɪ/ – /iː/, /ʊ/ – /uː/ được tạo bằng giọng đọc máy{" "}
+        {SYNTHESIZED_VOICE}; âm dài được kéo dài để nghe rõ khác âm ngắn. Theo giọng Mỹ, /ɪə/, /eə/, /ʊə/ có thêm âm r (như here, hair, tour).
       </p>
       <ul className="mt-2 grid gap-x-6 gap-y-1 sm:grid-cols-2">
         {IPA_RECORDINGS.map((r) => {
@@ -241,7 +238,6 @@ function EmptyDetail() {
         <Ear className="size-7" />
       </span>
       <p className="font-semibold text-fg">Chọn một âm trong bảng</p>
-      <p className="text-sm">Bạn sẽ thấy cách đặt môi, lưỡi, âm tiếng Việt gần giống, lỗi hay gặp và nghe từ ví dụ.</p>
     </div>
   );
 }

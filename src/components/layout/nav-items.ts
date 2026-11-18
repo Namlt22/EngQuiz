@@ -9,7 +9,6 @@ export interface NavLink {
   href: string;
   label: string;
   /** Mô tả ngắn hiện trong menu thả xuống */
-  hint?: string;
   icon: LucideIcon;
 }
 
@@ -29,10 +28,10 @@ export const NAV_EN: NavEntry[] = [
     label: "Học",
     icon: BookOpen,
     items: [
-      { href: "/levels", label: "Cấp độ", hint: "Lộ trình A1 → C1 theo chủ điểm", icon: Layers },
-      { href: "/grammar", label: "Lý thuyết", hint: "Ngữ pháp dễ hiểu, nhiều ví dụ", icon: BookOpen },
-      { href: "/ipa", label: "Phát âm", hint: "Bảng IPA có âm thanh mẫu", icon: AudioLines },
-      { href: "/reading", label: "Đọc hiểu", hint: "Bài đọc theo chủ đề, có câu hỏi", icon: BookOpenText },
+      { href: "/levels", label: "Cấp độ", icon: Layers },
+      { href: "/grammar", label: "Lý thuyết", icon: BookOpen },
+      { href: "/ipa", label: "Phát âm", icon: AudioLines },
+      { href: "/reading", label: "Đọc hiểu", icon: BookOpenText },
     ],
   },
   {
@@ -40,10 +39,10 @@ export const NAV_EN: NavEntry[] = [
     label: "Luyện tập",
     icon: Dumbbell,
     items: [
-      { href: "/quiz", label: "Quiz", hint: "Bộ câu hỏi theo chủ điểm, cấp độ", icon: PenLine },
-      { href: "/dictation", label: "Nghe chép", hint: "Nghe và chép lại từng câu", icon: Headphones },
-      { href: "/speaking", label: "Luyện nói", hint: "Đọc theo mẫu, AI sửa lỗi khi nói", icon: Mic },
-      { href: "/dialogues", label: "Hội thoại", hint: "Nghe và nhập vai theo tình huống", icon: MessagesSquare },
+      { href: "/quiz", label: "Quiz", icon: PenLine },
+      { href: "/dictation", label: "Nghe chép", icon: Headphones },
+      { href: "/speaking", label: "Luyện nói", icon: Mic },
+      { href: "/dialogues", label: "Hội thoại", icon: MessagesSquare },
     ],
   },
 ];
@@ -60,11 +59,11 @@ export const NAV_ZH: NavEntry[] = [
     label: "Học",
     icon: BookOpen,
     items: [
-      { href: "/zh/pinyin", label: "Pinyin & thanh điệu", hint: "Thanh mẫu, vận mẫu, 4 thanh, biến điệu", icon: AudioLines },
-      { href: "/zh/hanzi", label: "Hán tự", hint: "Nét, bộ thủ, tập viết có hoạt hình", icon: PenLine },
-      { href: "/zh/vocab", label: "Từ vựng HSK", hint: "Thẻ ôn lặp lại ngắt quãng", icon: Layers },
-      { href: "/zh/grammar", label: "Ngữ pháp", hint: "Theo danh mục chuẩn HSK 3.0", icon: BookOpenText },
-      { href: "/zh/reading", label: "Bài đọc", hint: "Bài đọc ngắn, chạm từ xem nghĩa", icon: BookOpen },
+      { href: "/zh/pinyin", label: "Pinyin & thanh điệu", icon: AudioLines },
+      { href: "/zh/hanzi", label: "Hán tự", icon: PenLine },
+      { href: "/zh/vocab", label: "Từ vựng HSK", icon: Layers },
+      { href: "/zh/grammar", label: "Ngữ pháp", icon: BookOpenText },
+      { href: "/zh/reading", label: "Bài đọc", icon: BookOpen },
     ],
   },
   {
@@ -72,12 +71,12 @@ export const NAV_ZH: NavEntry[] = [
     label: "Luyện tập",
     icon: Dumbbell,
     items: [
-      { href: "/zh/dialogues", label: "Hội thoại", hint: "Tình huống giao tiếp, mỗi vai một giọng", icon: MessagesSquare },
-      { href: "/zh/dictation", label: "Nghe chép", hint: "Gõ pinyin hoặc chữ Hán, chấm từng thanh", icon: Headphones },
-      { href: "/zh/mock/hsk1", label: "Thi thử HSK 1", hint: "20 câu nghe – đọc, chấm điểm từng phần", icon: PenLine },
-      { href: "/zh/mock/hsk2", label: "Thi thử HSK 2", hint: "20 câu nghe – đọc, ngữ pháp HSK 2", icon: PenLine },
-      { href: "/zh/mock/hsk3", label: "Thi thử HSK 3", hint: "20 câu nghe – đọc, câu 把 / 被, bổ ngữ", icon: PenLine },
-      { href: "/zh/mock/hsk4", label: "Thi thử HSK 4", hint: "20 câu nghe – đọc, câu phức, văn viết", icon: PenLine },
+      { href: "/zh/dialogues", label: "Hội thoại", icon: MessagesSquare },
+      { href: "/zh/dictation", label: "Nghe chép", icon: Headphones },
+      { href: "/zh/mock/hsk1", label: "Thi thử HSK 1", icon: PenLine },
+      { href: "/zh/mock/hsk2", label: "Thi thử HSK 2", icon: PenLine },
+      { href: "/zh/mock/hsk3", label: "Thi thử HSK 3", icon: PenLine },
+      { href: "/zh/mock/hsk4", label: "Thi thử HSK 4", icon: PenLine },
     ],
   },
 ];

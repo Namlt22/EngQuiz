@@ -12,10 +12,7 @@ export default function DialoguesIndexPage() {
     <div className="space-y-6">
       <header className="max-w-3xl">
         <h1 className="text-2xl font-extrabold md:text-3xl">Hội thoại</h1>
-        <p className="mt-2 text-muted">
-          Hội thoại theo tình huống thật: gọi món, đặt phòng, đổi lịch họp… Nghe cả bài, rồi <b className="text-fg">nhập vai</b> — máy đọc lời một
-          nhân vật, bạn nói lời nhân vật còn lại và được chấm từng từ.
-        </p>
+        <p className="mt-2 text-sm text-muted">Nghe cả bài, rồi nhập vai và được chấm từng từ.</p>
       </header>
       <LessonList
         basePath="/dialogues"
