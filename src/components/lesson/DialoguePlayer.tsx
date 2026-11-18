@@ -17,6 +17,7 @@ import { SpeakButton } from "@/components/ui/SpeakButton";
 import { RecordButton } from "@/components/speaking/RecordButton";
 import { ScoreBadge } from "@/components/speaking/ScoreBadge";
 import { LessonQuiz } from "./LessonQuiz";
+import { SelectionSave } from "@/components/notebook/SelectionSave";
 
 const LINE_RATE = 0.9;
 /** Cao độ giọng của hai nhân vật — cùng một giọng máy nhưng nghe ra hai người. */
@@ -151,6 +152,7 @@ function ListenMode({ dialogue, showVi, onToggleVi }: { dialogue: Dialogue; show
           {notice}
         </p>
       )}
+      <SelectionSave course="en" source={`dialogue:${dialogue.id}`}>
       <ol className="space-y-3">
         {dialogue.lines.map((line, i) => (
           <li key={i} className={`flex gap-2 ${line.speaker === 1 ? "flex-row-reverse text-right" : ""}`}>
@@ -162,7 +164,7 @@ function ListenMode({ dialogue, showVi, onToggleVi }: { dialogue: Dialogue; show
               aria-label={`Nghe câu của ${dialogue.speakers[line.speaker]}`}
             >
               <span className="block text-xs font-semibold text-muted">{dialogue.speakers[line.speaker]}</span>
-              <span lang="en" className="block leading-relaxed">
+              <span lang="en" className="block select-text leading-relaxed">
                 {line.en}
               </span>
               {showVi && <span className="mt-0.5 block text-sm text-muted">{line.vi}</span>}
@@ -170,6 +172,7 @@ function ListenMode({ dialogue, showVi, onToggleVi }: { dialogue: Dialogue; show
           </li>
         ))}
       </ol>
+      </SelectionSave>
     </section>
   );
 }

@@ -102,3 +102,25 @@ describe("sổ tay — làm sạch & gộp hai máy", () => {
     expect(mergeNotebook(phone, base.list)[0].meaning).toBe("mặt trời (n)");
   });
 });
+
+describe("sổ tay — phiên âm", () => {
+  it("lưu, sửa, làm sạch trường phiên âm", () => {
+    const { list, entry } = addEntry([], { term: "see", meaning: "nhìn", reading: " /siː/ " }, 1, 1);
+    expect(entry.reading).toBe("/siː/");
+    expect(updateEntry(list, entry.id, { reading: "" }, 2)[0].reading).toBeUndefined();
+    expect(sanitizeNotebook([{ ...entry, reading: 5 }])[0].reading).toBeUndefined();
+  });
+});
+
+describe("sổ tay — hoàn tác xoá", () => {
+  it("khôi phục mục vừa xoá, giữ nguyên hộp ôn; khôi phục là một lần sửa mới (thắng khi gộp)", async () => {
+    const { restoreEntry } = await import("./notebook");
+    const a = addEntry([], { term: "kind", meaning: "tốt bụng" }, 1, 1);
+    const reviewed = reviewEntry(a.list, a.entry.id, "good", 1, 2);
+    const removed = removeEntry(reviewed, a.entry.id, 3);
+    const back = restoreEntry(removed, a.entry.id, 4);
+    expect(back[0]).toMatchObject({ term: "kind", meaning: "tốt bụng", box: 1, updated: 4 });
+    expect(back[0].deleted).toBeUndefined();
+    expect(mergeNotebook(removed, back)[0].deleted).toBeUndefined();
+  });
+});

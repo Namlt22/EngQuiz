@@ -4,6 +4,7 @@
 import { Volume2, X } from "lucide-react";
 import type { ZhToken } from "@/core/zh-sentence";
 import { POS_LABEL, vocabVi } from "@/content/zh/vocab-vi";
+import { SaveWordButton } from "@/components/notebook/SaveWordButton";
 
 export function WordGloss({ token, onSpeak, onClose }: { token: ZhToken; onSpeak: () => void; onClose: () => void }) {
   const vi = token.kind === "word" ? vocabVi(token.text) : undefined;
@@ -28,6 +29,7 @@ export function WordGloss({ token, onSpeak, onClose }: { token: ZhToken; onSpeak
             <div className="text-sm text-muted">{token.kind === "name" ? "Tên riêng" : token.kind === "number" ? "Số" : `Từ HSK ${token.level ?? ""}`}</div>
           )}
         </div>
+        {vi && <SaveWordButton entry={{ term: token.text, meaning: vi[1], reading: token.pinyin, source: "text" }} />}
         <button type="button" onClick={onClose} className="grid size-8 place-items-center rounded-lg text-muted hover:text-fg" aria-label="Đóng">
           <X className="size-4" />
         </button>

@@ -68,6 +68,7 @@ const notebookEntrySchema = z.strictObject({
   id: z.string().regex(/^[a-z0-9]{6,32}$/),
   term: z.string().min(1).max(NOTEBOOK_LIMITS.term),
   meaning: z.string().min(1).max(NOTEBOOK_LIMITS.meaning),
+  reading: z.string().max(NOTEBOOK_LIMITS.reading).optional(),
   example: z.string().max(NOTEBOOK_LIMITS.example).optional(),
   source: z.string().max(NOTEBOOK_LIMITS.source).optional(),
   box: z.number().int().min(0).max(5),

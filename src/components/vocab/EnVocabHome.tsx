@@ -13,6 +13,7 @@ import { MASTERED_BOX, buildQueue, dayNumber, decodeSrs } from "@/core/srs";
 import { useProgress } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
 import { EnFlashcardSession, type EnCardMode } from "./EnFlashcardSession";
+import { SaveWordButton } from "@/components/notebook/SaveWordButton";
 
 export function EnVocabHome() {
   const params = useSearchParams();
@@ -117,6 +118,7 @@ export function EnVocabHome() {
                   {box >= MASTERED_BOX ? "Đã thuộc" : `Hộp ${box}`}
                 </span>
               )}
+              <SaveWordButton entry={{ term: word, meaning: vi, reading: ipa, example, source: "vocab" }} />
             </li>
           );
         })}

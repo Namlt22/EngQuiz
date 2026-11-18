@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CheckCircle2, Languages, Volume2 } from "lucide-react";
 import type { ChatCorrection } from "@/lib/ai-chat";
 import type { CourseCode } from "@/lib/course";
+import { SaveWordButton } from "@/components/notebook/SaveWordButton";
 
 export interface UiMessage {
   id: string;
@@ -34,6 +35,10 @@ export function ChatBubble({ msg, course, showPinyin, onSpeak }: { msg: UiMessag
               </span>
             </p>
             {msg.correction.explanationVi && <p className="mt-1 text-muted">{msg.correction.explanationVi}</p>}
+            <div className="mt-1 flex items-center justify-end gap-1 text-xs text-muted">
+              Do AI tạo, có thể sai
+              <SaveWordButton entry={correctionEntry(msg.correction)} className="size-7" />
+            </div>
           </div>
         )}
       </div>
@@ -68,3 +73,6 @@ export function ChatBubble({ msg, course, showPinyin, onSpeak }: { msg: UiMessag
     </div>
   );
 }
+
+/** Câu đã sửa → mục Sổ tay (nghĩa = giải thích tiếng Việt của AI). */
+export const correctionEntry = (c: ChatCorrection) => ({ term: c.corrected, meaning: c.explanationVi || "Câu đúng", source: "chat" });

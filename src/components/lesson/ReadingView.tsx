@@ -10,6 +10,9 @@ import { SPEECH_ERROR_NOTICE, useSpeech } from "@/lib/speech";
 import { LevelBadge } from "@/components/ui/LevelBadge";
 import { SpeakButton } from "@/components/ui/SpeakButton";
 import { LessonQuiz } from "./LessonQuiz";
+import { SaveWordButton } from "@/components/notebook/SaveWordButton";
+import { SelectionSave } from "@/components/notebook/SelectionSave";
+import { sentenceWith } from "@/lib/notebook-lookup";
 
 const READ_RATE = 0.9;
 
@@ -83,6 +86,7 @@ export function ReadingView({ passage }: { passage: ReadingPassage }) {
         </p>
       )}
 
+      <SelectionSave course="en" source={`reading:${passage.id}`} glossary={passage.glossary}>
       <article className="card space-y-4 p-5 md:p-7">
         {passage.paragraphs.map((p, i) => (
           <div key={i} className={`flex gap-3 rounded-xl p-2 transition ${playing === i ? "bg-primary-soft" : ""}`}>
@@ -94,6 +98,7 @@ export function ReadingView({ passage }: { passage: ReadingPassage }) {
           </div>
         ))}
       </article>
+      </SelectionSave>
 
       <section className="card space-y-3 p-5">
         <h2 className="text-lg font-bold">Từ vựng trong bài</h2>
@@ -101,9 +106,12 @@ export function ReadingView({ passage }: { passage: ReadingPassage }) {
           {passage.glossary.map((g) => (
             <li key={g.word} className="flex items-center gap-2 rounded-xl bg-surface-2 p-2.5 text-sm">
               <SpeakButton text={g.word} rate={0.8} />
-              <span>
+              <span className="flex-1">
                 <b>{g.word}</b> — {g.meaning}
               </span>
+              <SaveWordButton
+                entry={{ term: g.word, meaning: g.meaning, example: sentenceWith(passage.paragraphs.map((x) => x.en).join(" "), g.word.split(" ")[0], "en"), source: `reading:${passage.id}` }}
+              />
             </li>
           ))}
         </ul>

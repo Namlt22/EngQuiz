@@ -13,7 +13,9 @@ import type { CourseCode } from "@/lib/course";
 import type { ApiResponse } from "@/lib/learner-schema";
 import { useSpeech } from "@/lib/speech";
 import { useSpeechRecognition } from "@/lib/speech-recognition";
-import { ChatBubble, type UiMessage } from "./ChatBubble";
+import { ChatBubble, correctionEntry, type UiMessage } from "./ChatBubble";
+import { SaveWordButton } from "@/components/notebook/SaveWordButton";
+import { progressActions } from "@/lib/progress";
 import type { ChatChoice } from "./ChatPicker";
 
 type Phase = { kind: "idle" } | { kind: "sending" } | { kind: "error"; message: string; status: number };
@@ -156,12 +158,15 @@ export function ChatRoom({ course, choice, onExit }: { course: CourseCode; choic
       {phase.kind === "error" && <ChatError phase={phase} course={course} />}
 
       {ended || outOfTurns ? (
-        <div className="card flex flex-wrap items-center gap-3 p-4">
-          <PartyPopper className="size-6 text-primary" />
-          <p className="flex-1 font-semibold">{ended ? "Hoàn thành cuộc trò chuyện!" : `Đã đủ ${CHAT_LIMITS.maxLearnerTurns} tin của cuộc này.`}</p>
-          <button type="button" onClick={restart} className="btn-primary">
-            <RotateCcw className="size-4" /> Cuộc mới
-          </button>
+        <div className="card space-y-3 p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <PartyPopper className="size-6 text-primary" />
+            <p className="flex-1 font-semibold">{ended ? "Hoàn thành cuộc trò chuyện!" : `Đã đủ ${CHAT_LIMITS.maxLearnerTurns} tin của cuộc này.`}</p>
+            <button type="button" onClick={restart} className="btn-primary">
+              <RotateCcw className="size-4" /> Cuộc mới
+            </button>
+          </div>
+          <ChatSummary messages={messages} lang={course === "zh" ? "zh-Hans" : "en"} />
         </div>
       ) : (
         <form
@@ -227,6 +232,29 @@ function ChatError({ phase, course }: { phase: Extract<Phase, { kind: "error" }>
           <Sparkles className="size-4" /> Gói AI
         </Link>
       )}
+    </div>
+  );
+}
+
+/** Hết cuộc: các câu đã được sửa, lưu từng câu hoặc lưu tất cả vào Sổ tay. */
+function ChatSummary({ messages, lang }: { messages: UiMessage[]; lang: string }) {
+  const fixes = messages.flatMap((m) => (m.correction ? [m.correction] : []));
+  if (!fixes.length) return null;
+  return (
+    <div className="space-y-2 border-t border-line pt-3">
+      <ul className="space-y-1.5">
+        {fixes.map((c, k) => (
+          <li key={k} className="flex items-center gap-2 text-sm">
+            <span lang={lang} className="flex-1 font-semibold">
+              {c.corrected}
+            </span>
+            <SaveWordButton entry={correctionEntry(c)} className="size-7" />
+          </li>
+        ))}
+      </ul>
+      <button type="button" onClick={() => fixes.forEach((c) => progressActions.addToNotebook(correctionEntry(c)))} className="btn-ghost text-sm">
+        Lưu tất cả
+      </button>
     </div>
   );
 }

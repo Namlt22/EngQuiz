@@ -16,8 +16,8 @@ describe("màn hình đang làm bài (ẩn thanh tab dưới)", () => {
 });
 
 describe("menu", () => {
-  it("cả hai khoá cùng khung Hôm nay · Lộ trình · Học · Luyện", () => {
-    for (const nav of [NAV_EN, NAV_ZH]) expect(nav.map((e) => e.label)).toEqual(["Hôm nay", "Lộ trình", "Học", "Luyện"]);
+  it("cả hai khoá cùng khung Hôm nay · Lộ trình · Học · Luyện · Sổ tay", () => {
+    for (const nav of [NAV_EN, NAV_ZH]) expect(nav.map((e) => e.label)).toEqual(["Hôm nay", "Lộ trình", "Học", "Luyện", "Sổ tay"]);
   });
 
   it("không còn Cấp độ / Lý thuyết; thi thử HSK là một mục", () => {

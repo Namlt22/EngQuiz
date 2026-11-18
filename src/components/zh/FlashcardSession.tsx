@@ -16,6 +16,7 @@ import { applySandhi } from "@/core/pinyin";
 import type { Grade } from "@/core/srs";
 import { gradeWordPinyin, type WordPinyinResult } from "@/core/zh-vocab-quiz";
 import { progressActions } from "@/lib/progress";
+import { SaveWordButton } from "@/components/notebook/SaveWordButton";
 
 export type CardMode = "hanzi" | "meaning" | "listen" | "pinyin";
 
@@ -137,6 +138,7 @@ export function FlashcardSession({ queue: initial, mode, speak, onExit }: Props)
         )}
         {revealed ? (
           <div className="space-y-1">
+            {vi && <SaveWordButton entry={{ term: word, meaning: vi[1], reading: hsk?.pinyin, source: "vocab" }} className="mx-auto" />}
             <button type="button" onClick={() => speak(word)} className="inline-flex items-center gap-1.5 text-2xl font-bold text-primary">
               <Volume2 className="size-5" /> {hsk?.pinyin}
             </button>

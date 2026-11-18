@@ -1,9 +1,9 @@
-import { AudioLines, BookOpen, BookOpenText, Bot, Dumbbell, Headphones, House, Layers, MessagesSquare, Mic, PenLine, Route, type LucideIcon } from "lucide-react";
+import { AudioLines, BookOpen, BookOpenText, Bot, Dumbbell, Headphones, House, Layers, MessagesSquare, Mic, NotebookPen, PenLine, Repeat, Route, type LucideIcon } from "lucide-react";
 import type { CourseCode } from "@/lib/course";
 
 /**
  * Điều hướng chính, dùng chung cho header (máy tính) và thanh tab dưới (điện thoại) — docs/REDESIGN.md mục 2.
- * Cả hai khoá cùng khung: Hôm nay · Lộ trình · Học ▾ · Luyện ▾.
+ * Cả hai khoá cùng khung: Hôm nay · Lộ trình · Học ▾ · Luyện ▾ · Sổ tay.
  */
 export interface NavLink {
   href: string;
@@ -39,12 +39,14 @@ export const NAV_EN: NavEntry[] = [
     label: "Luyện",
     icon: Dumbbell,
     items: [
+      { href: "/review", label: "Ôn thẻ hôm nay", icon: Repeat },
       { href: "/quiz", label: "Quiz", icon: PenLine },
       { href: "/dictation", label: "Nghe chép", icon: Headphones },
       { href: "/speaking", label: "Luyện nói", icon: Mic },
       { href: "/chat", label: "Trò chuyện AI", icon: Bot },
     ],
   },
+  { kind: "link", href: "/notebook", label: "Sổ tay", icon: NotebookPen },
 ];
 
 export const NAV_ZH: NavEntry[] = [
@@ -68,11 +70,13 @@ export const NAV_ZH: NavEntry[] = [
     label: "Luyện",
     icon: Dumbbell,
     items: [
+      { href: "/zh/review", label: "Ôn thẻ hôm nay", icon: Repeat },
       { href: "/zh/dictation", label: "Nghe chép", icon: Headphones },
       { href: "/zh/mock", label: "Thi thử HSK", icon: PenLine },
       { href: "/zh/chat", label: "Trò chuyện AI", icon: Bot },
     ],
   },
+  { kind: "link", href: "/zh/notebook", label: "Sổ tay", icon: NotebookPen },
 ];
 
 /**

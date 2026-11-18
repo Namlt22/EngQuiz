@@ -15,6 +15,7 @@ import { MASTERED_BOX, buildQueue, dayNumber, decodeSrs } from "@/core/srs";
 import { useProgress } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
 import { FlashcardSession, type CardMode } from "./FlashcardSession";
+import { SaveWordButton } from "@/components/notebook/SaveWordButton";
 import { ZhVoiceNotice } from "./ZhVoiceNotice";
 
 function readLevel(v: string | null): HskLevel {
@@ -131,6 +132,7 @@ export function VocabHome() {
                   {box >= MASTERED_BOX ? "Đã thuộc" : `Hộp ${box}`}
                 </span>
               )}
+              {vi && <SaveWordButton entry={{ term: w.hanzi, meaning: vi[1], reading: w.pinyin, source: "vocab" }} />}
             </li>
           );
         })}

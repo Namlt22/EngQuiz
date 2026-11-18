@@ -6,9 +6,9 @@
  * Chưa có lộ trình → thẻ tạo lộ trình thay cho phần Tiếp theo và bài trong ngày. Không có dòng chú thích.
  */
 import Link from "next/link";
-import { ArrowRight, Bot, Flame, Layers, PartyPopper, Repeat, Route, Star } from "lucide-react";
-import { buildNotebookQueue } from "@/core/notebook";
-import { dayNumber, decodeSrs } from "@/core/srs";
+import { ArrowRight, Bot, Flame, Layers, NotebookPen, PartyPopper, Repeat, Route, Star } from "lucide-react";
+import { dayNumber } from "@/core/srs";
+import { buildReviewQueue } from "@/lib/review-queue";
 import type { CourseCode } from "@/lib/course";
 import { daysFor } from "@/lib/course-roadmap";
 import { todayKey, useProgress } from "@/lib/progress";
@@ -24,12 +24,17 @@ const ACCENT: Record<CourseCode, string> = {
   zh: "from-red-600 via-rose-600 to-amber-500",
 };
 
+/** Chữ trên nút trắng theo màu của khoá. */
+const ACCENT_TEXT: Record<CourseCode, string> = { en: "text-indigo-700", zh: "text-rose-700" };
+
 const QUICK: Record<CourseCode, { href: string; label: string; icon: typeof Layers }[]> = {
   en: [
+    { href: "/notebook", label: "Sổ tay", icon: NotebookPen },
     { href: "/vocab", label: "Từ vựng", icon: Layers },
     { href: "/chat", label: "Chat AI", icon: Bot },
   ],
   zh: [
+    { href: "/zh/notebook", label: "Sổ tay", icon: NotebookPen },
     { href: "/zh/vocab", label: "Từ vựng", icon: Layers },
     { href: "/zh/chat", label: "Chat AI", icon: Bot },
   ],
@@ -47,8 +52,8 @@ export function TodayHub({ course }: { course: CourseCode }) {
   const dayN = day?.n ?? days.length;
 
   const today = dayNumber();
-  const due = [...decodeSrs(p.srs).values()].filter((s) => s.due <= today).length + buildNotebookQueue(p.notebook ?? [], today).length;
-  const vocabHref = course === "zh" ? "/zh/vocab" : "/vocab";
+  const due = buildReviewQueue(p.srs, p.notebook ?? [], today).length;
+  const reviewHref = course === "zh" ? "/zh/review" : "/review";
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
@@ -77,7 +82,7 @@ export function TodayHub({ course }: { course: CourseCode }) {
                 <Link
                   href={task.href}
                   onClick={() => saveReturnTarget({ day: day.n, taskId: task.id, title: task.title, course })}
-                  className="btn bg-white text-indigo-700 hover:bg-white/90"
+                  className={`btn bg-white hover:bg-white/90 ${ACCENT_TEXT[course]}`}
                 >
                   Bắt đầu <ArrowRight className="size-4" />
                 </Link>
@@ -87,7 +92,7 @@ export function TodayHub({ course }: { course: CourseCode }) {
             <section className={`flex items-center gap-4 rounded-3xl bg-gradient-to-br p-5 text-white shadow-lg ${ACCENT[course]}`}>
               <PartyPopper className="size-8 shrink-0" />
               <h1 className="flex-1 text-xl font-extrabold">Xong lộ trình</h1>
-              <Link href={vocabHref} className="btn bg-white text-indigo-700 hover:bg-white/90">
+              <Link href={reviewHref} className={`btn bg-white hover:bg-white/90 ${ACCENT_TEXT[course]}`}>
                 Ôn thẻ
               </Link>
             </section>
@@ -109,7 +114,7 @@ export function TodayHub({ course }: { course: CourseCode }) {
 
         <div className="space-y-4">
           {due > 0 && (
-            <Link href={vocabHref} className="card flex items-center gap-3 p-4 transition hover:shadow-md">
+            <Link href={reviewHref} className="card flex items-center gap-3 p-4 transition hover:shadow-md">
               <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-surface-2 text-primary">
                 <Repeat className="size-5" />
               </span>
@@ -117,7 +122,7 @@ export function TodayHub({ course }: { course: CourseCode }) {
               <span className="text-lg font-extrabold text-primary">{due}</span>
             </Link>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {QUICK[course].map(({ href, label, icon: Icon }) => (
               <Link key={href} href={href} className="card flex flex-col items-center gap-2 p-4 text-center transition hover:shadow-md">
                 <span className="grid size-10 place-items-center rounded-xl bg-surface-2 text-primary">

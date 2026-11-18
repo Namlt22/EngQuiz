@@ -12,6 +12,7 @@ import { CheckCircle2, RotateCcw, Volume2, XCircle } from "lucide-react";
 import { EN_POS_LABEL, getEnWord } from "@/content/vocab-en";
 import type { Grade } from "@/core/srs";
 import { progressActions } from "@/lib/progress";
+import { SaveWordButton } from "@/components/notebook/SaveWordButton";
 
 export type EnCardMode = "word" | "meaning" | "spell";
 
@@ -118,6 +119,7 @@ export function EnFlashcardSession({ queue: initial, mode, speak, onExit }: Prop
         )}
         {revealed ? (
           <div className="space-y-1">
+            <SaveWordButton entry={{ term: word, meaning: vi, reading: ipa, example, source: "vocab" }} className="mx-auto" />
             <button type="button" onClick={() => speak(word, 0.9)} className="inline-flex items-center gap-1.5 font-mono text-xl text-primary">
               <Volume2 className="size-5" /> {ipa}
             </button>

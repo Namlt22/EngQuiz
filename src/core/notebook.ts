@@ -12,9 +12,11 @@ export const NOTEBOOK_LIMITS = {
   entries: 300,
   /** Tổng số mục kể cả dấu đã xoá (dấu cũ nhất bị bỏ khi vượt). */
   stored: 360,
-  term: 80,
+  /** Đủ cho một câu đã sửa từ Trò chuyện AI. */
+  term: 160,
   meaning: 160,
   example: 200,
+  reading: 60,
   source: 60,
 } as const;
 
@@ -22,6 +24,8 @@ export interface NotebookEntry {
   id: string;
   term: string;
   meaning: string;
+  /** Phiên âm IPA (EN) hoặc pinyin (ZH). */
+  reading?: string;
   example?: string;
   /** Nơi thêm từ, vd "reading:gig-economy", "chat", "vocab:travel". */
   source?: string;
@@ -37,6 +41,7 @@ export interface NotebookEntry {
 export interface NewEntry {
   term: string;
   meaning: string;
+  reading?: string;
   example?: string;
   source?: string;
 }
@@ -78,6 +83,7 @@ export function addEntry(
     id: newId(),
     term,
     meaning,
+    ...(clip(input.reading, NOTEBOOK_LIMITS.reading) ? { reading: clip(input.reading, NOTEBOOK_LIMITS.reading) } : {}),
     ...(clip(input.example, NOTEBOOK_LIMITS.example) ? { example: clip(input.example, NOTEBOOK_LIMITS.example) } : {}),
     ...(clip(input.source, NOTEBOOK_LIMITS.source) ? { source: clip(input.source, NOTEBOOK_LIMITS.source) } : {}),
     box: 0,
@@ -88,19 +94,30 @@ export function addEntry(
   return { list: trimStored([...list, entry]), entry, added: true };
 }
 
-export function updateEntry(list: readonly NotebookEntry[], id: string, patch: Partial<Pick<NotebookEntry, "term" | "meaning" | "example">>, now: number): NotebookEntry[] {
+export function updateEntry(list: readonly NotebookEntry[], id: string, patch: Partial<Pick<NotebookEntry, "term" | "meaning" | "reading" | "example">>, now: number): NotebookEntry[] {
   return list.map((e) => {
     if (e.id !== id || e.deleted) return e;
     const term = patch.term !== undefined ? clip(patch.term, NOTEBOOK_LIMITS.term) || e.term : e.term;
     const meaning = patch.meaning !== undefined ? clip(patch.meaning, NOTEBOOK_LIMITS.meaning) || e.meaning : e.meaning;
     const example = patch.example !== undefined ? clip(patch.example, NOTEBOOK_LIMITS.example) : e.example;
-    const { example: _drop, ...rest } = e;
-    return { ...rest, term, meaning, ...(example ? { example } : {}), updated: now };
+    const reading = patch.reading !== undefined ? clip(patch.reading, NOTEBOOK_LIMITS.reading) : e.reading;
+    const { example: _e, reading: _r, ...rest } = e;
+    return { ...rest, term, meaning, ...(reading ? { reading } : {}), ...(example ? { example } : {}), updated: now };
   });
 }
 
+/** Xoá: giữ nguyên dữ liệu kèm dấu `deleted` (để hoàn tác được và để máy khác biết mục đã xoá). */
 export function removeEntry(list: readonly NotebookEntry[], id: string, now: number): NotebookEntry[] {
-  return list.map((e) => (e.id === id ? { id: e.id, term: e.term, meaning: e.meaning, box: e.box, due: e.due, updated: now, deleted: true as const } : e));
+  return list.map((e) => (e.id === id && !e.deleted ? { ...e, updated: now, deleted: true as const } : e));
+}
+
+/** Hoàn tác xoá: bỏ dấu `deleted`, tính là một lần sửa mới (thắng bản xoá khi gộp hai máy). */
+export function restoreEntry(list: readonly NotebookEntry[], id: string, now: number): NotebookEntry[] {
+  return list.map((e) => {
+    if (e.id !== id || !e.deleted) return e;
+    const { deleted: _d, ...rest } = e;
+    return { ...rest, updated: now };
+  });
 }
 
 export function reviewEntry(list: readonly NotebookEntry[], id: string, grade: Grade, today: number, now: number): NotebookEntry[] {
@@ -131,11 +148,13 @@ function cleanEntry(raw: unknown): NotebookEntry | null {
   if (!term || !meaning) return null;
   const int = (v: unknown, max: number) => (typeof v === "number" && Number.isFinite(v) ? Math.min(max, Math.max(0, Math.floor(v))) : 0);
   const example = typeof r.example === "string" ? clip(r.example, NOTEBOOK_LIMITS.example) : "";
+  const reading = typeof r.reading === "string" ? clip(r.reading, NOTEBOOK_LIMITS.reading) : "";
   const source = typeof r.source === "string" ? clip(r.source, NOTEBOOK_LIMITS.source) : "";
   return {
     id: r.id,
     term,
     meaning,
+    ...(reading ? { reading } : {}),
     ...(example ? { example } : {}),
     ...(source ? { source } : {}),
     box: int(r.box, 5),

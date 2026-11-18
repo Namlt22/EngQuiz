@@ -11,7 +11,7 @@ import { resourceKey, type TaskKind } from "./roadmap-days";
 import { roadmapActions } from "./roadmap-store";
 import { cleanHanzi, sanitizeProgress } from "./learner-sanitize";
 import { dayNumber, decodeSrs, encodeSrs, isMastered, review, type Grade } from "@/core/srs";
-import { addEntry, removeEntry, reviewEntry, updateEntry, type NewEntry, type NotebookEntry } from "@/core/notebook";
+import { addEntry, removeEntry, restoreEntry, reviewEntry, updateEntry, type NewEntry, type NotebookEntry } from "@/core/notebook";
 import { readJson, writeJson } from "./local-json";
 import { COURSE_CODES, courseStorageKey, currentCourse, type CourseCode } from "./course";
 import { useCourse } from "./course-client";
@@ -229,12 +229,16 @@ export const progressActions = {
     return added;
   },
 
-  editNotebookEntry(id: string, patch: Partial<Pick<NotebookEntry, "term" | "meaning" | "example">>) {
+  editNotebookEntry(id: string, patch: Partial<Pick<NotebookEntry, "term" | "meaning" | "reading" | "example">>) {
     update((s) => ({ ...s, notebook: updateEntry(s.notebook ?? [], id, patch, Date.now()) }));
   },
 
   removeNotebookEntry(id: string) {
     update((s) => ({ ...s, notebook: removeEntry(s.notebook ?? [], id, Date.now()) }));
+  },
+
+  restoreNotebookEntry(id: string) {
+    update((s) => ({ ...s, notebook: restoreEntry(s.notebook ?? [], id, Date.now()) }));
   },
 
   /** Chấm một thẻ sổ tay: +1 XP khi nhớ. */
