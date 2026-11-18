@@ -6,7 +6,7 @@
  */
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BookOpen, Brain, Layers, Volume2 } from "lucide-react";
+import { BookOpen, Brain, Ear, Keyboard, Layers, Volume2 } from "lucide-react";
 import { HSK_LEVELS, type HskLevel } from "@/content/zh/hsk-levels";
 import { wordsIntroducedAt } from "@/content/zh/vocab";
 import { POS_LABEL, VI_LEVELS, vocabVi } from "@/content/zh/vocab-vi";
@@ -87,9 +87,17 @@ export function VocabHome() {
             <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "hanzi" })} className="btn-primary">
               {queue.length ? `Ôn ${queue.length} thẻ (${due} đến hạn)` : "Hôm nay đã ôn xong"}
             </button>
-            <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "meaning" })} className="btn-ghost text-sm">
-              Ôn kiểu nghĩa → chữ
-            </button>
+            <div className="grid grid-cols-3 gap-2">
+              <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "meaning" })} className="btn-ghost px-2 text-sm">
+                Nghĩa → chữ
+              </button>
+              <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "listen" })} className="btn-ghost px-2 text-sm">
+                <Ear className="size-4" /> Nghe
+              </button>
+              <button type="button" disabled={!queue.length} onClick={() => setSession({ queue, mode: "pinyin" })} className="btn-ghost px-2 text-sm">
+                <Keyboard className="size-4" /> Gõ pinyin
+              </button>
+            </div>
           </div>
         </section>
       ) : (
