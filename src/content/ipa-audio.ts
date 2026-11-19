@@ -5,13 +5,10 @@
  * Đây là bản ghi âm IPA chuẩn quốc tế, không riêng giọng Anh: không thể hiện độ dài (/iː/ và /ɪ/ dài bằng nhau),
  * âm tắc (/p/, /t/, /k/…) được đọc kèm nguyên âm /a/.
  *
- * 8 nguyên âm đôi: Commons không có bản ghi đứng riêng → tạo bằng giọng Windows "Microsoft David" (Anh-Mỹ, SAPI 5,
- * đọc trực tiếp âm vị), cắt khoảng lặng & cân âm lượng giống các file trên — scripts/windows/generate-diphthongs.ps1.
+ * 8 nguyên âm đôi (Commons không có bản ghi đứng riêng) và hai cặp ngắn – dài /ɪ/ – /iː/, /ʊ/ – /uː/ (bản Commons dài
+ * bằng nhau, nghe gần như giống hệt): tạo bằng Kokoro-82M (Apache 2.0), giọng Anh-Mỹ "af_heart", đọc trực tiếp âm vị;
+ * âm dài đọc chậm lại (~2,5 lần âm ngắn); cân âm lượng bằng các file trên — scripts/voice/generate_ipa_sounds.py.
  * Theo giọng Mỹ, ba nguyên âm đôi "hướng tâm" có âm r: /ɪə/ ≈ "here" /hɪr/, /eə/ ≈ "hair", /ʊə/ ≈ "tour".
- *
- * Hai cặp ngắn – dài /ɪ/ – /iː/ và /ʊ/ – /uː/: bản ghi Commons (nguyên âm chuẩn, dài bằng nhau) nghe gần như giống hệt nhau
- * → tạo lại bằng cùng giọng "Microsoft David" (âm Mỹ ih/iy như ship/sheep, uh/uw như book/food), âm dài kéo dài
- * gấp ~2,5 lần âm ngắn — scripts/windows/generate-vowel-pairs.ps1.
  */
 
 export type AudioLicense = "CC BY-SA 3.0" | "Public domain";
@@ -72,7 +69,7 @@ export const IPA_RECORDINGS: readonly IpaRecording[] = [
 
 /** Nguyên âm đôi có file tạo bằng giọng đọc máy (Anh-Mỹ). */
 export const SYNTHESIZED_DIPHTHONGS: readonly string[] = ["ia", "ei", "ua", "oi", "ou", "ea", "ai", "au"];
-export const SYNTHESIZED_VOICE = "Microsoft David (Windows, giọng Anh-Mỹ)";
+export const SYNTHESIZED_VOICE = "Kokoro-82M (giọng Anh-Mỹ af_heart, giấy phép Apache 2.0)";
 
 /** Nguyên âm đơn tạo lại bằng giọng đọc máy để phân biệt rõ cặp ngắn – dài. */
 export const SYNTHESIZED_VOWELS: readonly string[] = ["i-short", "i-long", "u-short", "u-long"];
@@ -84,7 +81,13 @@ const HAS_AUDIO = new Set([...IPA_RECORDINGS.map((r) => r.id), ...SYNTHESIZED_DI
  * File đã thay nội dung được đặt tên mới (…-v2.mp3): /audio được cache 7 ngày (next.config), giữ tên cũ thì người học
  * quay lại vẫn nghe bản cũ.
  */
-const FILE_VERSION: Readonly<Record<string, number>> = { "i-short": 2, "i-long": 2, "u-short": 2, "u-long": 2 };
+const FILE_VERSION: Readonly<Record<string, number>> = {
+  "i-short": 3,
+  "i-long": 3,
+  "u-short": 3,
+  "u-long": 3,
+  ...Object.fromEntries(SYNTHESIZED_DIPHTHONGS.map((id) => [id, 2])),
+};
 
 export function ipaAudioSrc(id: string): string | undefined {
   if (!HAS_AUDIO.has(id)) return undefined;

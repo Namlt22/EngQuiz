@@ -1,4 +1,4 @@
-"""Dịch vụ chấm phát âm tới từng âm (OpenPronounce, MIT) cho EngQuiz — chỉ nghe ở 127.0.0.1.
+r"""Dịch vụ chấm phát âm tới từng âm (OpenPronounce, MIT) cho EngQuiz — chỉ nghe ở 127.0.0.1.
 
 Next.js gọi qua /api/pronounce (đã kiểm tra đăng nhập, giới hạn lượt, kích thước file) — không mở cổng này ra ngoài.
 

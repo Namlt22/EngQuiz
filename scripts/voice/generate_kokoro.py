@@ -1,4 +1,4 @@
-"""Tạo giọng đọc mẫu tiếng Anh bằng Kokoro-82M (Apache 2.0) cho EngQuiz.
+r"""Tạo giọng đọc mẫu tiếng Anh bằng Kokoro-82M (Apache 2.0) cho EngQuiz.
 
 Đầu vào : texts.json do scripts/voice/export-texts.run.ts xuất ra ([{key, text, say, voice, group}]).
 Đầu ra  : public/audio/voice/en/<key>.mp3 (mono, 48 kbps) và public/audio/voice/en/index.json (danh sách khoá có file).

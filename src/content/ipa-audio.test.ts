@@ -24,10 +24,10 @@ describe("file ghi âm IPA", () => {
 
   it("id không phải âm IPA → undefined; nguyên âm đôi có file riêng", () => {
     expect(ipaAudioSrc("khong-co")).toBeUndefined();
-    expect(ipaAudioSrc("ei")).toBe("/audio/ipa/ei.mp3");
-    expect(ipaAudioSrc("i-long")).toBe("/audio/ipa/i-long-v2.mp3");
+    expect(ipaAudioSrc("ei")).toBe("/audio/ipa/ei-v2.mp3");
+    expect(ipaAudioSrc("i-long")).toBe("/audio/ipa/i-long-v3.mp3");
     expect(ipaAudioSrc("e")).toBe("/audio/ipa/e.mp3");
-    expect(ipaAudioSrc("u-long")).toBe("/audio/ipa/u-long-v2.mp3");
+    expect(ipaAudioSrc("u-long")).toBe("/audio/ipa/u-long-v3.mp3");
   });
 
   it("link ghi nguồn đúng dạng trang file của Commons", () => {
