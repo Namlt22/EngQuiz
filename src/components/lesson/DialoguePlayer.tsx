@@ -113,7 +113,7 @@ function ListenMode({ dialogue, showVi, onToggleVi }: { dialogue: Dialogue; show
     if (!line) return setPlaying(null);
     setPlaying(i);
     setNotice(null);
-    speak(line.en, LINE_RATE, { pitch: SPEAKER_PITCH[line.speaker], onEnd: () => playFrom(i + 1, run), onError: fail(run) });
+    speak(line.en, LINE_RATE, { pitch: SPEAKER_PITCH[line.speaker], speaker: line.speaker, onEnd: () => playFrom(i + 1, run), onError: fail(run) });
   }
 
   function toggleAll() {
@@ -131,7 +131,7 @@ function ListenMode({ dialogue, showVi, onToggleVi }: { dialogue: Dialogue; show
     const line = dialogue.lines[i];
     const run = runRef.current;
     setNotice(null);
-    speak(line.en, LINE_RATE, { pitch: SPEAKER_PITCH[line.speaker], onEnd: () => run === runRef.current && setPlaying(null), onError: fail(run) });
+    speak(line.en, LINE_RATE, { pitch: SPEAKER_PITCH[line.speaker], speaker: line.speaker, onEnd: () => run === runRef.current && setPlaying(null), onError: fail(run) });
   }
 
   return (
@@ -218,6 +218,7 @@ function RolePlay({ dialogue }: { dialogue: Dialogue }) {
     if (!ttsSupported) return;
     speak(next.en, LINE_RATE, {
       pitch: SPEAKER_PITCH[next.speaker],
+      speaker: next.speaker,
       onEnd: () => attempt === attemptRef.current && goTo(i + 1, who),
       // Không đọc được lời nhân vật kia: dừng tự chuyển câu, người học đọc chữ rồi bấm "Tiếp".
       onError: () => attempt === attemptRef.current && setNotice(SPEECH_ERROR_NOTICE),

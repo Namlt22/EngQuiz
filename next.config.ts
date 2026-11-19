@@ -42,6 +42,8 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: SECURITY_HEADERS },
       // File ghi âm không đổi nội dung: cho trình duyệt giữ 7 ngày, không hỏi lại server mỗi lần bấm nghe.
       { source: "/audio/:path*", headers: [{ key: "Cache-Control", value: `public, max-age=${AUDIO_CACHE_SECONDS}` }] },
+      // Danh sách câu có giọng đọc mẫu: đổi mỗi lần tạo thêm file → luôn hỏi lại server (file mp3 thì tên theo nội dung, cache lâu được).
+      { source: "/audio/voice/en/index.json", headers: [{ key: "Cache-Control", value: "no-cache" }] },
     ];
   },
 };

@@ -13,6 +13,9 @@ import { READ_ALOUD_PASS, scoreReadAloud } from "@/core/speaking";
 import { useIpaSoundPlayer } from "@/lib/ipa-player";
 import { getProgressState, progressActions } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
+import { usePronounceCheck } from "@/lib/pronounce-client";
+import { ipaCarrier, type PronounceResult } from "@/lib/pronounce";
+import { checkTaughtSound, type TaughtSoundCheck } from "@/lib/pronounce-ipa";
 import { useSpeechRecognition } from "@/lib/speech-recognition";
 import { RecordButton } from "@/components/speaking/RecordButton";
 import { scoreTone } from "@/components/speaking/ScoreBadge";
@@ -131,8 +134,12 @@ function ObserveStep({ sound, onPlay, onNext }: { sound: IpaSound; onPlay: () =>
 
 function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: string, r?: number) => void; onNext: () => void }) {
   const recognition = useSpeechRecognition();
-  const canRecord = recognition.status === "ready";
+  // Đã đăng nhập: chấm tới từng âm trên máy chủ; còn lại dùng nhận dạng giọng nói của trình duyệt.
+  const pron = usePronounceCheck();
+  const canRecord = pron.available || recognition.status === "ready";
+  const recording = pron.available ? pron.busy : recognition.listening;
   const [attempts, setAttempts] = useState<Record<string, WordAttempt>>({});
+  const [feedback, setFeedback] = useState<Record<string, TaughtSoundCheck>>({});
   const [heardFor, setHeardFor] = useState<Record<string, true>>({});
   const [active, setActive] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -146,14 +153,25 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
     setHeardFor((h) => ({ ...h, [word]: true }));
   }
 
+  const addAttempt = (word: string, score: number) =>
+    setAttempts((a) => ({ ...a, [word]: { best: Math.max(a[word]?.best ?? 0, score), tries: (a[word]?.tries ?? 0) + 1 } }));
+
   async function record(word: string) {
-    if (recognition.listening) return recognition.stop();
     setActive(word);
     setNotice(null);
+    if (pron.available) {
+      if (pron.busy) return pron.stop();
+      // Đọc từ trong câu khung (chấm chính xác hơn đọc trơ một từ), chỉ xét âm đang học.
+      const result = await pron.check(ipaCarrier(word), "sentence");
+      if (!result) return;
+      const taught = checkTaughtSound(result, word, sound.symbol);
+      setFeedback((f) => ({ ...f, [word]: taught }));
+      return addAttempt(word, taughtScore(result, taught));
+    }
+    if (recognition.listening) return recognition.stop();
     const result = await recognition.listen({ continuous: false, expected: [word] });
     if (!result) return setNotice("Chưa nghe được gì. Bấm nút, chờ chữ “Đang nghe…” rồi đọc to từ đó.");
-    const score = scoreReadAloud(word, result.alternatives).score;
-    setAttempts((a) => ({ ...a, [word]: { best: Math.max(a[word]?.best ?? 0, score), tries: (a[word]?.tries ?? 0) + 1 } }));
+    addAttempt(word, scoreReadAloud(word, result.alternatives).score);
   }
 
   return (
@@ -172,15 +190,22 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
             attempt={attempts[e.word]}
             done={isDone(e.word)}
             canRecord={canRecord}
-            listening={recognition.listening && active === e.word}
-            disabled={recognition.listening && active !== e.word}
+            listening={recording && active === e.word}
+            disabled={recording && active !== e.word}
             onHear={(rate) => hear(e.word, rate)}
             onRecord={() => record(e.word)}
+            feedback={feedback[e.word]}
+            carrier={pron.available ? ipaCarrier(e.word) : undefined}
+            onHearCarrier={() => speak(ipaCarrier(e.word), 0.85)}
           />
         ))}
       </ul>
-      {recognition.listening && <p className="text-sm text-muted">{recognition.ready ? "Đang nghe…" : "Chuẩn bị…"} {recognition.live}</p>}
-      {(notice || recognition.error) && <p className="text-sm text-danger">{notice ?? recognition.error}</p>}
+      {pron.available ? (
+        pron.phase !== "idle" && <p className="text-sm text-muted">{pron.phase === "scoring" ? "Đang chấm…" : pron.phase === "recording" ? "Đang nghe…" : "Chuẩn bị…"}</p>
+      ) : (
+        recognition.listening && <p className="text-sm text-muted">{recognition.ready ? "Đang nghe…" : "Chuẩn bị…"} {recognition.live}</p>
+      )}
+      {(notice || pron.error || recognition.error) && <p className="text-sm text-danger">{notice ?? pron.error ?? recognition.error}</p>}
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-muted">
           {sound.examples.filter((e) => isDone(e.word)).length}/{sound.examples.length} từ
@@ -203,6 +228,10 @@ function WordRow(props: {
   disabled: boolean;
   onHear: (rate: number) => void;
   onRecord: () => void;
+  feedback?: TaughtSoundCheck;
+  /** Câu cần đọc khi chấm từng âm (vd "Say sheep now."). */
+  carrier?: string;
+  onHearCarrier: () => void;
 }) {
   const { e, symbol, attempt, done, canRecord } = props;
   const i = e.ipa.indexOf(symbol);
@@ -230,6 +259,11 @@ function WordRow(props: {
           </span>
         </div>
         <div className="text-xs text-muted">{e.vi}</div>
+        {props.carrier && (
+          <button type="button" onClick={props.onHearCarrier} lang="en" className="mt-0.5 inline-flex items-center gap-1 text-sm text-primary">
+            <Volume2 className="size-3.5" /> {props.carrier}
+          </button>
+        )}
       </div>
       {attempt && <span className={`rounded-lg px-2 py-1 text-sm font-bold ${scoreTone(attempt.best)}`}>{attempt.best}%</span>}
       {done && <CheckCircle2 className="size-5 text-success" aria-label="Xong" />}
@@ -238,6 +272,13 @@ function WordRow(props: {
         <div className="w-full sm:w-auto [&>button]:w-full sm:[&>button]:w-auto">
           <RecordButton listening={props.listening} disabled={props.disabled} idleLabel={attempt ? "Đọc lại" : "Đọc"} listeningLabel="Dừng" onClick={props.onRecord} />
         </div>
+      )}
+      {props.feedback && !props.feedback.ok && props.feedback.expected && (
+        <p className="w-full rounded-xl bg-warning-soft px-3 py-2 font-ipa text-sm">
+          <b className="text-success">/{symbol}/</b>
+          <span className="text-muted"> ← </span>
+          <span className="text-danger">/{props.feedback.heard || "∅"}/</span>
+        </p>
       )}
     </li>
   );
@@ -375,4 +416,10 @@ function DoneCard({ sound, percent, xp, onRetry }: { sound: IpaSound; percent: n
       secondary={{ label: "Bảng IPA", href: "/ipa" }}
     />
   );
+}
+
+/** Điểm một lượt đọc từ IPA: âm đang học đúng → ít nhất mức đạt; sai → dưới mức đạt. */
+function taughtScore(result: PronounceResult, taught: TaughtSoundCheck): number {
+  const score = Math.round(result.score);
+  return taught.ok ? Math.max(score, READ_ALOUD_PASS) : Math.min(score, READ_ALOUD_PASS - 1);
 }

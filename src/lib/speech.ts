@@ -1,14 +1,15 @@
 "use client";
 
 /**
- * Phát âm bằng Web Speech API (có sẵn trong trình duyệt, không cần API key).
- * Giai đoạn sau sẽ thay bằng file audio TTS tạo sẵn (PLAN.md mục 5.6);
- * khi đó chỉ cần đổi phần cài đặt bên trong hook này.
+ * Phát âm: câu tiếng Anh có giọng đọc mẫu tạo sẵn (Kokoro, src/lib/voice-files.ts) thì phát file;
+ * còn lại (câu chưa có file, tiếng Trung) đọc bằng Web Speech API của trình duyệt.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { respellVietnameseNames } from "./vi-names";
 import { wakeAudio } from "./audio-keepalive";
 import { createSpeechRunner, type SpeechRunner, type SynthLike, type UtteranceLike } from "./speech-runner";
+import { hasVoiceFile, loadVoiceIndex, playVoiceFile, stopVoiceFile } from "./voice-files";
+import { DEFAULT_VOICE, SPEAKER_VOICES, voiceKey } from "./voice-key";
 
 export interface VoiceOption {
   id: string;
@@ -74,7 +75,9 @@ function getRunner(): SpeechRunner {
 }
 /** Dừng giọng máy đang đọc / đang chờ đọc (vd trước khi phát file ghi âm). */
 export function stopSpeech() {
-  if (typeof window !== "undefined" && "speechSynthesis" in window) getRunner().stop();
+  if (typeof window === "undefined") return;
+  stopVoiceFile();
+  if ("speechSynthesis" in window) getRunner().stop();
 }
 
 /** Hook nào đang đọc — hook bị gỡ khỏi trang chỉ dừng câu của chính nó. */
@@ -101,6 +104,7 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
       setSupported(false);
       return;
     }
+    if (lang === "en") void loadVoiceIndex();
     const synth = window.speechSynthesis;
     const owner = ownerRef.current;
     const refresh = () => {
@@ -121,7 +125,10 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
     return () => {
       synth.removeEventListener("voiceschanged", refresh);
       // Chỉ dừng nếu câu đang đọc là của hook này (không cắt ngang nút nghe khác trên trang).
-      if (currentOwner === owner) getRunner().stop();
+      if (currentOwner === owner) {
+        getRunner().stop();
+        stopVoiceFile();
+      }
     };
   }, [storageKey, lang, pick]);
 
@@ -136,8 +143,8 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
   );
 
   const stop = useCallback(() => {
-    if (!supported) return;
-    getRunner().stop();
+    stopVoiceFile();
+    if (supported) getRunner().stop();
     setSpeaking(false);
   }, [supported]);
 
@@ -147,9 +154,37 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
      * onEnd: gọi khi đọc xong cả câu (KHÔNG gọi khi bị hủy hay lỗi) — dùng để đọc nối câu tiếp theo.
      * onError: giọng máy lỗi thật (không phát được, mất mạng với giọng online, kẹt quá lâu…) — để giao diện thoát trạng thái "đang đọc".
      *   Bị hủy vì đọc câu khác / bấm dừng ("interrupted", "canceled") không tính là lỗi.
+     * speaker: nhân vật hội thoại (0, 1) — mỗi nhân vật một giọng đọc mẫu riêng; giọng máy thì phân biệt bằng pitch.
      */
-    (text: string, rate = 1, { pitch = 1, onEnd, onError }: { pitch?: number; onEnd?: () => void; onError?: (code: string) => void } = {}) => {
-      if (!supported) return;
+    (
+      text: string,
+      rate = 1,
+      { pitch = 1, speaker, onEnd, onError }: { pitch?: number; speaker?: 0 | 1; onEnd?: () => void; onError?: (code: string) => void } = {},
+    ) => {
+      const key = lang === "en" ? voiceKey(text, speaker === undefined ? DEFAULT_VOICE : SPEAKER_VOICES[speaker]) : "";
+      if (key && hasVoiceFile(key)) {
+        if (supported) getRunner().stop();
+        currentOwner = ownerRef.current;
+        playVoiceFile(key, rate, {
+          onStart: () => setSpeaking(true),
+          onSettle: () => setSpeaking(false),
+          onEnd,
+          onFail: () => speakWithSynth(text, rate, pitch, onEnd, onError),
+        });
+        return;
+      }
+      speakWithSynth(text, rate, pitch, onEnd, onError);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- speakWithSynth đổi theo cùng các phụ thuộc bên dưới
+    [supported, voices, voiceId, lang, pick],
+  );
+
+  function speakWithSynth(text: string, rate: number, pitch: number, onEnd?: () => void, onError?: (code: string) => void) {
+      if (!supported) {
+        onError?.("unsupported");
+        return;
+      }
+      stopVoiceFile();
       const synth = window.speechSynthesis;
       // Danh sách giọng nạp không đồng bộ: bấm nghe ngay khi vừa mở trang thì lấy giọng trực tiếp,
       // không để trình duyệt tự chọn giọng mặc định (thường là giọng online, chậm hơn).
@@ -173,9 +208,7 @@ export function useSpeech({ storageKey, lang = "en" }: { storageKey?: string; la
         onEnd,
         onError,
       });
-    },
-    [supported, voices, voiceId, lang, pick],
-  );
+  }
 
   const voiceOptions: VoiceOption[] = voices.map((v) => ({
     id: v.voiceURI,

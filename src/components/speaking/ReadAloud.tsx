@@ -5,12 +5,15 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DICTATIONS, getDictation } from "@/content/dictations";
 import type { DictationExercise } from "@/content/types";
 import type { WordStatus } from "@/core/dictation";
-import { averageScore, scoreReadAloud, type ReadAloudResult } from "@/core/speaking";
+import { READ_ALOUD_PASS, averageScore, scoreReadAloud, type ReadAloudResult } from "@/core/speaking";
 import { progressActions, useProgress } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
+import { pronounceScore, type PronounceResult } from "@/lib/pronounce";
+import { usePronounceCheck } from "@/lib/pronounce-client";
 import { useSpeechRecognition } from "@/lib/speech-recognition";
 import { LevelBadge } from "@/components/ui/LevelBadge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { PronounceFeedback } from "./PronounceFeedback";
 import { RecordButton } from "./RecordButton";
 import { ScoreBadge } from "./ScoreBadge";
 
@@ -36,6 +39,8 @@ interface SentenceScore {
   best: number;
   passed: boolean;
   last: ReadAloudResult;
+  /** Lượt cuối chấm tới từng âm (khi đã đăng nhập và máy chủ chấm được). */
+  sounds?: PronounceResult;
 }
 
 /** Bỏ dấu câu ở hai đầu để đọc riêng một từ. */
@@ -51,6 +56,10 @@ export function ReadAloud({ initialSetId }: { initialSetId?: string }) {
   const attemptRef = useRef(0);
   const { speak, supported: ttsSupported } = useSpeech();
   const recognition = useSpeechRecognition();
+  // Đã đăng nhập: chấm tới từng âm trên máy chủ; còn lại dùng nhận dạng giọng nói của trình duyệt.
+  const pron = usePronounceCheck();
+  const recording = pron.available ? pron.busy : recognition.listening;
+  const canRecord = pron.available || recognition.status === "ready";
   const savedBest = useProgress().speaking?.[setId]?.best;
   const total = exercise.sentences.length;
   const sentence = exercise.sentences[idx];
@@ -82,10 +91,28 @@ export function ReadAloud({ initialSetId }: { initialSetId?: string }) {
     setIdx((i) => Math.min(total - 1, Math.max(0, i + delta)));
   }
 
+  function saveScore(at: { idx: number }, result: ReadAloudResult, sounds?: PronounceResult) {
+    setScores((prev) => {
+      const old = prev[at.idx];
+      return { ...prev, [at.idx]: { best: Math.max(old?.best ?? 0, result.score), passed: !!old?.passed || result.passed, last: result, sounds } };
+    });
+  }
+
   async function record() {
+    const at = { idx, text: sentence.text };
+    if (pron.available) {
+      if (pron.busy) return pron.stop();
+      const attempt = ++attemptRef.current;
+      setNotice(null);
+      const sounds = await pron.check(at.text, "sentence");
+      if (attempt !== attemptRef.current || !sounds) return;
+      // Tô màu từng từ theo bản nghe được của máy chủ; điểm theo âm (có âm sai thì chưa đạt).
+      const words = scoreReadAloud(at.text, [sounds.transcript.toLowerCase()]);
+      const score = pronounceScore(sounds, READ_ALOUD_PASS);
+      return saveScore(at, { ...words, score, passed: score >= READ_ALOUD_PASS }, sounds);
+    }
     if (recognition.listening) return recognition.stop();
     const attempt = ++attemptRef.current;
-    const at = { idx, text: sentence.text };
     setNotice(null);
     const heard = await recognition.listen({ continuous: false, expected: [sentence.text] });
     if (attempt !== attemptRef.current) return;
@@ -93,11 +120,7 @@ export function ReadAloud({ initialSetId }: { initialSetId?: string }) {
       setNotice(NO_SPEECH);
       return;
     }
-    const result = scoreReadAloud(at.text, heard.alternatives);
-    setScores((prev) => {
-      const old = prev[at.idx];
-      return { ...prev, [at.idx]: { best: Math.max(old?.best ?? 0, result.score), passed: !!old?.passed || result.passed, last: result } };
-    });
+    saveScore(at, scoreReadAloud(at.text, heard.alternatives));
   }
 
   return (
@@ -131,27 +154,29 @@ export function ReadAloud({ initialSetId }: { initialSetId?: string }) {
             </>
           )}
           <RecordButton
-            listening={recognition.listening}
-            disabled={recognition.status !== "ready"}
+            listening={recording}
+            disabled={!canRecord}
             idleLabel={current ? "Nói lại" : "Bấm và đọc to"}
             onClick={record}
           />
         </div>
 
         <p className="min-h-5 text-center text-sm text-muted" aria-live="polite">
-          {recognition.listening && (
-            <>
-              {recognition.ready ? "Đang nghe…" : "Chuẩn bị…"} {recognition.live && <span lang="en" className="text-fg">“{recognition.live}”</span>}
-            </>
-          )}
+          {pron.available
+            ? pron.phase !== "idle" && (pron.phase === "scoring" ? "Đang chấm…" : pron.phase === "recording" ? "Đang nghe…" : "Chuẩn bị…")
+            : recognition.listening && (
+                <>
+                  {recognition.ready ? "Đang nghe…" : "Chuẩn bị…"} {recognition.live && <span lang="en" className="text-fg">“{recognition.live}”</span>}
+                </>
+              )}
         </p>
-        {(recognition.error || notice) && (
-          <p role="alert" className={`rounded-xl p-3 text-sm ${recognition.error ? "bg-danger-soft" : "bg-warning-soft"}`}>
-            {recognition.error ?? notice}
+        {(pron.error || recognition.error || notice) && (
+          <p role="alert" className={`rounded-xl p-3 text-sm ${pron.error || recognition.error ? "bg-danger-soft" : "bg-warning-soft"}`}>
+            {pron.error ?? recognition.error ?? notice}
           </p>
         )}
 
-        {current && !recognition.listening && <AttemptResult score={current} onSpeakWord={(w) => speak(w, MODEL_RATE)} />}
+        {current && !recording && <AttemptResult score={current} onSpeakWord={(w) => speak(w, MODEL_RATE)} />}
 
         <div className="flex items-center justify-between border-t border-line pt-4">
           <button type="button" onClick={() => go(-1)} disabled={idx === 0} className="btn-ghost">
@@ -242,6 +267,7 @@ function AttemptResult({ score, onSpeakWord }: { score: SentenceScore; onSpeakWo
           Từ thừa: <span lang="en">{last.check.extras.join(", ")}</span>
         </p>
       )}
+      {score.sounds && <PronounceFeedback result={score.sounds} onSpeakWord={(w) => onSpeakWord(w)} />}
     </div>
   );
 }
