@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 184 48" width="184" height="48">
+  <defs>
+    <linearGradient id="o5l-bg" x1="2" y1="2" x2="46" y2="46" gradientUnits="userSpaceOnUse"><stop stop-color="#6366F1"/><stop offset="1" stop-color="#A855F7"/></linearGradient>
+    <linearGradient id="o5l-txt" x1="100" y1="0" x2="172" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#6366F1"/><stop offset="1" stop-color="#A855F7"/></linearGradient>
+    <style>.o5l-eng{fill:#0F172A}@media (prefers-color-scheme:dark){.o5l-eng{fill:#F1F5F9}}</style>
+  </defs>
+  <rect x="2" y="2" width="44" height="44" rx="12" fill="url(#o5l-bg)"/>
+  <path d="M22.5 21C18.5 18 13.5 17 9 17.5V36c4.5-.5 9.5.5 13.5 3.5Z" fill="#fff"/>
+  <path d="M25.5 21c4-3 9-4 13.5-3.5V36c-4.5-.5-9.5.5-13.5 3.5Z" fill="#fff" opacity=".85"/>
+  <path d="M24 4.5q1.2 4.8 6 6-4.8 1.2-6 6-1.2-4.8-6-6 4.8-1.2 6-6Z" fill="#F59E0B"/>
+  <text x="58" y="34" font-family="'Be Vietnam Pro', system-ui, sans-serif" font-weight="800" font-size="27" letter-spacing="-0.5"><tspan class="o5l-eng">Eng</tspan><tspan fill="url(#o5l-txt)">Quiz</tspan></text>
+</svg>

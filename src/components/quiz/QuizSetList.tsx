@@ -23,7 +23,7 @@ export function QuizSetList({ sets }: { sets: SetSummary[] }) {
           {mixed.map((s) => (
             <Link key={s.id} href={`/quiz/${s.id}`} className="card group flex flex-col gap-2 p-5 transition hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-center gap-2">
-                <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white">
+                <span className="grid size-10 place-items-center rounded-xl bg-surface-2 text-primary">
                   <Layers className="size-5" />
                 </span>
                 {s.level && <LevelBadge level={s.level} />}

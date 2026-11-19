@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { CATALOG, getTopicMeta } from "./catalog";
 import { DICTATIONS } from "./dictations";
+import { expectSelfGrading, expectWellFormed } from "./question-checks";
 import { TOPIC_CONTENT } from "./topics";
-import { gradeQuestion } from "@/core/grading";
 import { checkDictation } from "@/core/dictation";
 
 describe("catalog", () => {
@@ -36,43 +36,11 @@ describe("topic content", () => {
       });
 
       it("điền từ / chia động từ có đúng một chỗ trống; trắc nghiệm không trùng phương án", () => {
-        for (const q of t.questions) {
-          if (q.type === "verb_form" || q.type === "gap_fill") {
-            expect(q.prompt.split("___").length - 1, q.id).toBe(1);
-          }
-          if (q.type === "mcq") expect(new Set(q.options).size, q.id).toBe(q.options.length);
-          if (q.type === "error_id") expect(q.segments.filter((s) => s.underline).length, q.id).toBeGreaterThanOrEqual(2);
-        }
+        t.questions.forEach(expectWellFormed);
       });
 
       it("đáp án hợp lệ và tự chấm đúng chính nó", () => {
-        for (const q of t.questions) {
-          switch (q.type) {
-            case "mcq":
-              expect(q.answer, q.id).toBeLessThan(q.options.length);
-              expect(gradeQuestion(q, { type: "mcq", choice: q.answer })).toBe(true);
-              break;
-            case "error_id":
-              expect(q.segments[q.answer]?.underline, q.id).toBe(true);
-              break;
-            case "word_order": {
-              // Các từ trong đáp án phải đúng bằng các từ đã cho.
-              const given = [...q.words].map((w) => w.toLowerCase()).sort();
-              const used = q.answers[0].replace(/[?.!]$/, " $&").split(/\s+/).filter(Boolean);
-              const joinedGiven = q.words.join(" ").toLowerCase().split(/\s+/).sort();
-              expect(used.map((w) => w.toLowerCase()).sort(), q.id).toEqual(joinedGiven);
-              expect(given.length).toBe(q.words.length);
-              break;
-            }
-            case "matching":
-              expect([...q.pairs].sort(), q.id).toEqual(q.right.map((_, i) => i));
-              expect(q.pairs.length).toBe(q.left.length);
-              break;
-            default:
-              expect(q.answers.length, q.id).toBeGreaterThan(0);
-              for (const a of q.answers) expect(gradeQuestion(q, { type: q.type, text: a } as never), `${q.id}: ${a}`).toBe(true);
-          }
-        }
+        t.questions.forEach(expectSelfGrading);
       });
     });
   }

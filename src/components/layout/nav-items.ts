@@ -1,10 +1,109 @@
-import { AudioLines, BookOpen, Headphones, House, Layers, PenLine } from "lucide-react";
+import { AudioLines, BookOpen, BookOpenText, Bot, Dumbbell, Headphones, House, Layers, MessageSquareText, MessagesSquare, Mic, NotebookPen, PenLine, Repeat, Route, type LucideIcon } from "lucide-react";
+import type { CourseCode } from "@/lib/course";
 
-export const NAV_ITEMS = [
-  { href: "/", label: "Trang chủ", icon: House, match: (p: string) => p === "/" },
-  { href: "/levels", label: "Lộ trình", icon: Layers, match: (p: string) => p.startsWith("/levels") },
-  { href: "/grammar", label: "Lý thuyết", icon: BookOpen, match: (p: string) => p.startsWith("/grammar") },
-  { href: "/quiz", label: "Quiz", icon: PenLine, match: (p: string) => p.startsWith("/quiz") },
-  { href: "/dictation", label: "Nghe chép", icon: Headphones, match: (p: string) => p.startsWith("/dictation") },
-  { href: "/ipa", label: "Phát âm", icon: AudioLines, match: (p: string) => p.startsWith("/ipa") },
+/**
+ * Điều hướng chính, dùng chung cho header (máy tính) và thanh tab dưới (điện thoại) — docs/REDESIGN.md mục 2.
+ * Cả hai khoá cùng khung: Hôm nay · Lộ trình · Học ▾ · Luyện ▾ · Sổ tay.
+ */
+export interface NavLink {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+export interface NavGroup {
+  label: string;
+  icon: LucideIcon;
+  items: NavLink[];
+}
+
+export type NavEntry = ({ kind: "link" } & NavLink) | ({ kind: "group" } & NavGroup);
+
+export const NAV_EN: NavEntry[] = [
+  { kind: "link", href: "/", label: "Hôm nay", icon: House },
+  { kind: "link", href: "/roadmap", label: "Lộ trình", icon: Route },
+  {
+    kind: "group",
+    label: "Học",
+    icon: BookOpen,
+    items: [
+      { href: "/grammar", label: "Ngữ pháp", icon: BookOpen },
+      { href: "/vocab", label: "Từ vựng", icon: Layers },
+      { href: "/ipa", label: "Phát âm", icon: AudioLines },
+      { href: "/reading", label: "Đọc hiểu", icon: BookOpenText },
+      { href: "/dialogues", label: "Hội thoại", icon: MessagesSquare },
+    ],
+  },
+  {
+    kind: "group",
+    label: "Luyện",
+    icon: Dumbbell,
+    items: [
+      { href: "/review", label: "Ôn thẻ hôm nay", icon: Repeat },
+      { href: "/quiz", label: "Quiz", icon: PenLine },
+      { href: "/sentences", label: "Đặt câu", icon: MessageSquareText },
+      { href: "/dictation", label: "Nghe chép", icon: Headphones },
+      { href: "/speaking", label: "Luyện nói", icon: Mic },
+      { href: "/chat", label: "Trò chuyện AI", icon: Bot },
+    ],
+  },
+  { kind: "link", href: "/notebook", label: "Sổ tay", icon: NotebookPen },
 ];
+
+export const NAV_ZH: NavEntry[] = [
+  { kind: "link", href: "/zh", label: "Hôm nay", icon: House },
+  { kind: "link", href: "/zh/roadmap", label: "Lộ trình", icon: Route },
+  {
+    kind: "group",
+    label: "Học",
+    icon: BookOpen,
+    items: [
+      { href: "/zh/pinyin", label: "Pinyin", icon: AudioLines },
+      { href: "/zh/hanzi", label: "Hán tự", icon: PenLine },
+      { href: "/zh/vocab", label: "Từ vựng HSK", icon: Layers },
+      { href: "/zh/grammar", label: "Ngữ pháp", icon: BookOpenText },
+      { href: "/zh/reading", label: "Bài đọc", icon: BookOpen },
+      { href: "/zh/dialogues", label: "Hội thoại", icon: MessagesSquare },
+    ],
+  },
+  {
+    kind: "group",
+    label: "Luyện",
+    icon: Dumbbell,
+    items: [
+      { href: "/zh/review", label: "Ôn thẻ hôm nay", icon: Repeat },
+      { href: "/zh/sentences", label: "Đặt câu", icon: MessageSquareText },
+      { href: "/zh/dictation", label: "Nghe chép", icon: Headphones },
+      { href: "/zh/mock", label: "Thi thử HSK", icon: PenLine },
+      { href: "/zh/chat", label: "Trò chuyện AI", icon: Bot },
+    ],
+  },
+  { kind: "link", href: "/zh/notebook", label: "Sổ tay", icon: NotebookPen },
+];
+
+/**
+ * Màn hình đang làm bài: thanh tab dưới ẩn để không che nút (docs/REDESIGN.md mục 2.2).
+ */
+export const SESSION_ROUTES: readonly RegExp[] = [
+  /^\/quiz\/.+/,
+  /^\/dictation\/.+/,
+  /^\/zh\/dictation\/.+/,
+  /^\/zh\/mock\/.+/,
+  /^\/review\/?$/,
+  /^\/zh\/review\/?$/,
+  /^\/sentences\/.+/,
+  /^\/zh\/sentences\/.+/,
+];
+
+export const isSessionRoute = (pathname: string) => SESSION_ROUTES.some((re) => re.test(pathname));
+
+export const NAV_BY_COURSE: Record<CourseCode, NavEntry[]> = { en: NAV_EN, zh: NAV_ZH };
+
+/** Trang đang mở có thuộc đường dẫn này không ("/" chỉ khớp đúng trang chủ). */
+// Trang chủ của khoá ("/" và "/zh") chỉ khớp đúng chính nó, không khớp mọi trang con.
+const COURSE_HOMES = new Set(["/", "/zh"]);
+export const isActive = (href: string, pathname: string) =>
+  COURSE_HOMES.has(href) ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+
+export const isEntryActive = (entry: NavEntry, pathname: string) =>
+  entry.kind === "link" ? isActive(entry.href, pathname) : entry.items.some((i) => isActive(i.href, pathname));

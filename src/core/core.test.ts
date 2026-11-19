@@ -150,3 +150,12 @@ describe("gradeQuestion", () => {
     expect(gradeQuestion(q, { type: "matching", pairs: [0, 1] })).toBe(false);
   });
 });
+
+describe("tên riêng Việt Nam trong nghe chép", () => {
+  it("gõ có dấu hay không dấu đều đúng", async () => {
+    const { checkDictation } = await import("./dictation");
+    expect(checkDictation("I live in a small house in Hue.", "I live in a small house in Huế.").passed).toBe(true);
+    expect(checkDictation("We're flying to Da Nang on Friday.", "We're flying to Đà Nẵng on Friday.").passed).toBe(true);
+    expect(checkDictation("Can I have an iced coffee, please?", "Can I have an iced coffee, please?").passed).toBe(true);
+  });
+});

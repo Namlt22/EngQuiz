@@ -2,7 +2,9 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 import { themeInitScript } from "@/components/layout/ThemeToggle";
+import { Providers } from "@/components/auth/Providers";
 
 export const metadata: Metadata = {
   title: { default: "EngQuiz — Học ngữ pháp & luyện nghe tiếng Anh", template: "%s · EngQuiz" },
@@ -31,9 +33,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-dvh">
-        <Header />
-        <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 md:pb-16">{children}</main>
-        <BottomNav />
+        <Providers>
+          <Header />
+          <main className="mx-auto max-w-6xl px-4 pb-12 pt-6 md:pb-16">{children}</main>
+          <SiteFooter />
+          <BottomNav />
+        </Providers>
       </body>
     </html>
   );

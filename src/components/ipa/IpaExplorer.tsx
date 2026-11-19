@@ -1,21 +1,30 @@
 "use client";
 
+import Link from "next/link";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle, CheckCircle2, Ear, Lightbulb, MousePointerClick, RefreshCw, Snail, Volume2, X, XCircle,
+  AlertTriangle, CheckCircle2, Ear, Lightbulb, RefreshCw, Snail, Volume2, X, XCircle,
 } from "lucide-react";
 import {
   ENDING_RULES, IPA_CHART, IPA_GROUP_INFO, IPA_MAP, IPA_SOUNDS, READING_RULES, type IpaExample, type IpaGroup, type IpaSound,
 } from "@/content/ipa";
+import { ipaAudioSrc } from "@/content/ipa-audio";
 import { useSpeech } from "@/lib/speech";
+import { useIpaSoundPlayer } from "@/lib/ipa-player";
 
 /* Một nguồn TTS dùng chung cho cả trang để đổi giọng một lần là áp dụng mọi nơi. */
 type Speak = (text: string, rate?: number) => void;
 const SpeakCtx = createContext<Speak>(() => {});
 const useSpeak = () => useContext(SpeakCtx);
 
+/* Phát âm đứng riêng — dùng useIpaSoundPlayer (src/lib/ipa-player.ts). */
+type PlaySound = (sound: IpaSound) => void;
+const PlaySoundCtx = createContext<PlaySound>(() => {});
+const usePlaySound = () => useContext(PlaySoundCtx);
+
 export function IpaExplorer() {
-  const speech = useSpeech({ prefer: "en-GB", storageKey: "engquiz:voice-ipa" });
+  const speech = useSpeech({ storageKey: "engquiz:voice-ipa-us" });
+  const playSound = useIpaSoundPlayer(speech.speak);
   const [selected, setSelected] = useState<string | null>(null);
 
   // Đọc #id trên URL để có thể chia sẻ link tới một âm cụ thể.
@@ -40,6 +49,7 @@ export function IpaExplorer() {
 
   return (
     <SpeakCtx.Provider value={speech.speak}>
+    <PlaySoundCtx.Provider value={playSound}>
       <div className="space-y-10">
         {/* Thanh công cụ: chú thích màu + chọn giọng */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -71,11 +81,8 @@ export function IpaExplorer() {
           {/* Bảng */}
           <div className="space-y-6">
             <ChartBlock title="Nguyên âm đơn" subtitle="12 âm · ngắn và dài" rows={IPA_CHART.monophthongs} cols={4} selected={selected} onSelect={select} />
-            <ChartBlock title="Nguyên âm đôi" subtitle="8 âm · trượt từ âm này sang âm kia" rows={IPA_CHART.diphthongs} cols={3} selected={selected} onSelect={select} />
-            <ChartBlock title="Phụ âm" subtitle="24 âm · phần lớn đi theo cặp vô thanh – hữu thanh" rows={IPA_CHART.consonants} cols={8} selected={selected} onSelect={select} />
-            <p className="flex items-center gap-2 text-sm text-muted">
-              <MousePointerClick className="size-4" /> Bấm vào một âm để xem cách đọc và nghe từ ví dụ.
-            </p>
+            <ChartBlock title="Nguyên âm đôi" subtitle="8 âm" rows={IPA_CHART.diphthongs} cols={3} selected={selected} onSelect={select} />
+            <ChartBlock title="Phụ âm" subtitle="24 âm" rows={IPA_CHART.consonants} cols={8} selected={selected} onSelect={select} />
           </div>
 
           {/* Chi tiết: cột phải trên desktop, bottom sheet trên điện thoại */}
@@ -94,6 +101,7 @@ export function IpaExplorer() {
         <ReadingGuide />
         <MinimalPairPractice />
       </div>
+    </PlaySoundCtx.Provider>
     </SpeakCtx.Provider>
   );
 }
@@ -149,14 +157,14 @@ function ChartBlock({
 }
 
 function Cell({ sound, active, onClick }: { sound: IpaSound; active: boolean; onClick: () => void }) {
-  const speak = useSpeak();
+  const playSound = usePlaySound();
   const info = IPA_GROUP_INFO[sound.group];
   return (
     <button
       type="button"
       onClick={() => {
         onClick();
-        speak(sound.examples[0].word, 0.8);
+        playSound(sound);
       }}
       className={`group flex flex-col items-center justify-center rounded-xl px-1 py-2.5 ring-1 transition hover:-translate-y-0.5 hover:shadow-md ${info.cell} ${
         active ? "ring-2 ring-offset-2 ring-offset-surface !ring-primary" : ""
@@ -170,6 +178,17 @@ function Cell({ sound, active, onClick }: { sound: IpaSound; active: boolean; on
   );
 }
 
+function PlaySoundButton({ sound }: { sound: IpaSound }) {
+  const playSound = usePlaySound();
+  const hasRecording = ipaAudioSrc(sound.id) !== undefined;
+  return (
+    <button type="button" onClick={() => playSound(sound)} className="btn-ghost mt-2 !px-3 !py-1.5 text-sm">
+      <Volume2 className="size-4" />
+      {hasRecording ? `Nghe âm /${sound.symbol}/` : `Nghe qua từ “${sound.examples[0].word}”`}
+    </button>
+  );
+}
+
 /* ---------------- Chi tiết một âm ---------------- */
 
 function EmptyDetail() {
@@ -179,7 +198,6 @@ function EmptyDetail() {
         <Ear className="size-7" />
       </span>
       <p className="font-semibold text-fg">Chọn một âm trong bảng</p>
-      <p className="text-sm">Bạn sẽ thấy cách đặt môi, lưỡi, âm tiếng Việt gần giống, lỗi hay gặp và nghe từ ví dụ.</p>
     </div>
   );
 }
@@ -200,11 +218,16 @@ function SoundDetail({ sound, onClose, onSelect }: { sound: IpaSound; onClose: (
         <div className="min-w-0 flex-1">
           <span className={`chip ${info.cell} ring-0`}>{info.label}</span>
           <h3 className="mt-1 font-ipa text-2xl font-bold">/{sound.symbol}/</h3>
+          <PlaySoundButton sound={sound} />
         </div>
         <button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-xl text-muted hover:bg-surface-2 hover:text-fg lg:hidden" aria-label="Đóng">
           <X className="size-5" />
         </button>
       </div>
+
+      <Link href={`/ipa/${sound.id}`} className="btn-primary w-full">
+        Học bài phát âm /{sound.symbol}/ — 3 bước, có chấm điểm
+      </Link>
 
       <section>
         <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">Từ ví dụ</h4>
@@ -248,7 +271,6 @@ function SoundDetail({ sound, onClose, onSelect }: { sound: IpaSound; onClose: (
             <PairButton e={sound.pair.a} highlight />
             <PairButton e={sound.pair.b} />
           </div>
-          <p className="mt-2 text-xs text-muted">Nghe lần lượt hai từ để nhận ra sự khác biệt.</p>
         </section>
       )}
     </div>
@@ -447,7 +469,6 @@ function MinimalPairPractice() {
           <h2 className="flex items-center gap-2 text-xl font-bold">
             <Ear className="size-5" /> Luyện nghe phân biệt cặp âm
           </h2>
-          <p className="text-sm text-white/85">Nghe một từ và chọn đúng từ bạn nghe được. {pairs.length} cặp từ dễ nhầm.</p>
         </div>
         <span className="chip w-fit bg-white/20 text-white">
           Đúng {score.correct}/{score.total}

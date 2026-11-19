@@ -1,17 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowRight, BookOpen, CheckCircle2, Eye, Gauge, Headphones, Lightbulb, Play, RotateCcw, SkipForward, Square, Trophy, X,
+  ArrowRight, CheckCircle2, Eye, Gauge, Lightbulb, Play, RotateCcw, SkipForward, Square,
 } from "lucide-react";
 import type { DictationExercise } from "@/content/types";
 import { checkDictation, maskSentence, maskWord, type DictationCheck } from "@/core/dictation";
 import { useSpeech } from "@/lib/speech";
 import { PASS_PERCENT, progressActions } from "@/lib/progress";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { SessionHeader } from "@/components/ui/SessionHeader";
 import { SpeakButton } from "@/components/ui/SpeakButton";
 import { LevelBadge } from "@/components/ui/LevelBadge";
+import { ActivityResult } from "@/components/lesson/ActivityResult";
+import { CATALOG } from "@/content/catalog";
+import { DICTATIONS } from "@/content/dictations";
+import { isAvailable } from "@/lib/learn";
 
 interface SentenceResult {
   /** Độ chính xác ở lần kiểm tra ĐẦU TIÊN (0..1) — phản ánh đúng khả năng nghe. */
@@ -145,15 +148,7 @@ export function DictationPlayer({ exercise }: { exercise: DictationExercise }) {
   return (
     <div className="mx-auto max-w-2xl space-y-5">
       {/* Đầu trang */}
-      <div className="flex items-center gap-3">
-        <Link href="/dictation" className="grid size-9 place-items-center rounded-xl text-muted hover:bg-surface-2 hover:text-fg" aria-label="Thoát">
-          <X className="size-5" />
-        </Link>
-        <ProgressBar value={((idx + (solved ? 1 : 0)) / total) * 100} className="h-3" barClassName="bg-success" label="Tiến độ" />
-        <span className="shrink-0 text-sm font-semibold text-muted">
-          {idx + 1}/{total}
-        </span>
-      </div>
+      <SessionHeader exitHref="/dictation" value={((idx + (solved ? 1 : 0)) / total) * 100} current={idx + 1} total={total} />
 
       <div className="flex flex-wrap items-center gap-2">
         <LevelBadge level={exercise.level} />
@@ -179,7 +174,7 @@ export function DictationPlayer({ exercise }: { exercise: DictationExercise }) {
               <Play className="ml-1 size-9" fill="currentColor" />
             </button>
             <p className="font-semibold">Bấm để bắt đầu nghe</p>
-            <p className="max-w-sm text-sm text-muted">{exercise.description} Nghe từng câu và gõ lại chính xác những gì bạn nghe được.</p>
+            <p className="max-w-sm text-sm text-muted">{exercise.description}</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4">
@@ -329,11 +324,6 @@ export function DictationPlayer({ exercise }: { exercise: DictationExercise }) {
             </section>
           )}
 
-          <p className="text-center text-xs text-muted">
-            <kbd className="rounded border border-line px-1.5 py-0.5 font-mono">Ctrl</kbd> +{" "}
-            <kbd className="rounded border border-line px-1.5 py-0.5 font-mono">Space</kbd> nghe lại ·{" "}
-            <kbd className="rounded border border-line px-1.5 py-0.5 font-mono">Enter</kbd> kiểm tra / câu tiếp
-          </p>
         </>
       )}
     </div>
@@ -389,36 +379,28 @@ function DictationSummary({
   }, [exercise, percent]);
 
   const passed = percent >= PASS_PERCENT;
-  const verdict = useMemo(
-    () => (percent >= 95 ? "Đôi tai vàng! 👂✨" : passed ? "Rất tốt! Bạn nghe khá chuẩn." : percent >= 50 ? "Khá ổn, luyện thêm chút nữa nhé." : "Đừng nản — nghe chậm (0.75x) và thử lại."),
-    [percent, passed],
-  );
+  // Bước tiếp: chủ điểm kế tiếp (bài theo chủ điểm) hoặc bài nghe chép kế tiếp cùng loại.
+  const nextLink = useMemo(() => {
+    if (exercise.topicSlug) {
+      const i = CATALOG.findIndex((t) => t.slug === exercise.topicSlug);
+      const t = CATALOG.slice(i + 1).find((x) => isAvailable(x.slug));
+      return t ? { label: t.title, href: `/grammar/${t.slug}` } : undefined;
+    }
+    const same = DICTATIONS.filter((d) => d.kind === exercise.kind);
+    const n = same[same.findIndex((d) => d.id === exercise.id) + 1];
+    return n ? { label: n.title, href: `/dictation/${n.id}` } : undefined;
+  }, [exercise]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <section className="card animate-pop-in overflow-hidden text-center">
-        <div className={`bg-gradient-to-br p-8 text-white ${passed ? "from-emerald-500 to-teal-500" : "from-indigo-500 to-violet-500"}`}>
-          <Trophy className="mx-auto size-12" />
-          <div className="mt-3 text-5xl font-black">{percent}%</div>
-          <p className="mt-1 text-white/90">
-            Chính xác ở lần kiểm tra đầu · {perfect}/{exercise.sentences.length} câu hoàn hảo
-          </p>
-          <p className="mt-3 font-semibold">{verdict}</p>
-        </div>
-        <div className="flex flex-wrap justify-center gap-2 p-4">
-          <button type="button" onClick={onRestart} className="btn-primary">
-            <RotateCcw className="size-4" /> Làm lại
-          </button>
-          {exercise.topicSlug && (
-            <Link href={`/grammar/${exercise.topicSlug}`} className="btn-ghost">
-              <BookOpen className="size-4" /> Lý thuyết
-            </Link>
-          )}
-          <Link href="/dictation" className="btn-ghost">
-            <Headphones className="size-4" /> Bài khác
-          </Link>
-        </div>
-      </section>
+      <ActivityResult
+        passed={passed}
+        percent={percent}
+        detail={`${perfect}/${exercise.sentences.length}`}
+        onRetry={onRestart}
+        reviewLink={exercise.topicSlug ? { label: "Xem lại lý thuyết", href: `/grammar/${exercise.topicSlug}` } : undefined}
+        next={nextLink}
+      />
 
       <section className="card divide-y divide-line">
         <h2 className="p-4 font-bold">Toàn bộ nội dung</h2>
