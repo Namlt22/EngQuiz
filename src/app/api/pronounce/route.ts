@@ -10,6 +10,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/auth";
 import type { ApiResponse } from "@/lib/learner-schema";
 import { PRONOUNCE_LIMITS, pronounceResultSchema, type PronounceResult } from "@/lib/pronounce";
+import { vietnameseNamesIn } from "@/lib/vi-names";
 import { normalizeVoiceText } from "@/lib/voice-key";
 import { collectVoiceTexts } from "@/lib/voice-texts";
 import { createRateLimiter } from "@/server/rate-limit";
@@ -29,6 +30,33 @@ const ipBurst = createRateLimiter({ limit: 120, windowMs: TEN_MINUTES });
 let knownTexts: Set<string> | null = null;
 const isKnownText = (text: string) => (knownTexts ??= new Set(collectVoiceTexts().map((t) => t.text.toLowerCase()))).has(text.toLowerCase());
 
+const MODES = new Set(["word", "sentence", "ipa"]);
+
+/** Đọc thân yêu cầu, dừng ngay khi vượt `max` byte (trả null). */
+async function readBytesWithLimit(req: Request, max: number): Promise<Uint8Array | null> {
+  if (!req.body) return new Uint8Array();
+  const reader = req.body.getReader();
+  const parts: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel();
+      return null;
+    }
+    parts.push(value);
+  }
+  const out = new Uint8Array(size);
+  let at = 0;
+  for (const p of parts) {
+    out.set(p, at);
+    at += p.byteLength;
+  }
+  return out;
+}
+
 function fail(status: number, error: string) {
   return NextResponse.json<ApiResponse<never>>({ success: false, data: null, error }, { status });
 }
@@ -45,13 +73,14 @@ export async function POST(req: NextRequest) {
   if (!userId) return fail(401, "Hãy đăng nhập để chấm phát âm.");
 
   const declared = Number(req.headers.get("content-length") ?? "0");
-  // Không có Content-Length thì không đọc (tránh luồng dữ liệu không giới hạn); trình duyệt luôn gửi khi đăng FormData.
-  if (!Number.isFinite(declared) || declared <= 0) return fail(411, "Thiếu kích thước dữ liệu.");
   if (declared > PRONOUNCE_LIMITS.maxBytes + FORM_OVERHEAD) return fail(413, "Bản ghi quá dài.");
 
+  // Tự đọc thân yêu cầu có giới hạn: qua Cloudflare Tunnel, Content-Length có thể bị bỏ (truyền từng khúc).
   let form: FormData;
   try {
-    form = await req.formData();
+    const bytes = await readBytesWithLimit(req, PRONOUNCE_LIMITS.maxBytes + FORM_OVERHEAD);
+    if (!bytes) return fail(413, "Bản ghi quá dài.");
+    form = await new Response(new Blob([bytes as Uint8Array<ArrayBuffer>]), { headers: { "content-type": req.headers.get("content-type") ?? "" } }).formData();
   } catch {
     return fail(400, "Dữ liệu gửi lên không hợp lệ.");
   }
@@ -71,6 +100,13 @@ export async function POST(req: NextRequest) {
   const upstream = new FormData();
   upstream.set("file", file, file.type.includes("ogg") ? "rec.ogg" : file.type.includes("mp4") ? "rec.m4a" : "rec.webm");
   upstream.set("text", text);
+  const mode = String(form.get("mode") ?? "sentence");
+  upstream.set("mode", MODES.has(mode) ? mode : "sentence");
+  const focus = String(form.get("focus") ?? "").slice(0, 40);
+  if (focus && text.toLowerCase().includes(focus.toLowerCase())) upstream.set("focus", focus);
+  // Tên riêng Việt Nam: giọng mẫu đọc theo cách viết lại (Linh → "Ling") → chỉ hiển thị, không chấm.
+  const names = vietnameseNamesIn(text);
+  if (names.length) upstream.set("skip", names.join(","));
   let res: Response;
   try {
     res = await fetch(`${SERVICE_URL}/score`, { method: "POST", body: upstream, signal: AbortSignal.timeout(SERVICE_TIMEOUT_MS) });

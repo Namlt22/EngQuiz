@@ -1,25 +1,33 @@
 "use client";
 
 /**
- * Ghi âm một từ / câu rồi gửi /api/pronounce để chấm tới từng âm (OpenPronounce trên máy chủ).
- * Tự dừng khi người học nói xong (im lặng END_SILENCE_MS sau khi đã có tiếng), hoặc khi bấm dừng / quá giờ.
+ * Ghi âm một từ / câu rồi gửi /api/pronounce để chấm tới từng âm (máy chủ EngQuiz, scripts/voice/pronounce_service.py).
  *
- * Chỉ dùng khi đã đăng nhập và trình duyệt ghi âm được; dịch vụ chấm không chạy (503) thì `available` tắt trong
- * lượt mở trang này để màn hình quay về nhận dạng giọng nói của trình duyệt.
+ * Nhận biết đang nói theo NỀN ỒN của chính phòng / micro (không dùng một ngưỡng cố định: micro laptop bật lọc ồn
+ * thường nhỏ hơn hẳn, ngưỡng cố định khiến app "không nghe thấy" rồi chờ hết giờ). Tự dừng khi im lặng sau tiếng nói,
+ * khi bấm dừng hoặc quá giờ. Giữ bản ghi cuối để người học nghe lại giọng mình (như ELSA).
+ *
+ * Chỉ dùng khi đã đăng nhập và trình duyệt ghi âm được; dịch vụ chấm không chạy thì `available` tắt trong lượt mở
+ * trang này để màn hình quay về nhận dạng giọng nói của trình duyệt.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import type { ApiResponse } from "./learner-schema";
 import type { PronounceResult } from "./pronounce";
 
-/** Âm lượng (RMS 0–1) coi là đang nói. */
-const SPEECH_RMS = 0.02;
-const END_SILENCE_MS = { word: 700, sentence: 1100 } as const;
-const MAX_MS = { word: 5_000, sentence: 15_000 } as const;
+/** Tiếng nói phải to hơn nền ồn ít nhất ~10 dB (×3 biên độ), và không nhỏ hơn mức tuyệt đối này (RMS 0–1). */
+const SPEECH_OVER_FLOOR = 3;
+const MIN_SPEECH_RMS = 0.004;
+/** Nền ồn ban đầu khi chưa đo được (rất nhỏ — thà nhận nhầm tiếng ồn là tiếng nói còn hơn "không nghe thấy"). */
+const START_FLOOR = 0.002;
+const END_SILENCE_MS = { word: 600, sentence: 900 } as const;
+const MAX_MS = { word: 6_000, sentence: 15_000 } as const;
 /** Chưa nói gì sau chừng này thì dừng và báo. */
-const NO_SPEECH_MS = 6_000;
+const NO_SPEECH_MS = 5_000;
+const TICK_MS = 40;
 
 export type PronouncePhase = "idle" | "preparing" | "recording" | "scoring";
+export type PronounceKind = "word" | "sentence" | "ipa";
 
 let serviceDown = false;
 
@@ -33,20 +41,25 @@ export function usePronounceCheck() {
   const [supported, setSupported] = useState(false);
   const [down, setDown] = useState(serviceDown);
   const [phase, setPhase] = useState<PronouncePhase>("idle");
+  /** Mức âm lượng micro hiện tại (0–1) để vẽ thanh mức — người học thấy app đang nghe. */
+  const [level, setLevel] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  /** Bản ghi cuối (URL tạm) để nghe lại giọng mình. */
+  const [lastRecording, setLastRecording] = useState<string | null>(null);
   const stopRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     setSupported(typeof MediaRecorder !== "undefined" && !!navigator.mediaDevices?.getUserMedia && window.isSecureContext);
     return () => stopRef.current();
   }, []);
+  useEffect(() => () => void (lastRecording && URL.revokeObjectURL(lastRecording)), [lastRecording]);
 
   const available = supported && status === "authenticated" && !down;
 
   /** Bấm lần nữa khi đang ghi → dừng sớm và chấm phần đã ghi. */
   const stop = useCallback(() => stopRef.current(), []);
 
-  const check = useCallback(async (text: string, kind: "word" | "sentence" = "word"): Promise<PronounceResult | null> => {
+  const check = useCallback(async (text: string, kind: PronounceKind = "word", focus?: string): Promise<PronounceResult | null> => {
     setError(null);
     setPhase("preparing");
     let stream: MediaStream;
@@ -58,23 +71,30 @@ export function usePronounceCheck() {
       return null;
     }
 
-    const blob = await recordUntilSilence(stream, kind, (stopNow) => {
-      stopRef.current = stopNow;
-      setPhase("recording");
+    const blob = await recordUntilSilence(stream, kind === "sentence" ? "sentence" : "word", {
+      onStart: (stopNow) => {
+        stopRef.current = stopNow;
+        setPhase("recording");
+      },
+      onLevel: setLevel,
     });
     stream.getTracks().forEach((t) => t.stop());
     stopRef.current = () => {};
+    setLevel(0);
     if (!blob) {
       setPhase("idle");
-      setError("Chưa nghe được gì. Bấm nút rồi đọc to.");
+      setError("Chưa nghe thấy tiếng nói. Hãy nói to và gần micro hơn.");
       return null;
     }
+    setLastRecording(URL.createObjectURL(blob));
 
     setPhase("scoring");
     try {
       const form = new FormData();
       form.set("file", blob, "rec");
       form.set("text", text);
+      form.set("mode", kind);
+      if (focus) form.set("focus", focus);
       const res = await fetch("/api/pronounce", { method: "POST", body: form });
       const json = (await res.json().catch(() => null)) as ApiResponse<PronounceResult> | null;
       if (res.status === 503 && json?.error?.includes("tạm nghỉ")) {
@@ -94,11 +114,18 @@ export function usePronounceCheck() {
     }
   }, []);
 
-  return { available, phase, busy: phase !== "idle", error, check, stop };
+  return { available, phase, busy: phase !== "idle", level, error, lastRecording, check, stop };
 }
 
-/** Ghi tới khi im lặng sau tiếng nói / quá giờ / bấm dừng. Trả null nếu không có tiếng nói nào. */
-function recordUntilSilence(stream: MediaStream, kind: "word" | "sentence", onStart: (stopNow: () => void) => void): Promise<Blob | null> {
+/**
+ * Ghi tới khi im lặng sau tiếng nói / quá giờ / bấm dừng. Trả null nếu không có tiếng nói nào.
+ * Nền ồn = mức nhỏ nhất gần đây (bám theo phòng); tiếng nói = to hơn nền SPEECH_OVER_FLOOR lần.
+ */
+function recordUntilSilence(
+  stream: MediaStream,
+  kind: "word" | "sentence",
+  cb: { onStart: (stopNow: () => void) => void; onLevel: (level: number) => void },
+): Promise<Blob | null> {
   return new Promise((resolve) => {
     const mimeType = pickMimeType();
     const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
@@ -108,6 +135,7 @@ function recordUntilSilence(stream: MediaStream, kind: "word" | "sentence", onSt
     analyser.fftSize = 1024;
     ctx.createMediaStreamSource(stream).connect(analyser);
     const buf = new Float32Array(analyser.fftSize);
+    let floor = START_FLOOR;
     let heard = false;
     let lastLoud = 0;
     const started = performance.now();
@@ -127,16 +155,21 @@ function recordUntilSilence(stream: MediaStream, kind: "word" | "sentence", onSt
       analyser.getFloatTimeDomainData(buf);
       let sum = 0;
       for (const v of buf) sum += v * v;
+      const rms = Math.sqrt(sum / buf.length);
       const now = performance.now();
-      if (Math.sqrt(sum / buf.length) > SPEECH_RMS) {
+      // Nền ồn: hạ ngay khi gặp mức nhỏ hơn, nâng chậm (để tiếng nói kéo dài không bị coi là nền).
+      floor = rms < floor ? rms : floor + (rms - floor) * 0.01;
+      const loud = rms > Math.max(floor * SPEECH_OVER_FLOOR, MIN_SPEECH_RMS);
+      if (loud) {
         heard = true;
         lastLoud = now;
       }
+      cb.onLevel(Math.min(1, rms * 12));
       const elapsed = now - started;
       if ((heard && now - lastLoud > END_SILENCE_MS[kind]) || elapsed > MAX_MS[kind] || (!heard && elapsed > NO_SPEECH_MS)) finish();
-    }, 50);
+    }, TICK_MS);
 
     recorder.start();
-    onStart(finish);
+    cb.onStart(finish);
   });
 }

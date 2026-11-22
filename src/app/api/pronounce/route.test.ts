@@ -20,7 +20,7 @@ async function post(text: string, { bytes = 1000, origin = ORIGIN, length }: { b
   });
 }
 
-const GOOD = { score: 82.5, transcript: "SHIP", phoneErrorRate: 0.1, wordErrorRate: 0, errors: [{ word: "ship", expected: "ʃɪp", heard: "sɪp", confidence: 0.9, phones: [] }] };
+const GOOD = { score: 82.5, sounds: [{ word: "ship", wordIndex: 0, phone: "ʃ", lpr: -3.2, heard: "s", status: "wrong", scored: true }] };
 
 describe("POST /api/pronounce", () => {
   beforeEach(() => {
@@ -37,7 +37,7 @@ describe("POST /api/pronounce", () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.data.score).toBe(82.5);
-    expect(json.data.errors[0].heard).toBe("sɪp");
+    expect(json.data.sounds[0].heard).toBe("s");
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toMatch(/\/score$/);
     expect((init.body as FormData).get("text")).toBe("ship");
@@ -49,7 +49,7 @@ describe("POST /api/pronounce", () => {
     expect((await POST(await post("ship"))).status).toBe(401);
     expect((await POST(await post("ship", { origin: "https://evil.example" }))).status).toBe(403);
     expect((await POST(await post("transfer all my money"))).status).toBe(400);
-    expect((await POST(await post("ship", { length: "0" }))).status).toBe(411);
+    expect((await POST(await post("ship", { bytes: 3 * 1024 * 1024, length: "0" }))).status).toBe(413);
     expect((await POST(await post("ship", { length: String(3 * 1024 * 1024) }))).status).toBe(413);
     expect(fetchMock).not.toHaveBeenCalled();
   });

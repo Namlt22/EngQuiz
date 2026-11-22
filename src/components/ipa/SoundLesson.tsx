@@ -16,6 +16,8 @@ import { useSpeech } from "@/lib/speech";
 import { usePronounceCheck } from "@/lib/pronounce-client";
 import { ipaCarrier, type PronounceResult } from "@/lib/pronounce";
 import { checkTaughtSound, type TaughtSoundCheck } from "@/lib/pronounce-ipa";
+import { PronounceFeedback } from "@/components/speaking/PronounceFeedback";
+import { MicLevel } from "@/components/speaking/MicLevel";
 import { useSpeechRecognition } from "@/lib/speech-recognition";
 import { RecordButton } from "@/components/speaking/RecordButton";
 import { scoreTone } from "@/components/speaking/ScoreBadge";
@@ -139,7 +141,7 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
   const canRecord = pron.available || recognition.status === "ready";
   const recording = pron.available ? pron.busy : recognition.listening;
   const [attempts, setAttempts] = useState<Record<string, WordAttempt>>({});
-  const [feedback, setFeedback] = useState<Record<string, TaughtSoundCheck>>({});
+  const [feedback, setFeedback] = useState<Record<string, { result: PronounceResult; taught: TaughtSoundCheck }>>({});
   const [heardFor, setHeardFor] = useState<Record<string, true>>({});
   const [active, setActive] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -154,7 +156,7 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
   }
 
   const addAttempt = (word: string, score: number) =>
-    setAttempts((a) => ({ ...a, [word]: { best: Math.max(a[word]?.best ?? 0, score), tries: (a[word]?.tries ?? 0) + 1 } }));
+    setAttempts((a) => ({ ...a, [word]: { best: Math.max(a[word]?.best ?? 0, score), tries: (a[word]?.tries ?? 0) + 1, last: score } }));
 
   async function record(word: string) {
     setActive(word);
@@ -162,10 +164,10 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
     if (pron.available) {
       if (pron.busy) return pron.stop();
       // Đọc từ trong câu khung (chấm chính xác hơn đọc trơ một từ), chỉ xét âm đang học.
-      const result = await pron.check(ipaCarrier(word), "sentence");
+      const result = await pron.check(ipaCarrier(word), "ipa", word);
       if (!result) return;
       const taught = checkTaughtSound(result, word, sound.symbol);
-      setFeedback((f) => ({ ...f, [word]: taught }));
+      setFeedback((f) => ({ ...f, [word]: { result, taught } }));
       return addAttempt(word, taughtScore(result, taught));
     }
     if (recognition.listening) return recognition.stop();
@@ -195,13 +197,20 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
             onHear={(rate) => hear(e.word, rate)}
             onRecord={() => record(e.word)}
             feedback={feedback[e.word]}
+            recordingUrl={pron.lastRecording}
+            onSpeak={(t) => speak(t, 0.85)}
             carrier={pron.available ? ipaCarrier(e.word) : undefined}
             onHearCarrier={() => speak(ipaCarrier(e.word), 0.85)}
           />
         ))}
       </ul>
       {pron.available ? (
-        pron.phase !== "idle" && <p className="text-sm text-muted">{pron.phase === "scoring" ? "Đang chấm…" : pron.phase === "recording" ? "Đang nghe…" : "Chuẩn bị…"}</p>
+        pron.phase !== "idle" && (
+          <div className="flex items-center gap-3 text-sm text-muted">
+            {pron.phase === "scoring" ? "Đang chấm…" : pron.phase === "recording" ? "Đang nghe…" : "Chuẩn bị…"}
+            {pron.phase === "recording" && <MicLevel level={pron.level} />}
+          </div>
+        )
       ) : (
         recognition.listening && <p className="text-sm text-muted">{recognition.ready ? "Đang nghe…" : "Chuẩn bị…"} {recognition.live}</p>
       )}
@@ -228,7 +237,9 @@ function WordRow(props: {
   disabled: boolean;
   onHear: (rate: number) => void;
   onRecord: () => void;
-  feedback?: TaughtSoundCheck;
+  feedback?: { result: PronounceResult; taught: TaughtSoundCheck };
+  recordingUrl: string | null;
+  onSpeak: (text: string) => void;
   /** Câu cần đọc khi chấm từng âm (vd "Say sheep now."). */
   carrier?: string;
   onHearCarrier: () => void;
@@ -265,7 +276,7 @@ function WordRow(props: {
           </button>
         )}
       </div>
-      {attempt && <span className={`rounded-lg px-2 py-1 text-sm font-bold ${scoreTone(attempt.best)}`}>{attempt.best}%</span>}
+      {attempt && <span className={`rounded-lg px-2 py-1 text-sm font-bold ${scoreTone(attempt.last ?? attempt.best)}`}>{attempt.last ?? attempt.best}%</span>}
       {done && <CheckCircle2 className="size-5 text-success" aria-label="Xong" />}
       {canRecord && (
         // Điện thoại: nút ghi âm xuống hàng riêng, rộng hết dòng (để không đè lên chữ).
@@ -273,12 +284,10 @@ function WordRow(props: {
           <RecordButton listening={props.listening} disabled={props.disabled} idleLabel={attempt ? "Đọc lại" : "Đọc"} listeningLabel="Dừng" onClick={props.onRecord} />
         </div>
       )}
-      {props.feedback && !props.feedback.ok && props.feedback.expected && (
-        <p className="w-full rounded-xl bg-warning-soft px-3 py-2 font-ipa text-sm">
-          <b className="text-success">/{symbol}/</b>
-          <span className="text-muted"> ← </span>
-          <span className="text-danger">/{props.feedback.heard || "∅"}/</span>
-        </p>
+      {props.feedback && (
+        <div className="w-full">
+          <PronounceFeedback result={props.feedback.result} onlyWord={e.word} onSpeak={props.onSpeak} recording={props.recordingUrl} />
+        </div>
       )}
     </li>
   );

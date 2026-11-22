@@ -1,48 +1,49 @@
 /**
- * Bài luyện một âm IPA: chỉ xét ÂM ĐANG HỌC trong từ ví dụ (kết quả chấm từng âm, src/lib/pronounce.ts).
- *
- * Vì sao không xét cả từ: giọng Mỹ chuẩn cũng bị báo lỗi ở âm khác (t cuối thành âm vỗ trước nguyên âm, k bật hơi…);
- * còn OpenPronounce lại không báo một âm sai đơn lẻ (ship ↔ sheep). Thử trên các cặp từ tối thiểu của app
- * (scripts/voice, giọng Kokoro đọc đúng / đọc nhầm): xét riêng âm đang học vừa ít báo nhầm hơn, vừa bắt được nhầm âm.
+ * Bài luyện một âm IPA: xét ÂM ĐANG HỌC trong từ ví dụ (kết quả chấm từng âm, src/lib/pronounce.ts), và nối ngược
+ * âm vị của bộ chấm (espeak Anh-Mỹ) về ký hiệu trong bài để chỉ ra "bạn đọc gần /ɪ/".
  */
-import type { PronounceResult } from "./pronounce";
+import { IPA_SOUNDS, type IpaSound } from "@/content/ipa";
+import type { PronounceResult, PronounceSound } from "./pronounce";
 
-/** Ký hiệu trong bài (IPA Anh) → âm vị espeak Anh-Mỹ mà bộ chấm dùng (đã bỏ dấu dài ː). */
+/** Ký hiệu trong bài (IPA Anh) → các âm vị espeak Anh-Mỹ tương ứng của bộ chấm. */
 const ESPEAK_PHONES: Readonly<Record<string, readonly string[]>> = {
-  "iː": ["i"],
-  "uː": ["u"],
   e: ["ɛ", "e"],
-  "ɜː": ["ɜ", "ɜɹ", "ɚ"],
-  "ɔː": ["ɔ", "oɹ", "ɔɹ"],
-  "ɑː": ["ɑ", "ɑɹ"],
-  "ɒ": ["ɑ", "ɔ", "ɒ"],
-  "ɪə": ["ɪɹ", "ɪə", "iə"],
-  "ʊə": ["ʊɹ", "ʊə"],
+  "ɜː": ["ɜː", "ɜ", "ɚ"],
+  "ɔː": ["ɔː", "ɔ", "ɔːɹ", "oːɹ"],
+  "ɑː": ["ɑː", "ɑ", "ɑːɹ"],
+  "ɒ": ["ɑː", "ɑ", "ɔ", "ɒ"],
+  "ɪə": ["ɪɹ", "iə"],
+  "ʊə": ["ʊɹ"],
   "əʊ": ["oʊ", "əʊ"],
   "eə": ["ɛɹ", "eə"],
   "ɡ": ["ɡ", "g"],
   r: ["ɹ", "r"],
+  "ə": ["ə", "ɚ"],
 };
 
-/** Độ tin cậy (0–1) tối thiểu để coi âm đang học là sai — chọn theo kết quả thử ở scripts/voice. */
-export const TAUGHT_SOUND_THRESHOLD = 0.3;
+const espeakFor = (symbol: string) => ESPEAK_PHONES[symbol] ?? [symbol];
+
+/** Âm vị espeak → âm trong bài (để mở bài / lấy mẹo của âm người học đọc nhầm sang). */
+export function soundForPhone(phone: string): IpaSound | undefined {
+  return IPA_SOUNDS.find((s) => espeakFor(s.symbol).includes(phone));
+}
 
 export interface TaughtSoundCheck {
   ok: boolean;
-  /** Âm đúng → âm nghe được, khi sai. */
-  expected?: string;
-  heard?: string;
+  /** Âm đang học trong từ, theo thứ tự (để tô màu); rỗng nếu không thấy từ. */
+  sounds: PronounceSound[];
+  /** Âm đang học bị đọc nhầm thành (khi sai). */
+  heardAs?: IpaSound | null;
 }
 
 export function checkTaughtSound(result: PronounceResult, word: string, symbol: string): TaughtSoundCheck {
-  const w = result.words.find((x) => x.word.toLowerCase() === word.toLowerCase());
-  // Không thấy từ trong bản chấm (đọc từ khác hẳn / không rõ): coi là chưa đạt.
-  if (!w) return { ok: false };
-  const want = ESPEAK_PHONES[symbol] ?? [symbol];
-  const taught = w.phones.filter((p) => p.expected && want.includes(p.expected));
+  const inWord = result.sounds.filter((s) => s.word.toLowerCase() === word.toLowerCase());
+  if (!inWord.length) return { ok: false, sounds: [] };
+  const want = espeakFor(symbol);
+  const taught = inWord.filter((s) => want.includes(s.phone));
   // Không tìm ra âm đang học trong cách đọc chuẩn của từ → xét cả từ.
-  const pool = taught.length ? taught : w.phones;
-  const worst = pool.reduce<(typeof pool)[number] | null>((m, p) => ((p.confidence ?? 0) > (m?.confidence ?? 0) ? p : m), null);
-  if (!worst || (worst.confidence ?? 0) < TAUGHT_SOUND_THRESHOLD) return { ok: true };
-  return { ok: false, expected: worst.expected ?? undefined, heard: worst.heard ?? undefined };
+  const pool = taught.length ? taught : inWord;
+  const wrong = pool.find((s) => s.status === "wrong");
+  if (!wrong) return { ok: true, sounds: inWord };
+  return { ok: false, sounds: inWord, heardAs: wrong.heard ? (soundForPhone(wrong.heard) ?? null) : null };
 }

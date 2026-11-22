@@ -106,8 +106,8 @@ export function ReadAloud({ initialSetId }: { initialSetId?: string }) {
       setNotice(null);
       const sounds = await pron.check(at.text, "sentence");
       if (attempt !== attemptRef.current || !sounds) return;
-      // Tô màu từng từ theo bản nghe được của máy chủ; điểm theo âm (có âm sai thì chưa đạt).
-      const words = scoreReadAloud(at.text, [sounds.transcript.toLowerCase()]);
+      // Chấm theo từng âm (có âm sai thì chưa đạt); phần tô màu từ của cách chấm cũ không dùng tới.
+      const words = scoreReadAloud(at.text, [at.text]);
       const score = pronounceScore(sounds, READ_ALOUD_PASS);
       return saveScore(at, { ...words, score, passed: score >= READ_ALOUD_PASS }, sounds);
     }
@@ -176,7 +176,7 @@ export function ReadAloud({ initialSetId }: { initialSetId?: string }) {
           </p>
         )}
 
-        {current && !recording && <AttemptResult score={current} onSpeakWord={(w) => speak(w, MODEL_RATE)} />}
+        {current && !recording && <AttemptResult score={current} onSpeakWord={(w) => speak(w, MODEL_RATE)} recording={pron.lastRecording} />}
 
         <div className="flex items-center justify-between border-t border-line pt-4">
           <button type="button" onClick={() => go(-1)} disabled={idx === 0} className="btn-ghost">
@@ -234,8 +234,19 @@ function SetPicker({
   );
 }
 
-function AttemptResult({ score, onSpeakWord }: { score: SentenceScore; onSpeakWord: (word: string) => void }) {
+function AttemptResult({ score, onSpeakWord, recording }: { score: SentenceScore; onSpeakWord: (word: string) => void; recording: string | null }) {
   const { last } = score;
+  if (score.sounds) {
+    return (
+      <div className="space-y-3 rounded-2xl border border-line p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <ScoreBadge score={last.score} label={last.passed ? "Đạt" : "Chưa đạt"} />
+          {score.best > last.score && <span className="text-sm text-muted">Tốt nhất câu này: {score.best}%</span>}
+        </div>
+        <PronounceFeedback result={score.sounds} onSpeak={onSpeakWord} recording={recording} />
+      </div>
+    );
+  }
   return (
     <div className="space-y-3 rounded-2xl border border-line p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -267,7 +278,6 @@ function AttemptResult({ score, onSpeakWord }: { score: SentenceScore; onSpeakWo
           Từ thừa: <span lang="en">{last.check.extras.join(", ")}</span>
         </p>
       )}
-      {score.sounds && <PronounceFeedback result={score.sounds} onSpeakWord={(w) => onSpeakWord(w)} />}
     </div>
   );
 }

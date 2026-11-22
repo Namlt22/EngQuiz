@@ -53,6 +53,8 @@ export const listenPercent = (correct: number, total: number) => (total ? Math.r
 export interface WordAttempt {
   best: number;
   tries: number;
+  /** Điểm lượt gần nhất (hiển thị); `best` quyết định đạt hay chưa. */
+  last?: number;
 }
 
 /** Một từ ví dụ coi như xong khi đọc đạt, hoặc đã thử đủ số lần (tránh kẹt vì máy nhận dạng sai từ đơn). */

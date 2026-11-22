@@ -68,3 +68,8 @@ export function splitVietnameseNames(text: string): SpeechSegment[] {
 export function respellVietnameseNames(text: string): string {
   return text.replace(NAME_RE, (m) => BY_MATCH.get(m)?.en ?? m);
 }
+
+/** Các từ thuộc tên riêng Việt Nam trong câu (vd ["Da", "Nang", "Linh"]) — để bộ chấm phát âm bỏ qua. */
+export function vietnameseNamesIn(text: string): string[] {
+  return [...text.matchAll(NAME_RE)].flatMap((m) => m[0].split(/\s+/));
+}

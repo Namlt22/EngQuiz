@@ -1,6 +1,7 @@
 /**
- * Kết quả chấm phát âm tới từng âm (dịch vụ OpenPronounce cục bộ — scripts/voice/pronounce_service.py,
- * gọi qua POST /api/pronounce). Dùng chung cho route (kiểm tra dữ liệu dịch vụ trả về) và giao diện.
+ * Kết quả chấm phát âm tới từng âm (dịch vụ cục bộ scripts/voice/pronounce_service.py, gọi qua POST /api/pronounce).
+ * Mỗi âm vị của câu đúng có một biên GOP (lpr): âm đúng khớp bản ghi hơn âm người Việt hay đọc nhầm bao nhiêu.
+ * Dùng chung cho route (kiểm tra dữ liệu dịch vụ trả về) và giao diện.
  */
 import { z } from "zod";
 
@@ -10,62 +11,54 @@ export const PRONOUNCE_LIMITS = {
   maxTextChars: 200,
 } as const;
 
-const phoneSchema = z.object({
-  expected: z.string().nullable().optional(),
-  heard: z.string().nullable().optional(),
-  confidence: z.number().nullable().optional(),
+export const soundSchema = z.object({
+  word: z.string(),
+  wordIndex: z.number().int().min(0),
+  /** Âm vị espeak Anh-Mỹ (vd "iː", "θ", "ɪɹ"). */
+  phone: z.string(),
+  lpr: z.number().nullable(),
+  /** Âm nhầm khớp nhất ("" = bỏ âm). */
+  heard: z.string(),
+  status: z.enum(["right", "unsure", "wrong"]),
+  /** false = âm chỉ hiển thị, không chấm (nguyên âm của từ chức năng, tên riêng Việt Nam). */
+  scored: z.boolean().catch(true),
 });
 
 export const pronounceResultSchema = z.object({
   score: z.number().min(0).max(100),
-  transcript: z.string().catch(""),
-  phoneErrorRate: z.number().nullable().optional(),
-  wordErrorRate: z.number().nullable().optional(),
-  errors: z
-    .array(
-      z.object({
-        word: z.string().nullable().optional(),
-        expected: z.string().nullable().optional(),
-        heard: z.string().nullable().optional(),
-        confidence: z.number().nullable().optional(),
-        phones: z.array(phoneSchema).catch([]),
-      }),
-    )
-    .catch([]),
-  /** Từng âm của mọi từ (kể cả từ không bị báo lỗi) — để bài IPA xét riêng từ đang luyện. */
-  words: z
-    .array(
-      z.object({
-        word: z.string(),
-        expected: z.array(z.string()).catch([]),
-        heard: z.array(z.string()).catch([]),
-        phones: z.array(phoneSchema).catch([]),
-      }),
-    )
-    .catch([]),
+  sounds: z.array(soundSchema),
 });
 
 export type PronounceResult = z.infer<typeof pronounceResultSchema>;
-export type PronounceError = PronounceResult["errors"][number];
+export type PronounceSound = z.infer<typeof soundSchema>;
+export type SoundStatus = PronounceSound["status"];
 
-/** Lỗi đủ chắc để báo cho người học (OpenPronounce gắn độ tin cậy 0–1 cho mỗi từ sai). */
-export const CONFIDENT_ERROR = 0.5;
+/** Các âm theo từng từ (giữ thứ tự câu). */
+export function soundsByWord(r: PronounceResult): { word: string; wordIndex: number; sounds: PronounceSound[] }[] {
+  const out: { word: string; wordIndex: number; sounds: PronounceSound[] }[] = [];
+  for (const s of r.sounds) {
+    const last = out[out.length - 1];
+    if (last && last.wordIndex === s.wordIndex) last.sounds.push(s);
+    else out.push({ word: s.word, wordIndex: s.wordIndex, sounds: [s] });
+  }
+  return out;
+}
 
-export const confidentErrors = (r: PronounceResult) => r.errors.filter((e) => (e.confidence ?? 1) >= CONFIDENT_ERROR);
+/** Trạng thái một từ = âm tệ nhất của nó. */
+export function wordStatus(sounds: readonly PronounceSound[]): SoundStatus {
+  if (sounds.some((s) => s.status === "wrong")) return "wrong";
+  return sounds.some((s) => s.status === "unsure") ? "unsure" : "right";
+}
 
-/**
- * Điểm hiển thị cho một lượt đọc (0–100), cùng thang với READ_ALOUD_PASS (80) của chấm cũ:
- * không có âm sai đáng tin → ít nhất mức đạt; còn âm sai → dưới mức đạt, dù điểm âm học cao.
- */
+/** Điểm cùng thang với READ_ALOUD_PASS của cách chấm cũ: còn âm sai → dưới mức đạt. */
 export function pronounceScore(r: PronounceResult, pass: number): number {
   const score = Math.round(r.score);
-  return confidentErrors(r).length ? Math.min(score, pass - 1) : Math.max(score, pass);
+  return r.sounds.some((s) => s.status === "wrong") ? Math.min(score, pass - 1) : Math.max(score, pass);
 }
 
 /**
  * Câu khung khi chấm một từ IPA. Thử trên 30 cặp từ tối thiểu của app, giọng Kokoro đọc đúng / đọc nhầm (scripts/voice):
- *  - đọc trơ một từ: báo nhầm 4/16 lần đọc đúng (bộ nhận dạng âm cần ngữ cảnh);
- *  - "Say … again.": phụ âm cuối nối vào nguyên âm sau (t thành âm vỗ) → báo nhầm 3/60, bắt được 44/60;
- *  - "Say … now.": báo nhầm 2/60, bắt được 49/60 (xét riêng âm đang học, ngưỡng 0,3).
+ * đọc trơ một từ báo nhầm 6–10/60 với mọi cách chấm (mô hình cần ngữ cảnh); trong "Say … now." báo nhầm 0/60, bắt 56/60.
+ * ("Say … again." kém hơn: phụ âm cuối nối vào nguyên âm sau, t thành âm vỗ.)
  */
 export const ipaCarrier = (word: string) => `Say ${word} now.`;
