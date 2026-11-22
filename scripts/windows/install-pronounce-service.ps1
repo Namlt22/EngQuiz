@@ -13,6 +13,8 @@ $Python = Join-Path $ProjectDir '..\voice-runtime\venv\Scripts\python.exe'
 
 if (-not (Test-Path $Launcher)) { throw "Launcher not found: $Launcher" }
 if (-not (Test-Path $Python)) { throw "Python env not found: $Python" }
+$Ffmpeg = Join-Path $ProjectDir '..\voice-runtime\bin\ffmpeg.exe'
+if (-not (Test-Path $Ffmpeg)) { throw "ffmpeg not found: $Ffmpeg (copy ffmpeg.exe there; the SYSTEM task cannot see per-user installs)" }
 
 $busy = Get-NetTCPConnection -LocalPort 8765 -State Listen -ErrorAction SilentlyContinue
 if ($busy) { throw 'Port 8765 is already in use - stop the service running in the terminal first (Ctrl+C).' }

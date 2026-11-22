@@ -9,6 +9,9 @@ set "RUNTIME=%~dp0..\..\..\voice-runtime"
 set "HF_HOME=%RUNTIME%\hf"
 set "OPENPRONOUNCE_CACHE_DIR=%RUNTIME%\reference-cache"
 set "PYTHONIOENCODING=utf-8"
+rem The task runs as SYSTEM, which does not see per-user installs (winget ffmpeg). Browser recordings are webm/opus and
+rem need ffmpeg to decode, so ship our own copy: ..\voice-runtime\bin\ffmpeg.exe (copied from the winget package).
+set "PATH=%RUNTIME%\bin;%PATH%"
 
 :loop
 if exist "logs\pronounce.log" for %%F in ("logs\pronounce.log") do if %%~zF GTR 10485760 move /y "logs\pronounce.log" "logs\pronounce.log.1" >nul
