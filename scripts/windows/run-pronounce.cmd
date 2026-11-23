@@ -9,6 +9,8 @@ set "RUNTIME=%~dp0..\..\..\voice-runtime"
 set "HF_HOME=%RUNTIME%\hf"
 set "OPENPRONOUNCE_CACHE_DIR=%RUNTIME%\reference-cache"
 set "PYTHONIOENCODING=utf-8"
+rem Without this Python buffers the redirected log and nothing shows up until the buffer fills.
+set "PYTHONUNBUFFERED=1"
 rem The task runs as SYSTEM, which does not see per-user installs (winget ffmpeg). Browser recordings are webm/opus and
 rem need ffmpeg to decode, so ship our own copy: ..\voice-runtime\bin\ffmpeg.exe (copied from the winget package).
 set "PATH=%RUNTIME%\bin;%PATH%"

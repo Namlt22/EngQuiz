@@ -4,7 +4,7 @@
  */
 import type { Metadata } from "next";
 import { IPA_MAP } from "@/content/ipa";
-import { commonsFileUrl, IPA_RECORDINGS, LICENSE_URL, SYNTHESIZED_DIPHTHONGS, SYNTHESIZED_VOICE, SYNTHESIZED_VOWELS } from "@/content/ipa-audio";
+import { IPA_RECORDINGS, LICENSE_URL, recordingSourceUrl } from "@/content/ipa-audio";
 
 export const metadata: Metadata = { title: "Nguồn dữ liệu" };
 
@@ -12,7 +12,6 @@ const CC_BY_SA_4 = "https://creativecommons.org/licenses/by-sa/4.0/";
 const ext = { target: "_blank", rel: "noopener noreferrer", className: "underline hover:text-fg" } as const;
 
 export default function CreditsPage() {
-  const synthesized = [...SYNTHESIZED_DIPHTHONGS, ...SYNTHESIZED_VOWELS].map((id) => `/${IPA_MAP[id]?.symbol}/`).join(" ");
   return (
     <div className="max-w-3xl space-y-6 text-sm text-muted">
       <h1 className="text-2xl font-extrabold text-fg md:text-3xl">Nguồn dữ liệu</h1>
@@ -58,15 +57,15 @@ export default function CreditsPage() {
       <section className="card space-y-2 p-5">
         <h2 className="text-base font-bold text-fg">Âm IPA</h2>
         <p>
-          {synthesized}: tạo bằng giọng đọc máy {SYNTHESIZED_VOICE}. Các âm còn lại: Wikimedia Commons (đã chuyển sang mp3, cắt khoảng lặng, cân bằng âm lượng).
+          Giọng người từ Wikimedia Commons; riêng /ŋ/ do mô hình Kokoro tạo. Đã chỉnh sửa: cắt đoạn chứa âm, đổi độ dài, chuyển sang mp3, cân bằng âm lượng.
         </p>
         <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
           {IPA_RECORDINGS.map((r) => {
             const licenseUrl = LICENSE_URL[r.license];
             return (
               <li key={r.id}>
-                <span className="font-ipa text-fg">/{IPA_MAP[r.id]?.symbol}/</span>{" "}
-                <a href={commonsFileUrl(r.file)} {...ext}>
+                <span className="font-ipa text-fg">/{IPA_MAP[r.id]?.symbol}/</span> {r.word && <span lang="en">{r.word} </span>}
+                <a href={recordingSourceUrl(r)} {...ext}>
                   {r.file}
                 </a>
                 {r.author && ` · ${r.author}`} ·{" "}

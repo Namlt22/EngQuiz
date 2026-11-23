@@ -47,6 +47,23 @@ FUNCTION_WORDS = {
     "can", "have", "has", "had", "was", "were", "are", "is", "be", "been", "do", "does", "will", "would", "shall",
     "me", "you", "your", "he", "she", "we", "they", "them", "him", "her", "his", "our", "us", "my", "its",
 }
+# Mô hình học trên nhiều thứ tiếng nên có cả nguyên âm mang thanh điệu (i5, u2, ei5… của tiếng Trung/Việt) và
+# nguyên âm ngắn-căng (i, u). Giọng người Việt đọc "see" hay rơi vào i2/i5: nếu để riêng, cả /iː/ lẫn /ɪ/ đều khớp
+# kém và GOP gần như đoán mò (thử espeak đọc chuẩn, giải mã tự do cũng ra "s i5"). Gộp các biến thể này vào âm
+# tiếng Anh cùng chất trước khi chấm; độ dài và thanh điệu không phải lỗi gây hiểu nhầm.
+MERGE: dict[str, tuple[str, ...]] = {
+    "iː": ("i", "i1", "i2", "i4", "i5", "i:", "iː1", "iːː"),
+    "uː": ("u1", "u2", "u4", "u5", "u:"),
+    "eɪ": ("ei2", "ei5", "eiɜ"),
+    "aɪ": ("ai", "ai2", "ai5", "aiɜ"),
+    "aʊ": ("au", "ɑu2", "ɑu5", "ɑuɜ"),
+    "oʊ": ("ou1", "ou2", "ou5", "ouɜ", "əʊ"),
+    "ə": ("ə1", "ə2", "ə4", "ə5"),
+    "ɑː": ("ɑ1", "ɑ2", "ɑ4", "ɑ5", "ɑɜ", "ɑ:"),
+    "a": ("a1", "a2", "a4", "a5", "aɜ"),
+    "o": ("o1", "o2", "o4", "o5", "oɜ", "o:"),
+}
+CLASS_OF = {m: rep for rep, members in MERGE.items() for m in members}
 # espeak viết vài âm khác vocab của mô hình.
 ESPEAK_TO_MODEL = {"ᵻ": "ɪ", "ɐ": "ə", "ɾ": "t", "ɫ": "l", "ʔ": "t"}
 
@@ -105,7 +122,7 @@ def score_text(log_post: np.ndarray, text: str, only_word: str | None = None, sk
     ids, blank = _vocab()
     words = expected_phones(text)
     flat: list[tuple[int, str, str]] = [(wi, w, p) for wi, (w, ph) in enumerate(words) for p in ph]
-    canon = [ids[p] for _, _, p in flat]
+    canon = [ids[CLASS_OF.get(p, p)] for _, _, p in flat]
     if not canon:
         return []
     variants: list[list[int]] = [canon]
@@ -119,13 +136,14 @@ def score_text(log_post: np.ndarray, text: str, only_word: str | None = None, sk
         if p not in VOWELS and w.lower() not in FUNCTION_WORDS:
             rivals.append("")  # bỏ phụ âm (người Việt hay nuốt âm cuối); từ chức năng nói nhanh vẫn được lược âm
         for r in rivals:
-            if r and r not in ids:
+            r = CLASS_OF.get(r, r)
+            if r and (r not in ids or ids[r] == canon[k]):
                 continue
             seq = canon[:k] + ([ids[r]] if r else []) + canon[k + 1:]
             if seq:
                 variants.append(seq)
                 owners.append((k, r))
-    nll = _nll(torch.from_numpy(log_post).float(), variants, blank)
+    nll = _nll(merged(log_post), variants, blank)
     best: dict[int, tuple[float, str]] = {}
     for (k, r), v in zip(owners, nll[1:]):
         lpr = float(v - nll[0])
@@ -140,6 +158,39 @@ def score_text(log_post: np.ndarray, text: str, only_word: str | None = None, sk
         for k, (wi, w, p) in enumerate(flat)
         if not only_word or w.lower() == only_word.lower()
     ]
+
+
+@lru_cache(maxsize=1)
+def _merge_groups() -> tuple[tuple[int, tuple[int, ...]], ...]:
+    ids, _ = _vocab()
+    return tuple((ids[rep], tuple(ids[m] for m in members if m in ids)) for rep, members in MERGE.items() if rep in ids)
+
+
+def merged(log_post: np.ndarray) -> torch.Tensor:
+    """Log posterior với các biến thể trong MERGE cộng dồn (logsumexp) vào âm đại diện; cột biến thể bị tắt."""
+    lp = torch.from_numpy(log_post).float().clone()
+    src = lp.clone()
+    for rep, members in _merge_groups():
+        cols = [rep, *members]
+        lp[:, rep] = torch.logsumexp(src[:, cols], dim=-1)
+        lp[:, list(members)] = -1e4
+    return lp
+
+
+def canonical_nll(log_post: np.ndarray, text: str) -> float:
+    """−log P(câu đúng | âm thanh): càng nhỏ càng khớp — dùng để đoán người học đã đọc câu nào."""
+    ids, blank = _vocab()
+    seq = [ids[CLASS_OF.get(p, p)] for _, ph in expected_phones(text) for p in ph]
+    return float(_nll(merged(log_post), [seq], blank)[0]) if seq else float("inf")
+
+
+def free_phones(log_post: np.ndarray) -> str:
+    """Chuỗi âm mô hình nghe được khi không biết trước câu (giải mã tham lam) — chỉ để ghi log chẩn đoán."""
+    _, blank = _vocab()
+    vocab = phones.phone_vocab()
+    best = log_post.argmax(axis=-1)
+    out = [vocab[t] for k, t in enumerate(best) if t != blank and (k == 0 or t != best[k - 1])]
+    return " ".join(out)
 
 
 def log_posteriors(wave: np.ndarray, sr: int = 16_000) -> np.ndarray:

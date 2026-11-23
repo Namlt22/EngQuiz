@@ -1,10 +1,8 @@
 "use client";
 
 /**
- * Phát âm IPA đứng riêng (file ghi âm), rồi đọc luôn từ ví dụ đầu tiên (giọng Kokoro) — như ELSA dạy âm trong từ:
- * nguyên âm đứng một mình vốn mơ hồ (thử bằng mô hình nhận dạng âm: cả bản ghi Commons lẫn Kokoro đều hay bị nghe
- * thành nguyên âm bên cạnh), nghe ngay trong một từ tiếng Anh thật thì tai mới định vị được.
- * Âm không có file thì chỉ đọc từ ví dụ. Dùng chung cho bảng IPA và bài học phát âm.
+ * Phát âm IPA đứng riêng (file ghi âm). Âm không có file hoặc phát lỗi thì đọc từ ví dụ thay thế.
+ * Dùng chung cho bảng IPA và bài học phát âm.
  */
 import { useCallback, useEffect, useRef } from "react";
 import { IPA_SOUNDS, type IpaSound } from "@/content/ipa";
@@ -14,8 +12,6 @@ import { stopSpeech } from "./speech";
 import { COLD_START_MS } from "./speech-runner";
 
 type Speak = (text: string, rate?: number) => void;
-/** Nghỉ giữa âm và từ ví dụ. */
-const WORD_GAP_MS = 350;
 
 export function useIpaSoundPlayer(speak: Speak, preload: readonly IpaSound[] = IPA_SOUNDS): (sound: IpaSound) => void {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -46,9 +42,6 @@ export function useIpaSoundPlayer(speak: Speak, preload: readonly IpaSound[] = I
       const audio = cacheRef.current.get(sound.id) ?? new Audio(src);
       audioRef.current = audio;
       const my = ++seqRef.current;
-      audio.onended = () => {
-        if (my === seqRef.current) window.setTimeout(() => my === seqRef.current && sayExample(), WORD_GAP_MS);
-      };
       const start = () => {
         if (my !== seqRef.current) return; // đã bấm âm khác trong lúc chờ
         audio.currentTime = 0;

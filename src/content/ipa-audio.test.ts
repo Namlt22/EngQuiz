@@ -2,15 +2,21 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { IPA_MAP, IPA_SOUNDS } from "./ipa";
-import { commonsFileUrl, ipaAudioSrc, IPA_RECORDINGS, SYNTHESIZED_DIPHTHONGS, SYNTHESIZED_VOWELS } from "./ipa-audio";
+import { commonsFileUrl, ipaAudioSrc, IPA_RECORDINGS, LICENSE_URL, recordingSourceUrl } from "./ipa-audio";
 
 describe("file ghi âm IPA", () => {
-  it("cả 44 âm đều có file đứng riêng: 32 bản ghi Commons + 8 nguyên âm đôi + /ɪ/, /iː/, /ʊ/, /uː/ tạo bằng giọng đọc máy", () => {
-    expect(IPA_SOUNDS.filter((s) => ipaAudioSrc(s.id))).toHaveLength(44);
-    const diphthongs = IPA_SOUNDS.filter((s) => s.group === "diphthong").map((s) => s.id);
-    expect([...SYNTHESIZED_DIPHTHONGS].sort()).toEqual(diphthongs.sort());
-    for (const id of [...SYNTHESIZED_DIPHTHONGS, ...SYNTHESIZED_VOWELS]) expect(existsSync(join(process.cwd(), "public", ipaAudioSrc(id)!)), id).toBe(true);
-    expect(IPA_RECORDINGS.some((r) => SYNTHESIZED_VOWELS.includes(r.id)), "không trùng nguồn").toBe(false);
+  it("/ŋ/ ghi nguồn Kokoro, các âm khác trỏ về Commons", () => {
+    const byId = new Map(IPA_RECORDINGS.map((r) => [r.id, r]));
+    const ng = byId.get("ng")!;
+    expect(ipaAudioSrc("ng")).toBe("/audio/ipa/ng-h4.mp3");
+    expect(recordingSourceUrl(ng)).toBe("https://huggingface.co/hexgrad/Kokoro-82M");
+    expect(LICENSE_URL[ng.license]).toBe("https://www.apache.org/licenses/LICENSE-2.0");
+    expect(recordingSourceUrl(byId.get("l")!)).toBe(commonsFileUrl("En-us-hello.ogg"));
+  });
+
+  it("cả 44 âm đều có nguồn ghi âm và có file trong public/", () => {
+    expect(IPA_RECORDINGS).toHaveLength(44);
+    for (const s of IPA_SOUNDS) expect(existsSync(join(process.cwd(), "public", ipaAudioSrc(s.id)!)), s.id).toBe(true);
   });
 
   it("mỗi bản ghi trỏ đúng một âm có thật, không trùng, và có file mp3 trong public/", () => {
@@ -22,12 +28,11 @@ describe("file ghi âm IPA", () => {
     }
   });
 
-  it("id không phải âm IPA → undefined; nguyên âm đôi có file riêng", () => {
+  it("id không phải âm IPA → undefined; âm có file theo phiên bản giọng người", () => {
     expect(ipaAudioSrc("khong-co")).toBeUndefined();
-    expect(ipaAudioSrc("ei")).toBe("/audio/ipa/ei-v2.mp3");
-    expect(ipaAudioSrc("i-long")).toBe("/audio/ipa/i-long-v3.mp3");
-    expect(ipaAudioSrc("e")).toBe("/audio/ipa/e.mp3");
-    expect(ipaAudioSrc("u-long")).toBe("/audio/ipa/u-long-v3.mp3");
+    expect(ipaAudioSrc("i-long")).toBe("/audio/ipa/i-long-h2.mp3");
+    expect(ipaAudioSrc("u-long")).toBe("/audio/ipa/u-long-h2.mp3");
+    expect(ipaAudioSrc("p")).toBe("/audio/ipa/p-h4.mp3");
   });
 
   it("link ghi nguồn đúng dạng trang file của Commons", () => {

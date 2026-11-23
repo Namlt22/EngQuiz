@@ -2,7 +2,7 @@ r"""Dịch vụ chấm phát âm tới từng âm cho EngQuiz — chỉ nghe ở
 
 Chấm theo câu đã biết bằng GOP trên mô hình CTC (scripts/voice/gop.py), như ELSA chấm bài đọc theo mẫu.
 Thử trên 30 cặp từ tối thiểu của app (giọng Kokoro đọc đúng / đọc nhầm, qua webm như trình duyệt gửi, câu khung
-"Say … now."): báo nhầm 0/60, bắt được 56/60 — so với 2/60 và 49/60 của cách OpenPronounce đoán tự do rồi so chuỗi.
+"Say … now."): báo nhầm 1/60, bắt được 56/60 — so với 2/60 và 49/60 của cách OpenPronounce đoán tự do rồi so chuỗi.
 
   ..\voice-runtime\venv\Scripts\python.exe scripts\voice\pronounce_service.py      (cổng 8765)
 
@@ -42,6 +42,8 @@ MAX_SECONDS = 15.0
 SURE_WRONG = -1.0
 SURE_RIGHT = 1.0
 UNSURE_CREDIT = 0.6
+# Câu đứng một mình phải khớp hơn câu khung ít nhất chừng này (nat) mới coi là người học chỉ đọc mỗi từ.
+ALONE_MARGIN = 10.0
 
 log = logging.getLogger("engquiz.pronounce")
 app = FastAPI(title="EngQuiz pronunciation", docs_url=None, redoc_url=None, openapi_url=None)
@@ -66,7 +68,15 @@ def _score_file(path: str, text: str, focus: str | None, skip: frozenset[str]) -
     # Đệm 0,3 giây im lặng hai đầu: bản ghi cắt sát làm mô hình đoán thêm âm ở mép.
     pad = np.zeros(int(0.3 * audio.TARGET_SR), dtype=np.float32)
     lp = gop.log_posteriors(np.concatenate([pad, np.asarray(sound, dtype=np.float32), pad]))
+    # Bài IPA chấm từ trong câu khung "Say … now."; người học chỉ đọc mỗi từ thì câu khung khớp rất kém
+    # (thử espeak: NLL ~40 so với ~5) và các phụ âm bị báo sai oan → chấm theo từ đứng một mình.
+    if focus and gop.canonical_nll(lp, focus) + ALONE_MARGIN < gop.canonical_nll(lp, text):
+        text = focus
     scored = gop.score_text(lp, text, only_word=focus, skip_words=skip)
+    log.info(
+        "text=%r heard=[%s] %s", text, gop.free_phones(lp),
+        " ".join(f"{s.word}/{s.phone}:{s.lpr}>{s.heard or '-'}" for s in scored if s.lpr is not None),
+    )
     sounds = [
         {"word": s.word, "wordIndex": s.word_index, "phone": s.phone, "lpr": s.lpr, "heard": s.heard, "status": _status(s.lpr), "scored": s.lpr is not None}
         for s in scored

@@ -58,7 +58,7 @@ export function pronounceScore(r: PronounceResult, pass: number): number {
 
 /**
  * Câu khung khi chấm một từ IPA. Thử trên 30 cặp từ tối thiểu của app, giọng Kokoro đọc đúng / đọc nhầm (scripts/voice):
- * đọc trơ một từ báo nhầm 6–10/60 với mọi cách chấm (mô hình cần ngữ cảnh); trong "Say … now." báo nhầm 0/60, bắt 56/60.
+ * đọc trơ một từ báo nhầm 6–10/60 với mọi cách chấm (mô hình cần ngữ cảnh); trong "Say … now." báo nhầm 1/60, bắt 56/60.
  * ("Say … again." kém hơn: phụ âm cuối nối vào nguyên âm sau, t thành âm vỗ.)
  */
 export const ipaCarrier = (word: string) => `Say ${word} now.`;
