@@ -4,7 +4,9 @@
  * Nhận dạng giọng nói cho mọi màn hình có micro.
  *
  * Đã đăng nhập → ghi âm rồi nhận dạng trên máy chủ EngQuiz (./server-recognition, Whisper chạy tại chỗ): nghe giọng
- * Việt tốt hơn, chạy được cả trên Firefox, không gửi âm thanh cho Google/Microsoft.
+ * Việt tốt hơn, chạy được cả trên Firefox. Whisper chỉ trả chữ sau khi nói xong (~1,5 giây), nên trên máy tính có
+ * thêm nhận dạng của trình duyệt chạy song song để hiện chữ ngay khi nói và dừng sớm khi đã đọc đủ câu mẫu
+ * (`startPreview`); chữ cuối cùng vẫn là của Whisper, bản đoán của trình duyệt chỉ ghép thêm vào alternatives.
  * Chưa đăng nhập hoặc dịch vụ tắt → Web Speech API của trình duyệt (Chrome, Edge, Safari; cần mạng).
  * Micro chỉ dùng được trên HTTPS hoặc localhost (secure context).
  */
@@ -109,6 +111,85 @@ export function recognitionErrorMessage(code: string): string {
 
 const ALTERNATIVES = 5;
 
+/**
+ * Điện thoại: micro thường chỉ cho một bên thu, chạy thêm nhận dạng của trình duyệt có thể làm bản ghi im lặng
+ * → không xem trước, chỉ hiện chữ khi máy chủ trả về.
+ */
+function canPreview(): boolean {
+  return !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
+interface Preview {
+  /** Ngừng nghe thêm (người học đã nói xong); các đoạn đang dở vẫn được trình duyệt chốt nốt. */
+  pause: () => void;
+  /** Tắt hẳn, trả các bản đoán đã chốt (rỗng nếu không có). */
+  collect: () => string[];
+}
+
+const NO_PREVIEW: Preview = { pause: () => {}, collect: () => [] };
+
+/** Nhận dạng của trình duyệt chỉ để xem trước lời nói; mọi lỗi của nó bị bỏ qua (máy chủ mới là kết quả chính). */
+function startPreview(lang: string, onHeard: (text: string) => void): Preview {
+  const Ctor = getCtor();
+  if (!Ctor || !canPreview()) return NO_PREVIEW;
+  const rec = new Ctor();
+  rec.lang = lang;
+  if (localOk.has(lang) && "processLocally" in rec) rec.processLocally = true;
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.maxAlternatives = ALTERNATIVES;
+  const finals: string[] = [];
+  let lastAlternatives: string[] = [];
+  let interim = "";
+  rec.onresult = (e) => {
+    interim = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const result = e.results[i];
+      if (result.isFinal) {
+        finals.push(result[0].transcript.trim());
+        lastAlternatives = Array.from({ length: result.length }, (_, k) => result[k].transcript.trim());
+      } else interim += result[0].transcript;
+    }
+    onHeard([...finals, interim.trim()].filter(Boolean).join(" "));
+  };
+  rec.onerror = () => {};
+  try {
+    rec.start();
+  } catch {
+    return NO_PREVIEW;
+  }
+  const quietly = (fn: () => void) => {
+    try {
+      fn();
+    } catch {
+      /* đã dừng */
+    }
+  };
+  return {
+    pause: () => quietly(() => rec.stop()),
+    collect: () => {
+      rec.onresult = null;
+      quietly(() => rec.abort());
+      if (finals.length === 1 && !interim.trim()) return lastAlternatives.filter(Boolean);
+      const joined = [...finals, interim.trim()].filter(Boolean).join(" ");
+      return joined ? [joined] : [];
+    },
+  };
+}
+
+/** Ghép bản đoán, bỏ trùng (không phân biệt hoa thường / dấu câu), giữ thứ tự. */
+export function mergeAlternatives(...lists: readonly (readonly string[])[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const text of lists.flat()) {
+    const key = text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(text);
+  }
+  return out;
+}
+
 /** Dòng trạng thái khi đang nghe: "Chuẩn bị…" (micro chưa mở) → "Đang nghe…" → "Đang nhận dạng…" (chờ máy chủ). */
 export function listenLabel({ ready, recognizing }: { ready: boolean; recognizing: boolean }): string {
   return recognizing ? "Đang nhận dạng…" : ready ? "Đang nghe…" : "Chuẩn bị…";
@@ -123,6 +204,8 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
   /** Đã ghi xong, đang chờ máy chủ nhận dạng. */
   const [recognizing, setRecognizing] = useState(false);
   const serverStopRef = useRef<() => void>(() => {});
+  /** Lượt máy chủ đang ở đâu: bấm dừng lúc micro chưa mở thì hủy lượt, lúc đang ghi thì dừng ghi. */
+  const serverPhaseRef = useRef<"idle" | "preparing" | "recording" | "recognizing">("idle");
   const turnRef = useRef(0);
   const [listening, setListening] = useState(false);
   /** Micro đã mở thật sự (sau sự kiện audiostart). Trước đó là đang chuẩn bị — người học chưa nên nói. */
@@ -281,47 +364,81 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
     const turn = ++turnRef.current;
     const current = () => turnRef.current === turn;
     let cancelled = false;
+    let preview = NO_PREVIEW;
     cancelRef.current = () => {
       cancelled = true;
       serverStopRef.current();
+      preview.collect();
     };
+    serverStopRef.current = () => {};
+    serverPhaseRef.current = "preparing";
     setError(null);
     setLive("");
     setReady(false);
     setRecognizing(false);
     setListening(true);
     const kind = continuous ? "long" : silenceFor(expected) === END_SILENCE_MS.word ? "word" : "sentence";
-    const outcome = await listenOnServer(
-      { lang, kind, expected: expected?.[0] },
-      {
-        onRecording: (stopNow) => {
-          serverStopRef.current = stopNow;
-          if (current()) setReady(true);
+    const zh = lang.toLowerCase().startsWith("zh");
+    let outcome: Awaited<ReturnType<typeof listenOnServer>>;
+    try {
+      outcome = await listenOnServer(
+        { lang, kind, expected: expected?.[0] },
+        {
+          onRecording: (stopNow) => {
+            serverStopRef.current = stopNow;
+            // Bấm dừng / hủy khi micro còn đang mở → dừng ngay lúc micro vừa mở.
+            if (cancelled || !current()) return stopNow();
+            serverPhaseRef.current = "recording";
+            setReady(true);
+            preview = startPreview(lang, (text) => {
+              if (!current() || serverPhaseRef.current !== "recording") return;
+              setLive(text);
+              // Đã nghe đủ câu cần đọc → dừng ngay, không chờ im lặng.
+              if (!continuous && expected?.length && heardAll(text, expected, zh ? "zh" : "en")) stopNow();
+            });
+          },
+          onRecognizing: () => {
+            serverStopRef.current = () => {};
+            preview.pause();
+            if (!current()) return;
+            serverPhaseRef.current = "recognizing";
+            setRecognizing(true);
+          },
+          isCancelled: () => cancelled,
         },
-        onRecognizing: () => {
-          serverStopRef.current = () => {};
-          if (current()) setRecognizing(true);
-        },
-        isCancelled: () => cancelled,
-      },
-    );
+      );
+    } catch {
+      outcome = { kind: "failed", message: "Không ghi âm được. Hãy thử lại." };
+    }
+    const browserGuesses = preview.collect();
     if (current()) {
       serverStopRef.current = () => {};
+      serverPhaseRef.current = "idle";
       setListening(false);
       setReady(false);
       setRecognizing(false);
     }
-    if (outcome.kind === "cancelled" || cancelled) return null;
+    if (outcome.kind === "cancelled" || cancelled || !current()) return null;
     if (outcome.kind === "failed") {
-      if (current()) setError(outcome.message);
+      setError(outcome.message);
       return null;
     }
     setLive(outcome.transcript);
-    return { transcript: outcome.transcript, alternatives: continuous ? [outcome.transcript] : outcome.alternatives, durationMs: outcome.durationMs };
+    const alternatives = continuous ? [outcome.transcript] : mergeAlternatives(outcome.alternatives, browserGuesses);
+    return { transcript: outcome.transcript, alternatives, durationMs: outcome.durationMs };
   }
 
   const stop = useCallback(() => {
     recRef.current?.stop();
+    // Micro chưa mở (đang "Chuẩn bị…", có khi đang chờ hỏi quyền micro) → hủy lượt này ngay, nút trở lại như cũ.
+    if (serverPhaseRef.current === "preparing") {
+      cancelRef.current();
+      turnRef.current += 1;
+      serverPhaseRef.current = "idle";
+      setListening(false);
+      setReady(false);
+      return;
+    }
     serverStopRef.current();
   }, []);
   /** Hủy lượt đang nghe: promise của lượt đó trả null. */
@@ -331,6 +448,7 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
     recRef.current = null;
     rec?.abort();
     turnRef.current += 1;
+    serverPhaseRef.current = "idle";
     setListening(false);
     setReady(false);
     setRecognizing(false);

@@ -193,6 +193,8 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
             done={isDone(e.word)}
             canRecord={canRecord}
             listening={recording && active === e.word}
+            busy={(pron.available ? pron.phase === "scoring" : recognition.recognizing) && active === e.word}
+            busyLabel={pron.available ? "Đang chấm…" : undefined}
             disabled={recording && active !== e.word}
             onHear={(rate) => hear(e.word, rate)}
             onRecord={() => record(e.word)}
@@ -234,6 +236,8 @@ function WordRow(props: {
   done: boolean;
   canRecord: boolean;
   listening: boolean;
+  busy: boolean;
+  busyLabel?: string;
   disabled: boolean;
   onHear: (rate: number) => void;
   onRecord: () => void;
@@ -281,7 +285,7 @@ function WordRow(props: {
       {canRecord && (
         // Điện thoại: nút ghi âm xuống hàng riêng, rộng hết dòng (để không đè lên chữ).
         <div className="w-full sm:w-auto [&>button]:w-full sm:[&>button]:w-auto">
-          <RecordButton listening={props.listening} disabled={props.disabled} idleLabel={attempt ? "Đọc lại" : "Đọc"} listeningLabel="Dừng" onClick={props.onRecord} />
+          <RecordButton listening={props.listening} busy={props.busy} busyLabel={props.busyLabel} disabled={props.disabled} idleLabel={attempt ? "Đọc lại" : "Đọc"} listeningLabel="Dừng" onClick={props.onRecord} />
         </div>
       )}
       {props.feedback && (

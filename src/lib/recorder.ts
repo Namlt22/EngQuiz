@@ -21,7 +21,7 @@ const AUDIO_BITS_PER_SECOND = 32_000;
 export type RecordKind = "word" | "sentence" | "long";
 
 /** Im lặng chừng này sau lần nói cuối thì tự dừng (null = không tự dừng). Người học hay ngập ngừng giữa câu. */
-const END_SILENCE_MS: Record<RecordKind, number | null> = { word: 700, sentence: 1200, long: null };
+const END_SILENCE_MS: Record<RecordKind, number | null> = { word: 700, sentence: 1000, long: null };
 const MAX_MS: Record<RecordKind, number> = { word: 6_000, sentence: 15_000, long: 190_000 };
 /** Chưa nói gì sau chừng này thì dừng và báo. */
 const NO_SPEECH_MS: Record<RecordKind, number> = { word: 5_000, sentence: 6_000, long: 10_000 };

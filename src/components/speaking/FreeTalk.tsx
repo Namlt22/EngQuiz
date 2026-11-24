@@ -160,6 +160,7 @@ export function FreeTalk({ initialPromptId, aiEnabled }: { initialPromptId?: str
           )}
           <RecordButton
             listening={listening}
+            busy={recognition.recognizing}
             disabled={recognition.status !== "ready" || busy}
             idleLabel={take ? "Nói lại từ đầu" : "Bắt đầu nói"}
             listeningLabel={`Dừng (${formatTime(elapsed)})`}

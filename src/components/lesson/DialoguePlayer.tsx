@@ -309,7 +309,7 @@ function RolePlay({ dialogue }: { dialogue: Dialogue }) {
       {mine ? (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <RecordButton listening={recognition.listening} idleLabel={turn ? "Nói lại" : "Bấm và nói"} onClick={record} />
+            <RecordButton listening={recognition.listening} busy={recognition.recognizing} idleLabel={turn ? "Nói lại" : "Bấm và nói"} onClick={record} />
             {!peek && !turn && (
               <button type="button" onClick={() => setPeek(true)} className="btn-ghost">
                 <Eye className="size-4" /> Xem câu gốc

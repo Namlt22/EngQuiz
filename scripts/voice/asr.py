@@ -3,14 +3,13 @@
 Web Speech gửi giọng lên Google/Microsoft, nghe giọng Việt kém, hay báo "no-speech"/lỗi mạng và mỗi trình duyệt
 một kiểu. Whisper chạy tại chỗ: cùng một bộ nghe cho mọi màn hình micro, không gửi âm thanh ra ngoài.
 
-Khi biết câu người học cần đọc (`expected`) mà lượt nghe thường không ra đúng câu đó, nghe thêm một lượt có câu đó
-làm ngữ cảnh: giọng lơ nói đúng thường được nhận ra ở lượt này, còn nói khác hẳn thì Whisper vẫn không viết ra câu
-mẫu. Lượt thêm chỉ thành một bản đoán phụ (alternatives), bản chính vẫn là lượt không gợi ý.
+Mỗi lượt tốn ~1,5 giây gần như cố định (Whisper luôn mã hoá khung 30 giây), nên chỉ nghe MỘT lượt, không gợi ý câu
+mẫu: lượt nghe thêm có gợi ý làm người học chờ gấp đôi. Chữ hiện ngay lúc đang nói do trình duyệt lo
+(src/lib/speech-recognition.ts), các bản đoán của trình duyệt được ghép vào kết quả cuối.
 """
 from __future__ import annotations
 
 import os
-import re
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -40,10 +39,6 @@ def _model():
     return WhisperModel(MODEL_NAME, device="cpu", compute_type="int8", cpu_threads=CPU_THREADS)
 
 
-def _comparable(text: str) -> str:
-    return re.sub(r"[^\w]+", " ", text.lower()).strip()
-
-
 def _decode(wave: np.ndarray, lang: str, prompt: str | None) -> str:
     segments, _ = _model().transcribe(
         wave,
@@ -59,20 +54,21 @@ def _decode(wave: np.ndarray, lang: str, prompt: str | None) -> str:
     return joiner.join(t for t in kept if t).strip()
 
 
-def transcribe(wave: np.ndarray, lang: str, expected: str | None = None) -> Heard:
+def transcribe(wave: np.ndarray, lang: str) -> Heard:
     """Lời nói trong `wave` (16 kHz, mono, float32). Không nghe ra gì → transcript rỗng."""
     if lang not in SUPPORTED_LANGS:
         raise ValueError("bad_lang")
-    base_prompt = ZH_PROMPT if lang == "zh" else None
-    main = _decode(wave, lang, base_prompt)
-    alternatives: list[str] = [main] if main else []
-    if expected and main and _comparable(main) != _comparable(expected):
-        hinted = _decode(wave, lang, f"{base_prompt or ''}{expected}")
-        if hinted and _comparable(hinted) not in {_comparable(a) for a in alternatives}:
-            alternatives.append(hinted)
-    return Heard(transcript=main, alternatives=tuple(alternatives))
+    main = _decode(wave, lang, ZH_PROMPT if lang == "zh" else None)
+    return Heard(transcript=main, alternatives=(main,) if main else ())
 
 
 def warm_up(sr: int = 16_000) -> None:
-    """Nạp mô hình sẵn (lần đầu vài giây)."""
-    _decode(np.zeros(sr, dtype=np.float32), "en", None)
+    """Nạp mô hình và chạy thử cả bộ giải mã (lần đầu vài giây).
+
+    Im lặng thì bộ lọc VAD bỏ hết, bộ giải mã không chạy và người học đầu tiên phải chờ thêm ~1 giây → thử trên tiếng
+    ồn nhẹ, tắt VAD.
+    """
+    noise = np.random.default_rng(0).normal(0, 0.05, sr).astype(np.float32)
+    for lang in sorted(SUPPORTED_LANGS):
+        segments, _ = _model().transcribe(noise, language=lang, beam_size=BEAM_SIZE, vad_filter=False, without_timestamps=True)
+        list(segments)

@@ -179,12 +179,12 @@ export function ChatRoom({ course, choice, onExit }: { course: CourseCode; choic
           <button
             type="button"
             onClick={() => void talk()}
-            disabled={phase.kind === "sending" || recognition.status !== "ready"}
+            disabled={phase.kind === "sending" || recognition.status !== "ready" || recognition.recognizing}
             aria-pressed={recognition.listening}
-            aria-label={recognition.listening ? "Dừng nói" : "Nói"}
+            aria-label={recognition.recognizing ? "Đang nhận dạng" : recognition.listening ? "Dừng nói" : "Nói"}
             className={`grid size-11 shrink-0 place-items-center rounded-xl border border-line ${recognition.listening ? "animate-pulse bg-danger text-white" : "bg-surface text-primary hover:bg-surface-2"} disabled:opacity-50`}
           >
-            {recognition.listening ? <Square className="size-4" /> : <Mic className="size-5" />}
+            {recognition.recognizing ? <Loader2 className="size-4 animate-spin" /> : recognition.listening ? <Square className="size-4" /> : <Mic className="size-5" />}
           </button>
           <textarea
             value={recognition.listening ? recognition.live || input : input}

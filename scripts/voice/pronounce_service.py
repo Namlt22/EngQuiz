@@ -33,6 +33,7 @@ from fastapi.concurrency import run_in_threadpool  # noqa: E402
 from openpronounce import audio  # noqa: E402
 
 import asr  # noqa: E402
+import decode  # noqa: E402
 import gop  # noqa: E402
 
 HOST = "127.0.0.1"
@@ -65,7 +66,7 @@ def _status(lpr: float | None) -> str:
 
 
 def _score_file(path: str, text: str, focus: str | None, skip: frozenset[str]) -> dict:
-    sound = audio.load(path)
+    sound = decode.load(path)
     seconds = len(sound) / audio.TARGET_SR
     if seconds < 0.2:
         raise ValueError("too_short")
@@ -145,13 +146,13 @@ async def score(file: UploadFile = File(...), text: str = Form(...), focus: str 
 
 
 def _transcribe_file(path: str, lang: str, expected: str | None) -> dict:
-    sound = np.asarray(audio.load(path), dtype=np.float32)
+    sound = decode.load(path)
     seconds = len(sound) / audio.TARGET_SR
     if seconds < 0.2:
         raise ValueError("too_short")
     if seconds > MAX_TRANSCRIBE_SECONDS:
         raise ValueError("too_long")
-    heard = asr.transcribe(sound, lang, expected)
+    heard = asr.transcribe(sound, lang)
     log.info("asr lang=%s %.1fs expected=%r heard=%r", lang, seconds, expected, list(heard.alternatives))
     return {"transcript": heard.transcript, "alternatives": list(heard.alternatives), "seconds": round(seconds, 2)}
 
@@ -193,6 +194,25 @@ async def transcribe(file: UploadFile = File(...), lang: str = Form("en"), expec
             log.warning("could not remove temp recording")
 
 
+def _normal_priority() -> None:
+    """Task Scheduler chạy tác vụ ở mức ưu tiên "dưới bình thường": mỗi lượt nhận dạng chậm thêm ~0,3 giây (đo 1,6 → 1,9).
+    Chỉ nâng tiến trình này lên mức bình thường, không đổi gì của hệ thống."""
+    if sys.platform != "win32":
+        return
+    import ctypes
+    from ctypes import wintypes
+
+    normal_priority_class = 0x20
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    # HANDLE dài 64 bit: không khai báo kiểu thì ctypes cắt handle giả (-1) còn 32 bit → "handle không hợp lệ".
+    kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+    kernel32.SetPriorityClass.argtypes = (wintypes.HANDLE, wintypes.DWORD)
+    kernel32.SetPriorityClass.restype = wintypes.BOOL
+    if not kernel32.SetPriorityClass(kernel32.GetCurrentProcess(), normal_priority_class):
+        log.warning("could not raise process priority (error %d)", ctypes.get_last_error())
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    _normal_priority()
     uvicorn.run(app, host=HOST, port=PORT, log_level="info")

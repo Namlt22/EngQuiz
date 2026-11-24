@@ -155,6 +155,8 @@ export function ReadAloud({ initialSetId }: { initialSetId?: string }) {
           )}
           <RecordButton
             listening={recording}
+            busy={pron.available ? pron.phase === "scoring" : recognition.recognizing}
+            busyLabel={pron.available ? "Đang chấm…" : undefined}
             disabled={!canRecord}
             idleLabel={current ? "Nói lại" : "Bấm và đọc to"}
             onClick={record}

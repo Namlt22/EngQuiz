@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isSpeech, nextFloor, shouldStop } from "./recorder";
-import { listenLabel } from "./speech-recognition";
+import { listenLabel, mergeAlternatives } from "./speech-recognition";
 
 describe("bộ ghi âm chung", () => {
   it("nền ồn hạ ngay theo mức nhỏ hơn, nâng rất chậm khi đang nói", () => {
@@ -29,6 +29,12 @@ describe("bộ ghi âm chung", () => {
   it("chưa nói gì: chờ vài giây rồi mới dừng", () => {
     expect(shouldStop("word", { heard: false, sinceLoudMs: 0, elapsedMs: 3000 })).toBe(false);
     expect(shouldStop("word", { heard: false, sinceLoudMs: 0, elapsedMs: 5500 })).toBe(true);
+  });
+
+  it("ghép bản đoán của máy chủ và trình duyệt: bản máy chủ đứng đầu, bỏ trùng hoa thường / dấu câu", () => {
+    expect(mergeAlternatives(["See."], ["see", "sea", ""])).toEqual(["See.", "sea"]);
+    expect(mergeAlternatives(["我是学生。"], ["我是学生"])).toEqual(["我是学生。"]);
+    expect(mergeAlternatives([], [])).toEqual([]);
   });
 
   it("dòng trạng thái: chuẩn bị → đang nghe → đang nhận dạng", () => {

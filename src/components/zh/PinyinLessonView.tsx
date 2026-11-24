@@ -231,6 +231,7 @@ function RepeatStep({ lesson, say, onNext }: { lesson: PinyinLesson; say: Say; o
                 <div className="w-full sm:w-auto [&>button]:w-full sm:[&>button]:w-auto">
                   <RecordButton
                     listening={recognition.listening && active === item.hanzi}
+                    busy={recognition.recognizing && active === item.hanzi}
                     disabled={recognition.listening && active !== item.hanzi}
                     idleLabel={a ? "Đọc lại" : "Đọc"}
                     listeningLabel="Dừng"
