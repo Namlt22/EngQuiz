@@ -14,7 +14,7 @@ import { vietnameseNamesIn } from "@/lib/vi-names";
 import { normalizeVoiceText } from "@/lib/voice-key";
 import { collectVoiceTexts } from "@/lib/voice-texts";
 import { createRateLimiter } from "@/server/rate-limit";
-import { clientIp, isSameOrigin } from "@/server/request";
+import { clientIp, isSameOrigin, readBytesWithLimit } from "@/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -31,31 +31,6 @@ let knownTexts: Set<string> | null = null;
 const isKnownText = (text: string) => (knownTexts ??= new Set(collectVoiceTexts().map((t) => t.text.toLowerCase()))).has(text.toLowerCase());
 
 const MODES = new Set(["word", "sentence", "ipa"]);
-
-/** Đọc thân yêu cầu, dừng ngay khi vượt `max` byte (trả null). */
-async function readBytesWithLimit(req: Request, max: number): Promise<Uint8Array | null> {
-  if (!req.body) return new Uint8Array();
-  const reader = req.body.getReader();
-  const parts: Uint8Array[] = [];
-  let size = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    size += value.byteLength;
-    if (size > max) {
-      await reader.cancel();
-      return null;
-    }
-    parts.push(value);
-  }
-  const out = new Uint8Array(size);
-  let at = 0;
-  for (const p of parts) {
-    out.set(p, at);
-    at += p.byteLength;
-  }
-  return out;
-}
 
 function fail(status: number, error: string) {
   return NextResponse.json<ApiResponse<never>>({ success: false, data: null, error }, { status });

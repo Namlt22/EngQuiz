@@ -10,7 +10,7 @@ import { progressActions, useProgress } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
 import { pronounceScore, type PronounceResult } from "@/lib/pronounce";
 import { usePronounceCheck } from "@/lib/pronounce-client";
-import { useSpeechRecognition } from "@/lib/speech-recognition";
+import { listenLabel, useSpeechRecognition } from "@/lib/speech-recognition";
 import { LevelBadge } from "@/components/ui/LevelBadge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { PronounceFeedback } from "./PronounceFeedback";
@@ -166,7 +166,7 @@ export function ReadAloud({ initialSetId }: { initialSetId?: string }) {
             ? pron.phase !== "idle" && (pron.phase === "scoring" ? "Đang chấm…" : pron.phase === "recording" ? "Đang nghe…" : "Chuẩn bị…")
             : recognition.listening && (
                 <>
-                  {recognition.ready ? "Đang nghe…" : "Chuẩn bị…"} {recognition.live && <span lang="en" className="text-fg">“{recognition.live}”</span>}
+                  {listenLabel(recognition)} {recognition.live && <span lang="en" className="text-fg">“{recognition.live}”</span>}
                 </>
               )}
         </p>

@@ -18,7 +18,7 @@ import { ipaCarrier, type PronounceResult } from "@/lib/pronounce";
 import { checkTaughtSound, type TaughtSoundCheck } from "@/lib/pronounce-ipa";
 import { PronounceFeedback } from "@/components/speaking/PronounceFeedback";
 import { MicLevel } from "@/components/speaking/MicLevel";
-import { useSpeechRecognition } from "@/lib/speech-recognition";
+import { listenLabel, useSpeechRecognition } from "@/lib/speech-recognition";
 import { RecordButton } from "@/components/speaking/RecordButton";
 import { scoreTone } from "@/components/speaking/ScoreBadge";
 import { ActivityResult } from "@/components/lesson/ActivityResult";
@@ -212,7 +212,7 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
           </div>
         )
       ) : (
-        recognition.listening && <p className="text-sm text-muted">{recognition.ready ? "Đang nghe…" : "Chuẩn bị…"} {recognition.live}</p>
+        recognition.listening && <p className="text-sm text-muted">{listenLabel(recognition)} {recognition.live}</p>
       )}
       {(notice || pron.error || recognition.error) && <p className="text-sm text-danger">{notice ?? pron.error ?? recognition.error}</p>}
       <div className="flex items-center justify-between gap-2">

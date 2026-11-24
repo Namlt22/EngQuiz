@@ -36,6 +36,31 @@ export async function readBodyWithLimit(req: Request, maxBytes: number): Promise
   return new TextDecoder().decode(all);
 }
 
+/** Đọc thân yêu cầu, dừng ngay khi vượt `max` byte (trả null). */
+export async function readBytesWithLimit(req: Request, max: number): Promise<Uint8Array | null> {
+  if (!req.body) return new Uint8Array();
+  const reader = req.body.getReader();
+  const parts: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel();
+      return null;
+    }
+    parts.push(value);
+  }
+  const out = new Uint8Array(size);
+  let at = 0;
+  for (const p of parts) {
+    out.set(p, at);
+    at += p.byteLength;
+  }
+  return out;
+}
+
 /** Lấy IP client (sau reverse proxy) để giới hạn tần suất; không dùng cho mục đích bảo mật khác. */
 export function clientIp(req: Request): string {
   // Sau Cloudflare Tunnel: CF-Connecting-IP là IP thật của người dùng (server chỉ nghe 127.0.0.1 nên chỉ cloudflared gửi được header này).

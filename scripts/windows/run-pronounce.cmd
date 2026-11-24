@@ -1,7 +1,8 @@
 @echo off
-rem EngQuiz pronunciation scoring service (OpenPronounce) for Task Scheduler.
-rem Listens on 127.0.0.1:8765 only; Next.js calls it from /api/pronounce. Restarts 10 s after it exits.
-rem Python env: ..\voice-runtime\venv (see scripts\voice\generate_kokoro.py). Log: logs\pronounce.log
+rem EngQuiz pronunciation scoring + speech recognition service (OpenPronounce, Whisper) for Task Scheduler.
+rem Listens on 127.0.0.1:8765 only; Next.js calls it from /api/pronounce and /api/transcribe. Restarts 10 s after it exits.
+rem Python env: ..\voice-runtime\venv (see scripts\voice\generate_kokoro.py), plus "pip install faster-whisper"
+rem and the Systran/faster-whisper-small model in %HF_HOME%. Log: logs\pronounce.log
 setlocal
 cd /d "%~dp0..\.."
 if not exist "logs" mkdir "logs"

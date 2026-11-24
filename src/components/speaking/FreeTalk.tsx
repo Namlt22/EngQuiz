@@ -11,7 +11,7 @@ import type { ApiResponse } from "@/lib/learner-schema";
 import { progressActions } from "@/lib/progress";
 import { useRoadmapState } from "@/lib/roadmap-store";
 import { useSpeech } from "@/lib/speech";
-import { useSpeechRecognition, type ListenResult } from "@/lib/speech-recognition";
+import { listenLabel, useSpeechRecognition, type ListenResult } from "@/lib/speech-recognition";
 import { FEEDBACK_LIMITS, type SpeakingFeedback } from "@/lib/speaking-feedback";
 import { AI_DAILY_LIMIT } from "@/lib/plans";
 import { FeedbackView } from "./FeedbackView";
@@ -170,7 +170,7 @@ export function FreeTalk({ initialPromptId, aiEnabled }: { initialPromptId?: str
         <div aria-live="polite">
           {listening && (
             <p lang="en" className="min-h-12 rounded-xl bg-surface-2 p-3 text-center">
-              {recognition.live || <span className="text-muted">{recognition.ready ? "Đang nghe… hãy bắt đầu nói." : "Chuẩn bị…"}</span>}
+              {recognition.live || <span className="text-muted">{recognition.recognizing || !recognition.ready ? listenLabel(recognition) : "Đang nghe… hãy bắt đầu nói."}</span>}
             </p>
           )}
         </div>

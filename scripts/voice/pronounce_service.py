@@ -1,4 +1,5 @@
-r"""Dịch vụ chấm phát âm tới từng âm cho EngQuiz — chỉ nghe ở 127.0.0.1 (Next.js gọi qua /api/pronounce).
+r"""Dịch vụ chấm phát âm tới từng âm và nhận dạng lời nói cho EngQuiz — chỉ nghe ở 127.0.0.1
+(Next.js gọi qua /api/pronounce và /api/transcribe; nhận dạng bằng Whisper, scripts/voice/asr.py).
 
 Chấm theo câu đã biết bằng GOP trên mô hình CTC (scripts/voice/gop.py), như ELSA chấm bài đọc theo mẫu.
 Thử trên 30 cặp từ tối thiểu của app (giọng Kokoro đọc đúng / đọc nhầm, qua webm như trình duyệt gửi, câu khung
@@ -31,6 +32,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile  # noqa: E402
 from fastapi.concurrency import run_in_threadpool  # noqa: E402
 from openpronounce import audio  # noqa: E402
 
+import asr  # noqa: E402
 import gop  # noqa: E402
 
 HOST = "127.0.0.1"
@@ -38,6 +40,10 @@ PORT = int(os.environ.get("PRONOUNCE_PORT", "8765"))
 MAX_BYTES = 2 * 1024 * 1024
 MAX_TEXT = 200
 MAX_SECONDS = 15.0
+# Nhận dạng lời nói: Nói tự do cho nói tới 3 phút.
+MAX_TRANSCRIBE_BYTES = 4 * 1024 * 1024
+MAX_TRANSCRIBE_SECONDS = 200.0
+MAX_EXPECTED = 200
 # Ngưỡng biên GOP (lpr): < SURE_WRONG → sai; < SURE_RIGHT → chưa rõ; còn lại đúng. Chọn theo kết quả thử ở trên.
 SURE_WRONG = -1.0
 SURE_RIGHT = 1.0
@@ -90,6 +96,7 @@ def _warm_up() -> None:
     global ready
     started = time.time()
     gop.score_text(gop.log_posteriors(np.zeros(audio.TARGET_SR, dtype=np.float32)), "Say see now.", skip_words=frozenset())
+    asr.warm_up(audio.TARGET_SR)
     ready = True
     log.info("ready after %.1fs", time.time() - started)
 
@@ -129,6 +136,55 @@ async def score(file: UploadFile = File(...), text: str = Form(...), focus: str 
         raise HTTPException(status_code=422, detail=str(err)) from None
     except Exception:
         log.exception("scoring failed")
+        raise HTTPException(status_code=500, detail="failed") from None
+    finally:
+        try:
+            os.remove(path)
+        except OSError:
+            log.warning("could not remove temp recording")
+
+
+def _transcribe_file(path: str, lang: str, expected: str | None) -> dict:
+    sound = np.asarray(audio.load(path), dtype=np.float32)
+    seconds = len(sound) / audio.TARGET_SR
+    if seconds < 0.2:
+        raise ValueError("too_short")
+    if seconds > MAX_TRANSCRIBE_SECONDS:
+        raise ValueError("too_long")
+    heard = asr.transcribe(sound, lang, expected)
+    log.info("asr lang=%s %.1fs expected=%r heard=%r", lang, seconds, expected, list(heard.alternatives))
+    return {"transcript": heard.transcript, "alternatives": list(heard.alternatives), "seconds": round(seconds, 2)}
+
+
+async def _read_upload(file: UploadFile, max_bytes: int) -> str:
+    """Ghi bản ghi ra file tạm (ffmpeg đọc từ file); trả đường dẫn. Người gọi phải xoá."""
+    data = await file.read(max_bytes + 1)
+    if not data or len(data) > max_bytes:
+        raise HTTPException(status_code=413, detail="bad_size")
+    suffix = Path(file.filename or "rec.webm").suffix or ".webm"
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        tmp.write(data)
+        return tmp.name
+
+
+@app.post("/transcribe")
+async def transcribe(file: UploadFile = File(...), lang: str = Form("en"), expected: str = Form("")) -> dict:
+    if lang not in asr.SUPPORTED_LANGS:
+        raise HTTPException(status_code=400, detail="bad_lang")
+    expected = " ".join(expected.split())[:MAX_EXPECTED] or None
+    if not ready:
+        raise HTTPException(status_code=503, detail="warming_up")
+    path = await _read_upload(file, MAX_TRANSCRIBE_BYTES)
+    try:
+        async with gate:
+            started = time.time()
+            result = await run_in_threadpool(_transcribe_file, path, lang, expected)
+            log.info("transcribed in %.2fs", time.time() - started)
+            return result
+    except ValueError as err:
+        raise HTTPException(status_code=422, detail=str(err)) from None
+    except Exception:
+        log.exception("transcription failed")
         raise HTTPException(status_code=500, detail="failed") from None
     finally:
         try:

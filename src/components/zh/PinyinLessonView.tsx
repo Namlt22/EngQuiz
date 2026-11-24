@@ -13,7 +13,7 @@ import { applySandhi, toneOf } from "@/core/pinyin";
 import { PASS_PERCENT, buildDrill, drillPercent, itemDone, scoreSpoken, type Attempt, type DrillRound } from "@/core/pinyin-lesson";
 import { getProgressState, progressActions } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
-import { useSpeechRecognition } from "@/lib/speech-recognition";
+import { listenLabel, useSpeechRecognition } from "@/lib/speech-recognition";
 import { RecordButton } from "@/components/speaking/RecordButton";
 import { scoreTone } from "@/components/speaking/ScoreBadge";
 import { ActivityResult } from "@/components/lesson/ActivityResult";
@@ -244,7 +244,7 @@ function RepeatStep({ lesson, say, onNext }: { lesson: PinyinLesson; say: Say; o
       </ul>
       {recognition.listening && (
         <p className="text-sm text-muted">
-          {recognition.ready ? "Đang nghe…" : "Chuẩn bị…"} <span lang="zh-Hans">{recognition.live}</span>
+          {listenLabel(recognition)} <span lang="zh-Hans">{recognition.live}</span>
         </p>
       )}
       {(notice || recognition.error) && <p className="text-sm text-danger">{notice ?? recognition.error}</p>}

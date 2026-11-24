@@ -1,11 +1,17 @@
 "use client";
 
 /**
- * Nhận dạng giọng nói bằng Web Speech API (Chrome, Edge, Safari bản mới; Firefox chưa hỗ trợ).
- * Lưu ý: Chrome/Edge gửi âm thanh lên máy chủ của Google/Microsoft để nhận dạng → cần mạng.
+ * Nhận dạng giọng nói cho mọi màn hình có micro.
+ *
+ * Đã đăng nhập → ghi âm rồi nhận dạng trên máy chủ EngQuiz (./server-recognition, Whisper chạy tại chỗ): nghe giọng
+ * Việt tốt hơn, chạy được cả trên Firefox, không gửi âm thanh cho Google/Microsoft.
+ * Chưa đăng nhập hoặc dịch vụ tắt → Web Speech API của trình duyệt (Chrome, Edge, Safari; cần mạng).
  * Micro chỉ dùng được trên HTTPS hoặc localhost (secure context).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
+import { canRecordAudio } from "./recorder";
+import { isServerDown, listenOnServer } from "./server-recognition";
 import { heardAll } from "./speech-match";
 
 /* Kiểu tối thiểu — lib DOM của TypeScript chưa có SpeechRecognition. */
@@ -103,8 +109,21 @@ export function recognitionErrorMessage(code: string): string {
 
 const ALTERNATIVES = 5;
 
+/** Dòng trạng thái khi đang nghe: "Chuẩn bị…" (micro chưa mở) → "Đang nghe…" → "Đang nhận dạng…" (chờ máy chủ). */
+export function listenLabel({ ready, recognizing }: { ready: boolean; recognizing: boolean }): string {
+  return recognizing ? "Đang nhận dạng…" : ready ? "Đang nghe…" : "Chuẩn bị…";
+}
+
 export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {}) {
-  const [status, setStatus] = useState<RecognitionStatus>("ready");
+  const { status: authStatus } = useSession();
+  const [canRecord, setCanRecord] = useState(false);
+  const [browserStatus, setBrowserStatus] = useState<RecognitionStatus>("ready");
+  const onServer = authStatus === "authenticated" && canRecord && !isServerDown();
+  const status: RecognitionStatus = onServer ? "ready" : browserStatus;
+  /** Đã ghi xong, đang chờ máy chủ nhận dạng. */
+  const [recognizing, setRecognizing] = useState(false);
+  const serverStopRef = useRef<() => void>(() => {});
+  const turnRef = useRef(0);
   const [listening, setListening] = useState(false);
   /** Micro đã mở thật sự (sau sự kiện audiostart). Trước đó là đang chuẩn bị — người học chưa nên nói. */
   const [ready, setReady] = useState(false);
@@ -115,12 +134,14 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
   const cancelRef = useRef<() => void>(() => {});
 
   useEffect(() => {
+    setCanRecord(canRecordAudio());
     const Ctor = getCtor();
-    if (!Ctor) setStatus("unsupported");
-    else if (!window.isSecureContext) setStatus("insecure");
+    if (!Ctor) setBrowserStatus("unsupported");
+    else if (!window.isSecureContext) setBrowserStatus("insecure");
     else checkLocalSupport(Ctor, lang);
     return () => {
       cancelRef.current();
+      serverStopRef.current();
       recRef.current?.abort();
     };
   }, []);
@@ -134,6 +155,7 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
      * expected: câu / từ người học cần đọc (chế độ một câu). Nghe đủ → dừng ngay, không chờ im lặng.
      */
     ({ continuous, expected }: { continuous: boolean; expected?: readonly string[] }): Promise<ListenResult | null> => {
+      if (onServer && !isServerDown()) return listenServer({ continuous, expected });
       const Ctor = getCtor();
       if (!Ctor || !window.isSecureContext) {
         setError(Ctor ? "Micro chỉ dùng được trên trang https:// hoặc localhost." : "Trình duyệt này không hỗ trợ nhận dạng giọng nói.");
@@ -246,19 +268,73 @@ export function useSpeechRecognition({ lang = "en-US" }: { lang?: string } = {})
         }
       });
     },
-    [lang],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- listenServer chỉ dùng ref, setState và lang
+    [lang, onServer],
   );
 
-  const stop = useCallback(() => recRef.current?.stop(), []);
+  /** Một lượt nghe qua máy chủ; cùng hợp đồng với nhánh trình duyệt (null = lỗi / hủy / không nghe thấy). */
+  async function listenServer({ continuous, expected }: { continuous: boolean; expected?: readonly string[] }): Promise<ListenResult | null> {
+    cancelRef.current();
+    recRef.current?.abort();
+    serverStopRef.current();
+    if (window.speechSynthesis?.speaking || window.speechSynthesis?.pending) window.speechSynthesis.cancel();
+    const turn = ++turnRef.current;
+    const current = () => turnRef.current === turn;
+    let cancelled = false;
+    cancelRef.current = () => {
+      cancelled = true;
+      serverStopRef.current();
+    };
+    setError(null);
+    setLive("");
+    setReady(false);
+    setRecognizing(false);
+    setListening(true);
+    const kind = continuous ? "long" : silenceFor(expected) === END_SILENCE_MS.word ? "word" : "sentence";
+    const outcome = await listenOnServer(
+      { lang, kind, expected: expected?.[0] },
+      {
+        onRecording: (stopNow) => {
+          serverStopRef.current = stopNow;
+          if (current()) setReady(true);
+        },
+        onRecognizing: () => {
+          serverStopRef.current = () => {};
+          if (current()) setRecognizing(true);
+        },
+        isCancelled: () => cancelled,
+      },
+    );
+    if (current()) {
+      serverStopRef.current = () => {};
+      setListening(false);
+      setReady(false);
+      setRecognizing(false);
+    }
+    if (outcome.kind === "cancelled" || cancelled) return null;
+    if (outcome.kind === "failed") {
+      if (current()) setError(outcome.message);
+      return null;
+    }
+    setLive(outcome.transcript);
+    return { transcript: outcome.transcript, alternatives: continuous ? [outcome.transcript] : outcome.alternatives, durationMs: outcome.durationMs };
+  }
+
+  const stop = useCallback(() => {
+    recRef.current?.stop();
+    serverStopRef.current();
+  }, []);
   /** Hủy lượt đang nghe: promise của lượt đó trả null. */
   const cancel = useCallback(() => {
     cancelRef.current();
     const rec = recRef.current;
     recRef.current = null;
     rec?.abort();
+    turnRef.current += 1;
     setListening(false);
     setReady(false);
+    setRecognizing(false);
   }, []);
 
-  return { status, listening, ready, live, error, listen, stop, cancel };
+  return { status, listening, ready, recognizing, live, error, listen, stop, cancel };
 }

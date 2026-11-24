@@ -11,7 +11,7 @@ import type { Dialogue } from "@/content/types";
 import { scoreReadAloud, type ReadAloudResult } from "@/core/speaking";
 import { progressActions } from "@/lib/progress";
 import { SPEECH_ERROR_NOTICE, useSpeech } from "@/lib/speech";
-import { useSpeechRecognition } from "@/lib/speech-recognition";
+import { listenLabel, useSpeechRecognition } from "@/lib/speech-recognition";
 import { LevelBadge } from "@/components/ui/LevelBadge";
 import { SpeakButton } from "@/components/ui/SpeakButton";
 import { RecordButton } from "@/components/speaking/RecordButton";
@@ -321,7 +321,7 @@ function RolePlay({ dialogue }: { dialogue: Dialogue }) {
               </button>
             )}
           </div>
-          {recognition.listening && <p className="text-sm text-muted">{recognition.ready ? "Đang nghe…" : "Chuẩn bị…"} {recognition.live}</p>}
+          {recognition.listening && <p className="text-sm text-muted">{listenLabel(recognition)} {recognition.live}</p>}
           {notice && <p className="text-sm text-danger">{notice}</p>}
           {recognition.error && <p className="text-sm text-danger">{recognition.error}</p>}
           {turn && (
