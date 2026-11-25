@@ -39,6 +39,13 @@ vi.mock("@/server/speaking-ai", () => ({
   AiUnavailableError,
   AiBadOutputError,
 }));
+// Bản đồ lỗi AI dùng chung (src/server/ai-errors.ts) lấy lớp lỗi từ anthropic-client — dùng cùng lớp giả.
+vi.mock("@/server/anthropic-client", () => ({
+  AiNotConfiguredError,
+  AiRefusedError,
+  AiUnavailableError,
+  AiBadOutputError,
+}));
 
 const ORIGIN = "http://localhost";
 const valid = { promptId: "intro-daily-1", transcript: "my name is Nam and I am a engineer", seconds: 20, level: "A2" };

@@ -13,7 +13,8 @@ import { applySandhi, toneOf } from "@/core/pinyin";
 import { PASS_PERCENT, buildDrill, drillPercent, itemDone, scoreSpoken, type Attempt, type DrillRound } from "@/core/pinyin-lesson";
 import { getProgressState, progressActions } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
-import { listenLabel, useSpeechRecognition } from "@/lib/speech-recognition";
+import { useSpeechRecognition } from "@/lib/speech-recognition";
+import { ListenStatus } from "@/components/speaking/ListenStatus";
 import { RecordButton } from "@/components/speaking/RecordButton";
 import { scoreTone } from "@/components/speaking/ScoreBadge";
 import { ActivityResult } from "@/components/lesson/ActivityResult";
@@ -243,11 +244,7 @@ function RepeatStep({ lesson, say, onNext }: { lesson: PinyinLesson; say: Say; o
           );
         })}
       </ul>
-      {recognition.listening && (
-        <p className="text-sm text-muted">
-          {listenLabel(recognition)} <span lang="zh-Hans">{recognition.live}</span>
-        </p>
-      )}
+      <ListenStatus recognition={recognition} lang="zh-Hans" />
       {(notice || recognition.error) && <p className="text-sm text-danger">{notice ?? recognition.error}</p>}
       {canRecord && recognition.error && (
         <button type="button" onClick={() => setMicFailed(true)} className="btn-ghost text-sm">

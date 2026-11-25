@@ -10,7 +10,7 @@ import { ArrowLeft, Loader2, Mic, PartyPopper, RotateCcw, Send, Sparkles, Square
 import { FREE_CHAT_OPENING } from "@/content/chat-scenarios";
 import { CHAT_LIMITS, FREE_CHAT_ID, type ChatReply } from "@/lib/ai-chat";
 import type { CourseCode } from "@/lib/course";
-import type { ApiResponse } from "@/lib/learner-schema";
+import { postApi } from "@/lib/api-client";
 import { useSpeech } from "@/lib/speech";
 import { useSpeechRecognition } from "@/lib/speech-recognition";
 import { ChatBubble, correctionEntry, type UiMessage } from "./ChatBubble";
@@ -68,19 +68,18 @@ export function ChatRoom({ course, choice, onExit }: { course: CourseCode; choic
     abortRef.current = ctrl;
     const timer = window.setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
+      const res = await postApi<unknown>(
+        "/api/chat",
+        {
           course,
           scenarioId: choice.scenario?.id ?? FREE_CHAT_ID,
           level: choice.level,
           conversationId,
           messages: history.map((m) => ({ role: m.role, text: m.text })),
-        }),
-        signal: ctrl.signal,
-      });
-      const json = (await res.json().catch(() => null)) as ApiResponse<unknown> | null;
+        },
+        { signal: ctrl.signal },
+      );
+      const { json } = res;
       if (!res.ok || !json?.success || !isReply(json.data)) {
         // Gửi lỗi: bỏ tin vừa gửi khỏi lịch sử để gửi lại không bị trùng, trả chữ về ô nhập.
         setMessages(messages);

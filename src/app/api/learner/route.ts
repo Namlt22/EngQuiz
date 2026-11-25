@@ -5,10 +5,11 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/auth";
-import { learnerPutSchema, type ApiResponse, type LearnerConflictResponse, type LearnerSnapshot } from "@/lib/learner-schema";
+import { learnerPutSchema, type LearnerConflictResponse, type LearnerSnapshot } from "@/lib/learner-schema";
+import { fail, ok, readJsonBody } from "@/server/api-response";
 import { findLearner, saveLearner } from "@/server/learner-repo";
 import { createRateLimiter } from "@/server/rate-limit";
-import { BodyTooLargeError, isSameOrigin, readBodyWithLimit } from "@/server/request";
+import { isSameOrigin } from "@/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -16,14 +17,6 @@ export const dynamic = "force-dynamic";
 const MAX_BODY_BYTES = 1024 * 1024;
 const readLimiter = createRateLimiter({ limit: 60, windowMs: 60_000 });
 const writeLimiter = createRateLimiter({ limit: 30, windowMs: 60_000 });
-
-function fail(status: number, error: string) {
-  return NextResponse.json<ApiResponse<never>>({ success: false, data: null, error }, { status });
-}
-
-function ok<T>(data: T, status = 200) {
-  return NextResponse.json<ApiResponse<T>>({ success: true, data, error: null }, { status });
-}
 
 async function currentUserId(): Promise<string | null> {
   const session = await auth();
@@ -48,14 +41,9 @@ export async function PUT(req: NextRequest) {
   if (!userId) return fail(401, "Bạn cần đăng nhập.");
   if (!writeLimiter.check(userId)) return fail(429, "Bạn thao tác quá nhanh, hãy thử lại sau ít phút.");
 
-  let json: unknown;
-  try {
-    json = JSON.parse(await readBodyWithLimit(req, MAX_BODY_BYTES));
-  } catch (e) {
-    if (e instanceof BodyTooLargeError) return fail(413, "Dữ liệu gửi lên quá lớn.");
-    return fail(400, "Dữ liệu không phải JSON hợp lệ.");
-  }
-  const parsed = learnerPutSchema.safeParse(json);
+  const body = await readJsonBody(req, MAX_BODY_BYTES, { tooLarge: "Dữ liệu gửi lên quá lớn.", invalid: "Dữ liệu không phải JSON hợp lệ." });
+  if (body instanceof Response) return body;
+  const parsed = learnerPutSchema.safeParse(body.json);
   if (!parsed.success) return fail(400, "Dữ liệu học không hợp lệ.");
 
   const { baseVersion, ...data } = parsed.data;

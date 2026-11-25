@@ -9,6 +9,7 @@ import { READ_ALOUD_PASS, averageScore, scoreReadAloud, type ReadAloudResult } f
 import { progressActions, useProgress } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
 import { pronounceScore, type PronounceResult } from "@/lib/pronounce";
+import { pronouncePhaseLabel, scoredMicState } from "@/lib/mic-state";
 import { usePronounceCheck } from "@/lib/pronounce-client";
 import { listenLabel, useSpeechRecognition } from "@/lib/speech-recognition";
 import { LevelBadge } from "@/components/ui/LevelBadge";
@@ -58,8 +59,8 @@ export function ReadAloud({ initialSetId }: { initialSetId?: string }) {
   const recognition = useSpeechRecognition();
   // Đã đăng nhập: chấm tới từng âm trên máy chủ; còn lại dùng nhận dạng giọng nói của trình duyệt.
   const pron = usePronounceCheck();
-  const recording = pron.available ? pron.busy : recognition.listening;
-  const canRecord = pron.available || recognition.status === "ready";
+  const mic = scoredMicState(pron, recognition);
+  const { recording, canRecord } = mic;
   const savedBest = useProgress().speaking?.[setId]?.best;
   const total = exercise.sentences.length;
   const sentence = exercise.sentences[idx];
@@ -155,8 +156,8 @@ export function ReadAloud({ initialSetId }: { initialSetId?: string }) {
           )}
           <RecordButton
             listening={recording}
-            busy={pron.available ? pron.phase === "scoring" : recognition.recognizing}
-            busyLabel={pron.available ? "Đang chấm…" : undefined}
+            busy={mic.busy}
+            busyLabel={mic.busyLabel}
             disabled={!canRecord}
             idleLabel={current ? "Nói lại" : "Bấm và đọc to"}
             onClick={record}
@@ -165,7 +166,7 @@ export function ReadAloud({ initialSetId }: { initialSetId?: string }) {
 
         <p className="min-h-5 text-center text-sm text-muted" aria-live="polite">
           {pron.available
-            ? pron.phase !== "idle" && (pron.phase === "scoring" ? "Đang chấm…" : pron.phase === "recording" ? "Đang nghe…" : "Chuẩn bị…")
+            ? pronouncePhaseLabel(pron.phase)
             : recognition.listening && (
                 <>
                   {listenLabel(recognition)} {recognition.live && <span lang="en" className="text-fg">“{recognition.live}”</span>}

@@ -17,6 +17,7 @@ import os
 import sys
 import tempfile
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 ESPEAK_DLL = Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "eSpeak NG" / "libespeak-ng.dll"
@@ -40,6 +41,7 @@ HOST = "127.0.0.1"
 PORT = int(os.environ.get("PRONOUNCE_PORT", "8765"))
 MAX_BYTES = 2 * 1024 * 1024
 MAX_TEXT = 200
+MIN_SECONDS = 0.2
 MAX_SECONDS = 15.0
 # Nhận dạng lời nói: Nói tự do cho nói tới 3 phút.
 MAX_TRANSCRIBE_BYTES = 4 * 1024 * 1024
@@ -65,13 +67,19 @@ def _status(lpr: float | None) -> str:
     return "wrong" if lpr < SURE_WRONG else "unsure" if lpr < SURE_RIGHT else "right"
 
 
-def _score_file(path: str, text: str, focus: str | None, skip: frozenset[str]) -> dict:
+def _load_recording(path: str, max_seconds: float) -> tuple[np.ndarray, float]:
+    """Giải mã bản ghi; quá ngắn / quá dài → ValueError (route trả 422)."""
     sound = decode.load(path)
     seconds = len(sound) / audio.TARGET_SR
-    if seconds < 0.2:
+    if seconds < MIN_SECONDS:
         raise ValueError("too_short")
-    if seconds > MAX_SECONDS:
+    if seconds > max_seconds:
         raise ValueError("too_long")
+    return sound, seconds
+
+
+def _score_file(path: str, text: str, focus: str | None, skip: frozenset[str]) -> dict:
+    sound, _ = _load_recording(path, MAX_SECONDS)
     # Đệm 0,3 giây im lặng hai đầu: bản ghi cắt sát làm mô hình đoán thêm âm ở mép.
     pad = np.zeros(int(0.3 * audio.TARGET_SR), dtype=np.float32)
     lp = gop.log_posteriors(np.concatenate([pad, np.asarray(sound, dtype=np.float32), pad]))
@@ -112,31 +120,38 @@ async def health() -> dict:
     return {"ready": ready}
 
 
-@app.post("/score")
-async def score(file: UploadFile = File(...), text: str = Form(...), focus: str = Form(""), skip: str = Form("")) -> dict:
-    text = " ".join(text.split())
-    if not text or len(text) > MAX_TEXT:
-        raise HTTPException(status_code=400, detail="bad_text")
-    data = await file.read(MAX_BYTES + 1)
-    if not data or len(data) > MAX_BYTES:
+async def _read_upload(file: UploadFile, max_bytes: int) -> bytes:
+    data = await file.read(max_bytes + 1)
+    if not data or len(data) > max_bytes:
         raise HTTPException(status_code=413, detail="bad_size")
-    if not ready:
-        raise HTTPException(status_code=503, detail="warming_up")
-    suffix = Path(file.filename or "rec.webm").suffix or ".webm"
+    return data
+
+
+def _to_temp_file(data: bytes, filename: str | None) -> str:
+    """Ghi bản ghi ra file tạm (ffmpeg / PyAV đọc từ file, đoán định dạng theo đuôi); trả đường dẫn. Người gọi phải xoá."""
+    suffix = Path(filename or "rec.webm").suffix or ".webm"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
         tmp.write(data)
-        path = tmp.name
+        return tmp.name
+
+
+def _require_ready() -> None:
+    if not ready:
+        raise HTTPException(status_code=503, detail="warming_up")
+
+
+async def _run_on_recording(path: str, task: str, work: Callable[[], dict]) -> tuple[dict, float]:
+    """Chạy `work` trong luồng phụ, một lượt mỗi lúc; trả (kết quả, số giây). ValueError → 422, lỗi khác → 500.
+    Luôn xoá file tạm."""
     try:
         async with gate:
             started = time.time()
-            skip_words = frozenset(w.lower() for w in skip.split(",") if w.strip())
-            result = await run_in_threadpool(_score_file, path, text, focus.strip() or None, skip_words)
-            log.info("scored %d sounds in %.2fs", len(result["sounds"]), time.time() - started)
-            return result
+            result = await run_in_threadpool(work)
+            return result, time.time() - started
     except ValueError as err:
         raise HTTPException(status_code=422, detail=str(err)) from None
     except Exception:
-        log.exception("scoring failed")
+        log.exception("%s failed", task)
         raise HTTPException(status_code=500, detail="failed") from None
     finally:
         try:
@@ -145,27 +160,25 @@ async def score(file: UploadFile = File(...), text: str = Form(...), focus: str 
             log.warning("could not remove temp recording")
 
 
+@app.post("/score")
+async def score(file: UploadFile = File(...), text: str = Form(...), focus: str = Form(""), skip: str = Form("")) -> dict:
+    text = " ".join(text.split())
+    if not text or len(text) > MAX_TEXT:
+        raise HTTPException(status_code=400, detail="bad_text")
+    data = await _read_upload(file, MAX_BYTES)
+    _require_ready()
+    path = _to_temp_file(data, file.filename)
+    skip_words = frozenset(w.lower() for w in skip.split(",") if w.strip())
+    result, elapsed = await _run_on_recording(path, "scoring", lambda: _score_file(path, text, focus.strip() or None, skip_words))
+    log.info("scored %d sounds in %.2fs", len(result["sounds"]), elapsed)
+    return result
+
+
 def _transcribe_file(path: str, lang: str, expected: str | None) -> dict:
-    sound = decode.load(path)
-    seconds = len(sound) / audio.TARGET_SR
-    if seconds < 0.2:
-        raise ValueError("too_short")
-    if seconds > MAX_TRANSCRIBE_SECONDS:
-        raise ValueError("too_long")
+    sound, seconds = _load_recording(path, MAX_TRANSCRIBE_SECONDS)
     heard = asr.transcribe(sound, lang)
     log.info("asr lang=%s %.1fs expected=%r heard=%r", lang, seconds, expected, list(heard.alternatives))
     return {"transcript": heard.transcript, "alternatives": list(heard.alternatives), "seconds": round(seconds, 2)}
-
-
-async def _read_upload(file: UploadFile, max_bytes: int) -> str:
-    """Ghi bản ghi ra file tạm (ffmpeg đọc từ file); trả đường dẫn. Người gọi phải xoá."""
-    data = await file.read(max_bytes + 1)
-    if not data or len(data) > max_bytes:
-        raise HTTPException(status_code=413, detail="bad_size")
-    suffix = Path(file.filename or "rec.webm").suffix or ".webm"
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-        tmp.write(data)
-        return tmp.name
 
 
 @app.post("/transcribe")
@@ -173,25 +186,11 @@ async def transcribe(file: UploadFile = File(...), lang: str = Form("en"), expec
     if lang not in asr.SUPPORTED_LANGS:
         raise HTTPException(status_code=400, detail="bad_lang")
     expected = " ".join(expected.split())[:MAX_EXPECTED] or None
-    if not ready:
-        raise HTTPException(status_code=503, detail="warming_up")
-    path = await _read_upload(file, MAX_TRANSCRIBE_BYTES)
-    try:
-        async with gate:
-            started = time.time()
-            result = await run_in_threadpool(_transcribe_file, path, lang, expected)
-            log.info("transcribed in %.2fs", time.time() - started)
-            return result
-    except ValueError as err:
-        raise HTTPException(status_code=422, detail=str(err)) from None
-    except Exception:
-        log.exception("transcription failed")
-        raise HTTPException(status_code=500, detail="failed") from None
-    finally:
-        try:
-            os.remove(path)
-        except OSError:
-            log.warning("could not remove temp recording")
+    _require_ready()
+    path = _to_temp_file(await _read_upload(file, MAX_TRANSCRIBE_BYTES), file.filename)
+    result, elapsed = await _run_on_recording(path, "transcription", lambda: _transcribe_file(path, lang, expected))
+    log.info("transcribed in %.2fs", elapsed)
+    return result
 
 
 def _normal_priority() -> None:

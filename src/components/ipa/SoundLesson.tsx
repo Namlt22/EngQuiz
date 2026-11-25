@@ -13,12 +13,14 @@ import { READ_ALOUD_PASS, scoreReadAloud } from "@/core/speaking";
 import { useIpaSoundPlayer } from "@/lib/ipa-player";
 import { getProgressState, progressActions } from "@/lib/progress";
 import { useSpeech } from "@/lib/speech";
+import { pronouncePhaseLabel, scoredMicState } from "@/lib/mic-state";
 import { usePronounceCheck } from "@/lib/pronounce-client";
 import { ipaCarrier, type PronounceResult } from "@/lib/pronounce";
 import { checkTaughtSound, type TaughtSoundCheck } from "@/lib/pronounce-ipa";
 import { PronounceFeedback } from "@/components/speaking/PronounceFeedback";
 import { MicLevel } from "@/components/speaking/MicLevel";
-import { listenLabel, useSpeechRecognition } from "@/lib/speech-recognition";
+import { useSpeechRecognition } from "@/lib/speech-recognition";
+import { ListenStatus } from "@/components/speaking/ListenStatus";
 import { RecordButton } from "@/components/speaking/RecordButton";
 import { scoreTone } from "@/components/speaking/ScoreBadge";
 import { ActivityResult } from "@/components/lesson/ActivityResult";
@@ -138,8 +140,8 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
   const recognition = useSpeechRecognition();
   // Đã đăng nhập: chấm tới từng âm trên máy chủ; còn lại dùng nhận dạng giọng nói của trình duyệt.
   const pron = usePronounceCheck();
-  const canRecord = pron.available || recognition.status === "ready";
-  const recording = pron.available ? pron.busy : recognition.listening;
+  const mic = scoredMicState(pron, recognition);
+  const { canRecord, recording } = mic;
   const [attempts, setAttempts] = useState<Record<string, WordAttempt>>({});
   const [feedback, setFeedback] = useState<Record<string, { result: PronounceResult; taught: TaughtSoundCheck }>>({});
   const [heardFor, setHeardFor] = useState<Record<string, true>>({});
@@ -193,8 +195,8 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
             done={isDone(e.word)}
             canRecord={canRecord}
             listening={recording && active === e.word}
-            busy={(pron.available ? pron.phase === "scoring" : recognition.recognizing) && active === e.word}
-            busyLabel={pron.available ? "Đang chấm…" : undefined}
+            busy={mic.busy && active === e.word}
+            busyLabel={mic.busyLabel}
             disabled={recording && active !== e.word}
             onHear={(rate) => hear(e.word, rate)}
             onRecord={() => record(e.word)}
@@ -209,12 +211,12 @@ function RepeatStep({ sound, speak, onNext }: { sound: IpaSound; speak: (t: stri
       {pron.available ? (
         pron.phase !== "idle" && (
           <div className="flex items-center gap-3 text-sm text-muted">
-            {pron.phase === "scoring" ? "Đang chấm…" : pron.phase === "recording" ? "Đang nghe…" : "Chuẩn bị…"}
+            {pronouncePhaseLabel(pron.phase)}
             {pron.phase === "recording" && <MicLevel level={pron.level} />}
           </div>
         )
       ) : (
-        recognition.listening && <p className="text-sm text-muted">{listenLabel(recognition)} {recognition.live}</p>
+        <ListenStatus recognition={recognition} />
       )}
       {(notice || pron.error || recognition.error) && <p className="text-sm text-danger">{notice ?? pron.error ?? recognition.error}</p>}
       <div className="flex items-center justify-between gap-2">

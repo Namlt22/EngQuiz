@@ -12,28 +12,9 @@ export async function readBodyWithLimit(req: Request, maxBytes: number): Promise
     const n = Number(declared);
     if (!Number.isFinite(n) || n < 0 || n > maxBytes) throw new BodyTooLargeError();
   }
-  if (!req.body) return "";
-
-  const reader = req.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > maxBytes) {
-      await reader.cancel();
-      throw new BodyTooLargeError();
-    }
-    chunks.push(value);
-  }
-  const all = new Uint8Array(total);
-  let offset = 0;
-  for (const c of chunks) {
-    all.set(c, offset);
-    offset += c.byteLength;
-  }
-  return new TextDecoder().decode(all);
+  const bytes = await readBytesWithLimit(req, maxBytes);
+  if (!bytes) throw new BodyTooLargeError();
+  return new TextDecoder().decode(bytes);
 }
 
 /** Đọc thân yêu cầu, dừng ngay khi vượt `max` byte (trả null). */
@@ -52,6 +33,10 @@ export async function readBytesWithLimit(req: Request, max: number): Promise<Uin
     }
     parts.push(value);
   }
+  return concatBytes(parts, size);
+}
+
+function concatBytes(parts: readonly Uint8Array[], size: number): Uint8Array {
   const out = new Uint8Array(size);
   let at = 0;
   for (const p of parts) {

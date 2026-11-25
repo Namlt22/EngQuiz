@@ -11,14 +11,23 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import type { ApiResponse } from "./learner-schema";
+import { isServiceResting, postApi, replyData, replyError } from "./api-client";
 import type { PronounceResult } from "./pronounce";
-import { canRecordAudio, openMicrophone, recordUntilSilence } from "./recorder";
+import { canRecordAudio, recordFromMicrophone } from "./recorder";
 
 export type PronouncePhase = "idle" | "preparing" | "recording" | "scoring";
 export type PronounceKind = "word" | "sentence" | "ipa";
 
 let serviceDown = false;
+
+function pronounceForm(blob: Blob, text: string, kind: PronounceKind, focus?: string): FormData {
+  const form = new FormData();
+  form.set("file", blob, "rec");
+  form.set("text", text);
+  form.set("mode", kind);
+  if (focus) form.set("focus", focus);
+  return form;
+}
 
 export function usePronounceCheck() {
   const { status } = useSession();
@@ -46,50 +55,37 @@ export function usePronounceCheck() {
   const check = useCallback(async (text: string, kind: PronounceKind = "word", focus?: string): Promise<PronounceResult | null> => {
     setError(null);
     setPhase("preparing");
-    let stream: MediaStream;
-    try {
-      stream = await openMicrophone();
-    } catch {
-      setPhase("idle");
-      setError("Không mở được micro. Hãy cho phép trình duyệt dùng micro rồi thử lại.");
-      return null;
-    }
-
-    const blob = await recordUntilSilence(stream, kind === "sentence" ? "sentence" : "word", {
+    const take = await recordFromMicrophone(kind === "sentence" ? "sentence" : "word", {
       onStart: (stopNow) => {
         stopRef.current = stopNow;
         setPhase("recording");
       },
       onLevel: setLevel,
     });
-    stream.getTracks().forEach((t) => t.stop());
     stopRef.current = () => {};
     setLevel(0);
-    if (!blob) {
+    if (take.kind === "mic-error") {
+      setPhase("idle");
+      setError("Không mở được micro. Hãy cho phép trình duyệt dùng micro rồi thử lại.");
+      return null;
+    }
+    if (!take.blob) {
       setPhase("idle");
       setError("Chưa nghe thấy tiếng nói. Hãy nói to và gần micro hơn.");
       return null;
     }
-    setLastRecording(URL.createObjectURL(blob));
+    setLastRecording(URL.createObjectURL(take.blob));
 
     setPhase("scoring");
     try {
-      const form = new FormData();
-      form.set("file", blob, "rec");
-      form.set("text", text);
-      form.set("mode", kind);
-      if (focus) form.set("focus", focus);
-      const res = await fetch("/api/pronounce", { method: "POST", body: form });
-      const json = (await res.json().catch(() => null)) as ApiResponse<PronounceResult> | null;
-      if (res.status === 503 && json?.error?.includes("tạm nghỉ")) {
+      const reply = await postApi<PronounceResult>("/api/pronounce", pronounceForm(take.blob, text, kind, focus));
+      if (isServiceResting(reply)) {
         serviceDown = true;
         setDown(true);
       }
-      if (!res.ok || !json?.success || !json.data) {
-        setError(json?.error ?? "Không chấm được bản ghi này. Hãy thử lại.");
-        return null;
-      }
-      return json.data;
+      const data = replyData(reply);
+      if (!data) setError(replyError(reply, "Không chấm được bản ghi này. Hãy thử lại."));
+      return data ?? null;
     } catch {
       setError("Mất kết nối khi gửi bản ghi. Hãy thử lại.");
       return null;

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Check, Loader2 } from "lucide-react";
+import { postApi } from "@/lib/api-client";
 import { formatVnd, perMonth, PLANS, savingPercent, type PlanId } from "@/lib/plans";
 
 /** salesOpen=false: hiện giá để tham khảo nhưng nút bị khoá (tạm dừng bán; dùng mã giới thiệu thay thế). */
@@ -23,12 +24,8 @@ export function PlanPicker({ salesOpen = true }: { salesOpen?: boolean }) {
     setBusy(plan);
     setError(undefined);
     try {
-      const res = await fetch("/api/billing/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      });
-      const json = (await res.json().catch(() => null)) as { success?: boolean; data?: { code: string }; error?: string } | null;
+      const res = await postApi<{ code: string }>("/api/billing/orders", { plan });
+      const { json } = res;
       if (!json?.success || !json.data) throw new Error(json?.error ?? `Lỗi máy chủ (HTTP ${res.status}).`);
       router.push(`/billing/${json.data.code}`);
     } catch (e) {

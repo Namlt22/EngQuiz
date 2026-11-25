@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { CheckCircle2, Gift, Loader2 } from "lucide-react";
+import { postApi } from "@/lib/api-client";
 
 const PERMANENT_YEAR = 2099;
 
@@ -21,12 +22,8 @@ export function ReferralBox() {
     setBusy(true);
     setError(undefined);
     try {
-      const res = await fetch("/api/billing/referral", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: code.trim() }),
-      });
-      const json = (await res.json().catch(() => null)) as { success?: boolean; data?: { premiumUntil: string }; error?: string } | null;
+      const res = await postApi<{ premiumUntil: string }>("/api/billing/referral", { code: code.trim() });
+      const { json } = res;
       if (!json?.success || !json.data) throw new Error(json?.error ?? `Lỗi máy chủ (HTTP ${res.status}).`);
       setUntil(json.data.premiumUntil);
     } catch (err) {

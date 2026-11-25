@@ -114,3 +114,34 @@ export function recordUntilSilence(
     cb.onStart(finish);
   });
 }
+
+export type MicTake =
+  | { kind: "mic-error"; error: unknown }
+  | { kind: "recorded"; blob: Blob | null; durationMs: number };
+
+/** Micro bị chặn quyền (khác với không có / không mở được micro). */
+export const isMicPermissionError = (err: unknown): boolean =>
+  err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "SecurityError");
+
+/**
+ * Một lượt ghi đầy đủ: mở micro → ghi tới khi nói xong → luôn tắt micro.
+ * `blob` null = không nghe thấy tiếng nói; `durationMs` tính từ lúc micro mở.
+ */
+export async function recordFromMicrophone(
+  kind: RecordKind,
+  cb: { onStart: (stopNow: () => void) => void; onLevel?: (level: number) => void },
+): Promise<MicTake> {
+  let stream: MediaStream;
+  try {
+    stream = await openMicrophone();
+  } catch (error) {
+    return { kind: "mic-error", error };
+  }
+  const startedAt = performance.now();
+  try {
+    const blob = await recordUntilSilence(stream, kind, cb);
+    return { kind: "recorded", blob, durationMs: performance.now() - startedAt };
+  } finally {
+    stream.getTracks().forEach((t) => t.stop());
+  }
+}

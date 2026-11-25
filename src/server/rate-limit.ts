@@ -36,3 +36,32 @@ export function createRateLimiter({ limit, windowMs }: { limit: number; windowMs
     },
   };
 }
+
+export type RateLimiter = ReturnType<typeof createRateLimiter>;
+
+/** Một bộ đếm cần lấy lượt: khoá (người dùng / IP / "all") và thông báo khi hết lượt. */
+export interface LimitStep {
+  limiter: RateLimiter;
+  key: string;
+  message: string;
+}
+
+/**
+ * Lấy một lượt ở mọi bộ đếm theo thứ tự; bộ nào hết thì trả lại các lượt đã lấy trước đó
+ * và trả thông báo của bộ đó. Trả null nếu lấy đủ.
+ */
+export function takeAll(steps: readonly LimitStep[], now = Date.now()): string | null {
+  for (let i = 0; i < steps.length; i++) {
+    const { limiter, key, message } = steps[i];
+    if (!limiter.check(key, now)) {
+      refundAll(steps.slice(0, i), now);
+      return message;
+    }
+  }
+  return null;
+}
+
+/** Trả lại lượt ở mọi bộ đếm (yêu cầu thất bại không do người dùng). */
+export function refundAll(steps: readonly Pick<LimitStep, "limiter" | "key">[], now = Date.now()): void {
+  for (const { limiter, key } of steps) limiter.refund(key, now);
+}

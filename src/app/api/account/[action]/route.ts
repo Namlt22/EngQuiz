@@ -6,8 +6,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAccountService } from "@/server/account-service";
 import { prismaAccountRepo } from "@/server/account-repo";
 import { sendAccountMail } from "@/server/account-email";
+import { readJsonObject } from "@/server/api-response";
 import { createRateLimiter } from "@/server/rate-limit";
-import { BodyTooLargeError, clientIp, isSameOrigin, readBodyWithLimit } from "@/server/request";
+import { clientIp, isSameOrigin } from "@/server/request";
 import { sessionCookieName, sessionCookieOptions } from "@/server/session";
 
 export const dynamic = "force-dynamic";
@@ -28,17 +29,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ act
   if (!isSameOrigin(req)) return fail(403, "Yêu cầu không hợp lệ.");
   if (!byIp.check(clientIp(req))) return fail(429, "Bạn thao tác quá nhiều lần. Hãy thử lại sau ít phút.");
 
-  let body: unknown;
-  try {
-    body = JSON.parse(await readBodyWithLimit(req, MAX_BODY_BYTES));
-  } catch (e) {
-    if (e instanceof BodyTooLargeError) return fail(413, "Dữ liệu gửi lên quá lớn.");
-    return fail(400, "Dữ liệu không hợp lệ.");
-  }
-  if (!body || typeof body !== "object" || Array.isArray(body)) return fail(400, "Dữ liệu không hợp lệ.");
+  const body = await readJsonObject(req, MAX_BODY_BYTES);
+  if (body instanceof Response) return body;
 
   try {
-    const result = await getService().run(action, body as Record<string, unknown>);
+    const result = await getService().run(action, body);
     if (result.error) return fail(result.status, result.error, result.data ?? null);
     const res = NextResponse.json({ success: true, data: result.data ?? null, error: null }, { status: result.status });
     if (result.session) res.cookies.set(sessionCookieName(), result.session.token, sessionCookieOptions());

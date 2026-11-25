@@ -7,7 +7,7 @@ import { Loader2, LogIn, RotateCcw, Sparkles, Volume2 } from "lucide-react";
 import type { RoadmapGoal } from "@/content/roadmap-units";
 import { GOAL_LABELS, SPEAKING_PROMPTS, getSpeakingPrompt, type SpeakingPrompt } from "@/content/speaking-prompts";
 import { speechStats } from "@/core/speaking";
-import type { ApiResponse } from "@/lib/learner-schema";
+import { postApi } from "@/lib/api-client";
 import { progressActions } from "@/lib/progress";
 import { useRoadmapState } from "@/lib/roadmap-store";
 import { useSpeech } from "@/lib/speech";
@@ -45,15 +45,9 @@ async function requestFeedback(
   signal: AbortSignal,
 ): Promise<{ ok: true; feedback: SpeakingFeedback } | { ok: false; message: string; needsPlan?: boolean }> {
   try {
-    const res = await fetch("/api/speaking/feedback", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-      signal,
-    });
-    const json = (await res.json().catch(() => null)) as ApiResponse<unknown> | null;
+    const { ok, status, json } = await postApi<unknown>("/api/speaking/feedback", body, { signal });
     // 402: hết lượt AI dùng thử / chưa có gói → mời mua gói thay vì nút "Thử lại".
-    if (!res.ok || !json?.success) return { ok: false, message: json?.error ?? `Lỗi máy chủ (${res.status}). Hãy thử lại.`, needsPlan: res.status === 402 };
+    if (!ok || !json?.success) return { ok: false, message: json?.error ?? `Lỗi máy chủ (${status}). Hãy thử lại.`, needsPlan: status === 402 };
     if (!isFeedback(json.data)) return { ok: false, message: "Kết quả chấm không hợp lệ. Hãy thử lại." };
     return { ok: true, feedback: json.data };
   } catch (e) {

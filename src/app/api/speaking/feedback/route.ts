@@ -7,15 +7,16 @@
  * theo IP (chặn một người tạo nhiều tài khoản) và tổng cả server mỗi ngày. Lượt lỗi do phía AI được trả lại.
  * Bộ đếm nằm trong bộ nhớ tiến trình (reset khi khởi động lại) — nên đặt thêm hạn mức chi tiêu cho khóa API ở Anthropic Console.
  */
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { getSpeakingPrompt } from "@/content/speaking-prompts";
-import type { ApiResponse } from "@/lib/learner-schema";
-import { FEEDBACK_LIMITS, feedbackRequestSchema, type SpeakingFeedback } from "@/lib/speaking-feedback";
+import { FEEDBACK_LIMITS, feedbackRequestSchema } from "@/lib/speaking-feedback";
+import { aiErrorResponse, logAiError } from "@/server/ai-errors";
+import { fail, ok, readJsonBody } from "@/server/api-response";
 import { BillingError, refundAiTurn, takeAiTurn, type AiTurn } from "@/server/billing";
-import { createRateLimiter } from "@/server/rate-limit";
-import { BodyTooLargeError, clientIp, isSameOrigin, readBodyWithLimit } from "@/server/request";
-import { AiBadOutputError, AiNotConfiguredError, AiRefusedError, AiUnavailableError, getSpeakingFeedback } from "@/server/speaking-ai";
+import { createRateLimiter, refundAll, takeAll, type LimitStep } from "@/server/rate-limit";
+import { clientIp, isSameOrigin } from "@/server/request";
+import { AiRefusedError, getSpeakingFeedback } from "@/server/speaking-ai";
 
 export const dynamic = "force-dynamic";
 
@@ -23,50 +24,23 @@ const MAX_BODY_BYTES = 16 * 1024;
 const TEN_MINUTES = 10 * 60_000;
 const ONE_DAY = 24 * 60 * 60_000;
 const GLOBAL_KEY = "all";
+const TAG = "api/speaking/feedback";
 
 const userBurst = createRateLimiter({ limit: 10, windowMs: TEN_MINUTES });
 const ipBurst = createRateLimiter({ limit: 20, windowMs: TEN_MINUTES });
 const globalDaily = createRateLimiter({ limit: 500, windowMs: ONE_DAY });
 
-function fail(status: number, error: string) {
-  return NextResponse.json<ApiResponse<never>>({ success: false, data: null, error }, { status });
-}
+const limitSteps = (userId: string, ip: string): LimitStep[] => [
+  { limiter: userBurst, key: userId, message: "Bạn gửi hơi nhiều, hãy nghỉ vài phút rồi thử lại." },
+  { limiter: ipBurst, key: ip, message: "Mạng này gửi quá nhiều yêu cầu, hãy thử lại sau ít phút." },
+  { limiter: globalDaily, key: GLOBAL_KEY, message: "Hôm nay hệ thống đã dùng hết lượt AI chấm. Hãy thử lại vào ngày mai." },
+];
 
-/** Lấy một lượt ở mọi bộ đếm; nếu bộ nào hết thì trả lại các lượt đã lấy và báo lý do. */
-function takeQuota(userId: string, ip: string): string | null {
-  const steps: [ReturnType<typeof createRateLimiter>, string, string][] = [
-    [userBurst, userId, "Bạn gửi hơi nhiều, hãy nghỉ vài phút rồi thử lại."],
-    [ipBurst, ip, "Mạng này gửi quá nhiều yêu cầu, hãy thử lại sau ít phút."],
-    [globalDaily, GLOBAL_KEY, "Hôm nay hệ thống đã dùng hết lượt AI chấm. Hãy thử lại vào ngày mai."],
-  ];
-  for (let i = 0; i < steps.length; i++) {
-    const [limiter, key, message] = steps[i];
-    if (!limiter.check(key)) {
-      steps.slice(0, i).forEach(([l, k]) => l.refund(k));
-      return message;
-    }
-  }
-  return null;
-}
-
-function refundQuota(userId: string, ip: string) {
-  userBurst.refund(userId);
-  ipBurst.refund(ip);
-  globalDaily.refund(GLOBAL_KEY);
-}
-
-/** Lỗi phía AI → mã HTTP + thông báo cho người học (không lộ chi tiết nội bộ). */
-function aiErrorResponse(e: unknown) {
-  if (e instanceof AiNotConfiguredError) {
-    return e.reason === "missing"
-      ? fail(503, "AI chưa được cấu hình trên server (thiếu ENGQUIZ_ANTHROPIC_API_KEY).")
-      : fail(503, "Khóa API của AI bị từ chối (sai, đã thu hồi hoặc hết credit). Hãy báo người quản trị.");
-  }
-  if (e instanceof AiRefusedError) return fail(422, "AI không chấm được câu trả lời này. Hãy thử nói lại theo đề.");
-  if (e instanceof AiBadOutputError) return fail(502, "AI trả kết quả không đọc được. Hãy thử nói ngắn gọn hơn rồi gửi lại.");
-  if (e instanceof AiUnavailableError) return fail(503, "AI đang bận hoặc lỗi kết nối. Hãy thử lại sau ít phút.");
-  return fail(500, "Có lỗi khi chấm bài. Hãy thử lại.");
-}
+const AI_MESSAGES = {
+  refused: "AI không chấm được câu trả lời này. Hãy thử nói lại theo đề.",
+  badOutput: "AI trả kết quả không đọc được. Hãy thử nói ngắn gọn hơn rồi gửi lại.",
+  fallback: "Có lỗi khi chấm bài. Hãy thử lại.",
+};
 
 export async function POST(req: NextRequest) {
   if (!isSameOrigin(req)) return fail(403, "Yêu cầu không hợp lệ.");
@@ -74,14 +48,9 @@ export async function POST(req: NextRequest) {
   const userId = session?.user?.id;
   if (!userId) return fail(401, "Hãy đăng nhập để dùng AI sửa lỗi.");
 
-  let json: unknown;
-  try {
-    json = JSON.parse(await readBodyWithLimit(req, MAX_BODY_BYTES));
-  } catch (e) {
-    if (e instanceof BodyTooLargeError) return fail(413, "Câu trả lời quá dài.");
-    return fail(400, "Dữ liệu không phải JSON hợp lệ.");
-  }
-  const parsed = feedbackRequestSchema.safeParse(json);
+  const body = await readJsonBody(req, MAX_BODY_BYTES, { tooLarge: "Câu trả lời quá dài.", invalid: "Dữ liệu không phải JSON hợp lệ." });
+  if (body instanceof Response) return body;
+  const parsed = feedbackRequestSchema.safeParse(body.json);
   if (!parsed.success) return fail(400, "Dữ liệu gửi lên không hợp lệ.");
 
   const { promptId, transcript, seconds, level } = parsed.data;
@@ -92,30 +61,28 @@ export async function POST(req: NextRequest) {
   }
 
   // Tính lượt sau khi dữ liệu hợp lệ: request hỏng không bị tính.
-  const ip = clientIp(req);
-  const quotaError = takeQuota(userId, ip);
-  if (quotaError) return fail(429, quotaError);
+  const steps = limitSteps(userId, clientIp(req));
+  const limited = takeAll(steps);
+  if (limited) return fail(429, limited);
 
   let turn: AiTurn;
   try {
     turn = await takeAiTurn(userId);
   } catch (e) {
-    refundQuota(userId, ip);
+    refundAll(steps);
     if (e instanceof BillingError) return fail(e.status, e.message);
-    console.error("[api/speaking/feedback] lấy lượt AI lỗi:", e);
+    console.error(`[${TAG}] lấy lượt AI lỗi:`, e);
     return fail(500, "Có lỗi khi kiểm tra gói AI. Hãy thử lại.");
   }
 
   try {
-    const feedback = await getSpeakingFeedback({ prompt, transcript, seconds, level });
-    return NextResponse.json<ApiResponse<SpeakingFeedback>>({ success: true, data: feedback, error: null });
+    return ok(await getSpeakingFeedback({ prompt, transcript, seconds, level }));
   } catch (e) {
-    // Chỉ log loại lỗi và thông điệp do EngQuiz tạo (không chứa lời nói của người học).
-    console.error(`[api/speaking/feedback] ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
+    logAiError(TAG, e);
     if (!(e instanceof AiRefusedError)) {
-      refundQuota(userId, ip);
-      await refundAiTurn(userId, turn).catch((err) => console.error("[api/speaking/feedback] trả lượt AI lỗi:", err));
+      refundAll(steps);
+      await refundAiTurn(userId, turn).catch((err) => console.error(`[${TAG}] trả lượt AI lỗi:`, err));
     }
-    return aiErrorResponse(e);
+    return aiErrorResponse(e, AI_MESSAGES);
   }
 }
