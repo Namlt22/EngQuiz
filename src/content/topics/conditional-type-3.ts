@@ -85,7 +85,7 @@ export const conditionalType3: TopicContent = {
     },
     { id: "c3f", type: "transform", prompt: "I didn't know you were in hospital, so I didn't visit you.", starter: "If I had", answers: ["If I had known you were in hospital, I would have visited you.", "If I had known you were in hospital, I'd have visited you.", "If I had known you were in hospital, I would've visited you."], explanation: "Hai vế phủ định ở quá khứ → loại 3 khẳng định ở cả hai vế." },
     { id: "c3g", type: "transform", prompt: "We got lost because we didn't have a map.", starter: "If we had", answers: ["If we had had a map, we would not have got lost.", "If we had had a map, we wouldn't have got lost.", "If we had had a map, we would not have gotten lost.", "If we had had a map, we wouldn't have gotten lost."], explanation: "had + V3 của have → had had; kết quả đảo nghĩa: wouldn't have got lost." },
-    { id: "c3h", type: "word_order", words: ["have", "if", "had", "passed", "would", "I", "studied", "I"], answers: ["I would have passed if I had studied"], explanation: "S + would have + V3 + if + S + had + V3." },
+    { id: "c3h", type: "word_order", words: ["have", "if", "had", "passed", "would", "I", "studied", "I"], answers: ["I would have passed if I had studied", "If I had studied I would have passed"], explanation: "S + would have + V3 + if + S + had + V3; đặt mệnh đề if lên trước cũng đúng." },
     {
       id: "c3i", type: "matching", prompt: "Nối mệnh đề If với mệnh đề chính đúng thì",
       left: ["If I see him,", "If I saw him,", "If I had seen him,"],

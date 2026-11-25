@@ -25,8 +25,8 @@ export default async function LevelPage({ params }: { params: Promise<{ level: s
   return (
     <div className="space-y-6">
       <section className={`rounded-3xl bg-gradient-to-br p-6 text-white shadow-lg md:p-8 ${level.gradient}`}>
-        <Link href="/levels" className="inline-flex items-center gap-1 text-sm font-medium text-white/80 hover:text-white">
-          <ChevronLeft className="size-4" /> Tất cả cấp độ
+        <Link href="/grammar" className="inline-flex items-center gap-1 text-sm font-medium text-white/80 hover:text-white">
+          <ChevronLeft className="size-4" /> Ngữ pháp
         </Link>
         <div className="mt-3 flex items-center gap-4">
           <span className="grid size-16 place-items-center rounded-2xl bg-white/20 text-2xl font-black">{level.code}</span>
@@ -35,13 +35,12 @@ export default async function LevelPage({ params }: { params: Promise<{ level: s
             <p className="text-white/85">{topicsByLevel(level.code).length} chủ điểm ngữ pháp</p>
           </div>
         </div>
-        <p className="mt-4 max-w-2xl text-white/90">{level.description}</p>
+        <div className="mt-4 flex flex-wrap gap-1.5 text-xs font-semibold">
+          <span className="chip bg-white/15 text-white">1 · Lý thuyết</span>
+          <span className="chip bg-white/15 text-white">2 · Quiz ≥ 80%</span>
+          <span className="chip bg-white/15 text-white">3 · Nghe chép ≥ 80%</span>
+        </div>
       </section>
-
-      <p className="text-sm text-muted">
-        Mỗi chủ điểm gồm 3 bước: <b className="text-fg">đọc lý thuyết</b> → <b className="text-fg">quiz ≥ 80%</b> →{" "}
-        <b className="text-fg">nghe chép ≥ 80%</b>. Hoàn thành cả 3 để mở chủ điểm tiếp theo.
-      </p>
 
       <LevelPath level={level.code} accent={level.accent} />
 

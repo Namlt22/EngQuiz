@@ -1,4 +1,5 @@
 /** Kiểu dữ liệu & phép tính tiến độ (thuần, không phụ thuộc trình duyệt). */
+import type { NotebookEntry } from "@/core/notebook";
 
 export interface TopicProgress {
   theoryRead?: boolean;
@@ -15,10 +16,27 @@ export interface DictationProgress {
   total: number;
 }
 
+/** Điểm đọc theo câu mẫu cao nhất của một bộ câu; cùng dạng với nghe chép. */
+export type SpeakingProgress = DictationProgress;
+
 export interface ProgressState {
   version: 1;
   topics: Record<string, TopicProgress>;
   dictations: Record<string, DictationProgress>;
+  /** Luyện nói — đọc theo câu mẫu, theo id bộ câu (= id bài nghe chép). Bản cũ chưa có trường này. */
+  speaking?: Record<string, SpeakingProgress>;
+  /** Bài đọc: điểm câu hỏi đọc hiểu cao nhất, theo id bài. Bản cũ chưa có trường này. */
+  reading?: Record<string, DictationProgress>;
+  /** Bài hội thoại: điểm bài tập cao nhất, theo id bài. Bản cũ chưa có trường này. */
+  dialogues?: Record<string, DictationProgress>;
+  /** Luyện đặt câu: điểm cao nhất, theo id bộ câu. Bản cũ chưa có trường này. */
+  sentences?: Record<string, DictationProgress>;
+  /** Khoá tiếng Trung: các chữ Hán đã tự viết đúng ở bài tô chữ, nối thành một chuỗi (gọn hơn một record mỗi chữ). */
+  hanzi?: string;
+  /** Khoá tiếng Trung: trạng thái ôn từ vựng (hộp Leitner), dạng chuỗi gọn — xem src/core/srs.ts. */
+  srs?: string;
+  /** Sổ tay từ vựng người học tự thêm — xem src/core/notebook.ts. Bản cũ chưa có trường này. */
+  notebook?: NotebookEntry[];
   xp: number;
   streak: number;
   /** yyyy-mm-dd theo giờ địa phương */

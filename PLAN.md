@@ -670,7 +670,7 @@ engquiz/
 |---|---|---|
 | 1 | Chấm dictation | Theo kiểu **dailydictation.com**: chép từng câu, kiểm tra → từ sai bị che `***`, sửa đến khi đúng; có gợi ý từng từ / hiện đáp án / bỏ qua. Bỏ qua dấu câu và hoa/thường; sai 1 ký tự ở từ dài = gần đúng (nửa điểm); sai đuôi ngữ pháp = sai. Điểm câu tính ở lần kiểm tra đầu. |
 | 2 | Thứ tự học | Khóa nhẹ: gợi ý thứ tự, cho học vượt khi quiz chủ điểm đạt ≥ 80%. |
-| 3 | Đăng nhập | Lý thuyết không cần đăng nhập. (Giai đoạn local: chưa có tài khoản, tiến độ lưu localStorage.) |
+| 3 | Đăng nhập | Lý thuyết không cần đăng nhập. Đăng nhập (Auth.js: link qua email, Google) để lưu tiến độ và lộ trình cá nhân vào PostgreSQL; chưa đăng nhập thì lưu localStorage. |
 | 4 | Hạ tầng | Lên kế hoạch sau. |
 | 5 | Thương hiệu | Lên kế hoạch sau; tạm dùng logo chữ "EngQuiz". |
 
@@ -678,7 +678,7 @@ engquiz/
 Để chạy được ngay trên máy không cần cài đặt thêm, bản đầu tiên đơn giản hóa so với mục 8:
 - **Một ứng dụng Next.js** (chưa tách monorepo); logic thuần nằm ở `src/core` kèm unit test.
 - **Nội dung lưu dạng file TypeScript** trong `src/content` (chưa có DB/CMS).
-- **Tiến độ lưu localStorage** (chưa có tài khoản).
+- **Tiến độ**: localStorage khi chưa đăng nhập; đăng nhập thì đồng bộ vào PostgreSQL (Prisma) qua `/api/learner`.
 - **Âm thanh dùng Web Speech API** của trình duyệt (chưa tạo file TTS).
 
 Đã có: 81 chủ điểm trong danh mục; **A1 (16/16) và A2 (18/18) đầy đủ**, cùng 3 chủ điểm B1–B2 (điều kiện loại 2/3, bị động) — tổng 37 chủ điểm, 322 câu quiz đủ 7 dạng, 42 bài nghe chép (mỗi chủ điểm một bài + truyện ngắn, hội thoại); bảng phiên âm IPA 44 âm.

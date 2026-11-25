@@ -91,7 +91,7 @@ const pastContinuous: TopicContent = {
   questions: [
     { id: "pq1", type: "verb_form", prompt: "At 8 p.m. yesterday, I ___ TV.", base: "watch", answers: ["was watching"], explanation: "Thời điểm xác định trong quá khứ → was watching." },
     { id: "pq2", type: "verb_form", prompt: "They ___ football at this time last Sunday.", base: "play", answers: ["were playing"], explanation: "They + were + V-ing." },
-    { id: "pq3", type: "mcq", prompt: "While my mother was cooking, my father ___ the newspaper.", options: ["read", "was reading", "is reading", "reads"], answer: 1, explanation: "Hai hành động song song với while → cả hai ở quá khứ tiếp diễn." },
+    { id: "pq3", type: "mcq", prompt: "While my mother was cooking, my father ___ the newspaper at the same time.", options: ["read", "was reading", "is reading", "reads"], answer: 1, explanation: "Hai hành động song song với while → cả hai ở quá khứ tiếp diễn." },
     {
       id: "pq4", type: "error_id",
       segments: [{ text: "We " }, { text: "was", underline: true }, { text: " " }, { text: "having", underline: true }, { text: " dinner at " }, { text: "7 o'clock", underline: true }, { text: "." }],
@@ -324,7 +324,7 @@ const presentPerfect: TopicContent = {
       explanation: "have + V3: see → seen.",
     },
     { id: "pp8", type: "transform", prompt: "I started learning English three years ago. I still learn it now.", starter: "I have", answers: ["I have learned English for three years.", "I have learnt English for three years.", "I have been learning English for three years.", "I've learned English for three years.", "I've learnt English for three years."], explanation: "Bắt đầu trong quá khứ, vẫn tiếp tục → have learned + for three years." },
-    { id: "pp9", type: "mcq", prompt: "Have you finished your homework ___?", options: ["already", "yet", "just", "since"], answer: 1, explanation: "yet đứng cuối câu hỏi: ...yet?" },
+    { id: "pp9", type: "mcq", prompt: "Have you finished your homework ___?", options: ["ever", "yet", "just", "since"], answer: 1, explanation: "yet đứng cuối câu hỏi: ...yet?" },
   ],
 };
 

@@ -51,7 +51,7 @@ const pronouns: TopicContent = {
       answer: 0, correction: "He",
       explanation: "Chủ ngữ phải dùng đại từ chủ ngữ: He plays football...",
     },
-    { id: "pr7", type: "transform", prompt: "Mai gives the book to Nam. (thay tên người bằng đại từ)", starter: "She", answers: ["She gives the book to him."], explanation: "Mai (chủ ngữ, nữ) → She; Nam (sau giới từ to, nam) → him." },
+    { id: "pr7", type: "transform", prompt: "Mai gives the book to Nam. (thay tên người bằng đại từ)", starter: "She", answers: ["She gives the book to him.", "She gives him the book."], explanation: "Mai (chủ ngữ, nữ) → She; Nam (sau giới từ to, nam) → him." },
     {
       id: "pr8", type: "matching", prompt: "Nối đại từ chủ ngữ với đại từ tân ngữ tương ứng",
       left: ["I", "she", "they"], right: ["them", "me", "her"], pairs: [1, 2, 0],
@@ -210,10 +210,11 @@ const pluralNouns: TopicContent = {
       title: "Quy tắc thêm -s / -es",
       headers: ["Danh từ tận cùng", "Quy tắc", "Ví dụ"],
       rows: [
-        ["-s, -ss, -sh, -ch, -x, -o", "thêm -es", "bus → buses, dish → dishes, box → boxes, tomato → tomatoes"],
+        ["-s, -ss, -sh, -ch, -x", "thêm -es", "bus → buses, dish → dishes, box → boxes"],
+        ["-o", "thường thêm -es (một số từ chỉ thêm -s)", "tomato → tomatoes, potato → potatoes; nhưng photo → photos, piano → pianos"],
         ["phụ âm + y", "bỏ y, thêm -ies", "baby → babies, city → cities"],
         ["nguyên âm + y", "thêm -s", "boy → boys, day → days"],
-        ["-f / -fe", "đổi thành -ves", "knife → knives, leaf → leaves, wife → wives"],
+        ["-f / -fe", "thường đổi thành -ves", "knife → knives, leaf → leaves, wife → wives (ngoại lệ: roof → roofs, chef → chefs)"],
         ["còn lại", "thêm -s", "book → books, car → cars"],
       ],
     },
@@ -353,7 +354,7 @@ const someAny: TopicContent = {
   questions: [
     { id: "sa1", type: "mcq", prompt: "There is ___ milk in the fridge.", options: ["a", "some", "any", "many"], answer: 1, explanation: "Câu khẳng định, milk không đếm được → some." },
     { id: "sa2", type: "mcq", prompt: "We don't have ___ eggs left.", options: ["some", "any", "a", "an"], answer: 1, explanation: "Câu phủ định → any." },
-    { id: "sa3", type: "mcq", prompt: "Would you like ___ coffee?", options: ["any", "some", "a", "many"], answer: 1, explanation: "Lời mời dùng some." },
+    { id: "sa3", type: "mcq", prompt: "Would you like ___ coffee?", options: ["any", "some", "an", "many"], answer: 1, explanation: "Lời mời dùng some." },
     { id: "sa4", type: "gap_fill", prompt: "Are there ___ students in the classroom?", answers: ["any"], hint: "some / any", explanation: "Câu hỏi → any." },
     { id: "sa5", type: "mcq", prompt: "Which word is UNCOUNTABLE (không đếm được)?", options: ["apple", "chair", "water", "book"], answer: 2, explanation: "water không đếm được; các từ còn lại đếm được." },
     {

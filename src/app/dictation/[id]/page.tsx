@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { DICTATIONS, getDictation } from "@/content/dictations";
 import { DictationPlayer } from "@/components/dictation/DictationPlayer";
+import { GuestGate } from "@/components/auth/GuestGate";
 
 export function generateStaticParams() {
   return DICTATIONS.map((d) => ({ id: d.id }));
@@ -15,5 +16,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function DictationPage({ params }: { params: Promise<{ id: string }> }) {
   const exercise = getDictation((await params).id);
   if (!exercise) notFound();
-  return <DictationPlayer exercise={exercise} />;
+  return (
+    <GuestGate itemKey={`dictation:${exercise.id}`}>
+      <DictationPlayer exercise={exercise} />
+    </GuestGate>
+  );
 }

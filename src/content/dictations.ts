@@ -1,4 +1,7 @@
 import { DICTATIONS_A1_A2 } from "./dictations-a1a2";
+import { DICTATIONS_B1 } from "./dictations-b1";
+import { DICTATIONS_B2 } from "./dictations-b2";
+import { DICTATIONS_C1 } from "./dictations-c1";
 import type { DictationExercise, DictationKind } from "./types";
 
 export const DICTATION_KIND_LABELS: Record<DictationKind, { label: string; description: string }> = {
@@ -142,7 +145,7 @@ const BASE_DICTATIONS: DictationExercise[] = [
       { text: "If she hadn't helped me, I would have failed.", vi: "Nếu cô ấy không giúp, tôi đã trượt." },
       { text: "He might have won if he hadn't fallen.", vi: "Có lẽ anh ấy đã thắng nếu không bị ngã." },
       { text: "If you had asked me, I would have told you the truth.", vi: "Nếu bạn hỏi, tôi đã nói sự thật với bạn." },
-      { text: "What would you have done if you had been there?", vi: "Bạn sẽ làm gì nếu bạn ở đó?" },
+      { text: "What would you have done if you had been there?", vi: "Nếu lúc đó bạn có mặt ở đó, bạn sẽ làm gì?" },
     ],
   },
 
@@ -235,8 +238,8 @@ const BASE_DICTATIONS: DictationExercise[] = [
   },
 ];
 
-/** Thứ tự: bài gốc trước, sau đó bài theo từng chủ điểm A1–A2; trang danh sách tự nhóm theo loại và lọc theo cấp. */
-export const DICTATIONS: DictationExercise[] = [...BASE_DICTATIONS, ...DICTATIONS_A1_A2];
+/** Thứ tự: bài gốc trước, sau đó bài theo từng chủ điểm A1–A2, rồi B1; trang danh sách tự nhóm theo loại và lọc theo cấp. */
+export const DICTATIONS: DictationExercise[] = [...BASE_DICTATIONS, ...DICTATIONS_A1_A2, ...DICTATIONS_B1, ...DICTATIONS_B2, ...DICTATIONS_C1];
 
 export function getDictation(id: string): DictationExercise | undefined {
   return DICTATIONS.find((d) => d.id === id);

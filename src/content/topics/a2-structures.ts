@@ -26,7 +26,7 @@ const comparatives: TopicContent = {
         ["big, hot (phụ âm-nguyên âm-phụ âm)", "bigger, hotter", "the biggest, the hottest"],
         ["happy, easy (tận cùng y)", "happier, easier", "the happiest, the easiest"],
         ["beautiful, expensive (dài)", "more beautiful", "the most beautiful"],
-        ["good / bad / far", "better / worse / farther (further)", "the best / the worst / the farthest"],
+        ["good / bad / far", "better / worse / farther (further)", "the best / the worst / the farthest (furthest)"],
       ],
     },
     {
@@ -459,7 +459,7 @@ const conditionalType0: TopicContent = {
       left: ["If you mix blue and yellow,", "If it rains,", "If you don't sleep,"], right: ["you feel tired.", "you get green.", "the ground gets wet."], pairs: [1, 2, 0],
       explanation: "Xanh dương + vàng = xanh lá; mưa → đất ướt; không ngủ → mệt.",
     },
-    { id: "c0h", type: "word_order", words: ["if", "floats", "you", "oil", "put", "in", "water", "it"], answers: ["If you put oil in water it floats"], explanation: "If + S + V, S + V." },
+    { id: "c0h", type: "word_order", words: ["if", "floats", "you", "oil", "put", "in", "water", "it"], answers: ["If you put oil in water it floats", "Oil floats if you put it in water"], explanation: "If + S + V, S + V." },
   ],
 };
 

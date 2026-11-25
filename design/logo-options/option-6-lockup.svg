@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 184 48" width="184" height="48">
+  <defs>
+    <linearGradient id="o6l-bg" x1="2" y1="2" x2="46" y2="46" gradientUnits="userSpaceOnUse"><stop stop-color="#6366F1"/><stop offset="1" stop-color="#A855F7"/></linearGradient>
+    <linearGradient id="o6l-txt" x1="100" y1="0" x2="172" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#6366F1"/><stop offset="1" stop-color="#A855F7"/></linearGradient>
+    <style>.o6l-eng{fill:#0F172A}@media (prefers-color-scheme:dark){.o6l-eng{fill:#F1F5F9}}</style>
+  </defs>
+  <rect x="2" y="2" width="44" height="44" rx="12" fill="url(#o6l-bg)"/>
+  <g fill="#fff">
+    <rect x="11" y="11" width="6" height="26" rx="3"/>
+    <rect x="11" y="11" width="24" height="6" rx="3"/>
+    <rect x="11" y="21" width="16" height="6" rx="3"/>
+    <rect x="11" y="31" width="24" height="6" rx="3"/>
+    <circle cx="35" cy="24" r="4"/>
+  </g>
+  <text x="58" y="34" font-family="'Be Vietnam Pro', system-ui, sans-serif" font-weight="800" font-size="27" letter-spacing="-0.5"><tspan class="o6l-eng">Eng</tspan><tspan fill="url(#o6l-txt)">Quiz</tspan></text>
+</svg>

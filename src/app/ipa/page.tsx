@@ -12,10 +12,6 @@ export default function IpaPage() {
     <div className="space-y-6">
       <header className="max-w-3xl">
         <h1 className="text-2xl font-extrabold md:text-3xl">Bảng phiên âm IPA</h1>
-        <p className="mt-2 text-muted">
-          44 âm của tiếng Anh theo ký hiệu quốc tế (giọng Anh-Anh chuẩn, giống từ điển Oxford & Cambridge). Bấm vào từng âm để xem cách đặt
-          môi, lưỡi và nghe từ ví dụ. Phát âm mẫu dùng giọng đọc của trình duyệt, nên hãy nghe qua <b className="text-fg">từ ví dụ</b>.
-        </p>
       </header>
       <IpaExplorer />
     </div>

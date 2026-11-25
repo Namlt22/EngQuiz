@@ -49,10 +49,16 @@ const SUFFIX_CONTRACTIONS: Array<[string, string]> = [
   ["'ve", "have"],
 ];
 
-/** Đưa mọi loại dấu nháy về ' và chuyển chữ thường. */
+/**
+ * Đưa mọi loại dấu nháy về ' và chuyển chữ thường. Bỏ dấu (Huế = Hue, Đà Nẵng = Da Nang, café = cafe):
+ * tên riêng Việt Nam được đọc bằng giọng Việt nên người học có thể gõ cả dấu.
+ */
 export function basicClean(input: string): string {
   return input
     .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "d")
     .replace(/[‘’‚‛′`´]/g, "'")
     .replace(/[“”„]/g, '"')
     .replace(/[–—]/g, " ");

@@ -6,3 +6,18 @@ next-env.d.ts
 .env*.local
 .DS_Store
 coverage/
+
+# Biến môi trường chứa bí mật (mẫu: .env.example)
+.env
+
+# Prisma client sinh tự động
+/src/generated/
+
+# Chứng chỉ HTTPS tự ký cho mạng LAN (npm run setup:lan)
+/certificates/
+
+# Log của server chạy nền (scripts/windows/run-server.cmd)
+/logs/
+
+# Giọng đọc mẫu Kokoro — tạo lại bằng scripts/voice/generate_kokoro.py
+/public/audio/voice/

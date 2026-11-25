@@ -1,0 +1,179 @@
+// Schema cơ sở dữ liệu EngQuiz (PostgreSQL).
+// Bảng User / Account / Session / VerificationToken theo chuẩn của Auth.js Prisma adapter.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String    @id @default(cuid())
+  name            String?
+  email           String?   @unique
+  emailVerified   DateTime?
+  image           String?
+  /// scrypt$<salt>$<hash> — null nếu tài khoản chỉ đăng nhập bằng Google / link email cũ
+  passwordHash    String?
+  /// Gói AI còn hạn đến thời điểm này (null = chưa từng mua)
+  premiumUntil    DateTime?
+  /// Số lượt AI dùng thử đã dùng (tặng mỗi tài khoản một số lượt cố định)
+  aiTrialUsed     Int       @default(0)
+  /// Lúc đồng ý Điều khoản & Chính sách bảo mật (Luật 91/2025: phải chứng minh được sự đồng ý)
+  termsAcceptedAt DateTime?
+  /// Phiên bản bộ điều khoản đã đồng ý (LEGAL_VERSION trong src/lib/legal-policy.ts)
+  termsVersion    String?
+  /// Admin khoá tài khoản: không đăng nhập được, phiên đang mở bị đăng xuất
+  disabled        Boolean   @default(false)
+  /// Admin đặt hạn dùng tài khoản: sau thời điểm này không đăng nhập được (null = không giới hạn)
+  accessUntil     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  learner  LearnerState?
+  orders   Order[]
+  aiUsage  AiUsage[]
+  referralRedemptions ReferralRedemption[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+/// Mã 6 chữ số gửi qua email: xác thực email khi đăng ký ("verify") hoặc đặt lại mật khẩu ("reset").
+/// Chỉ lưu HMAC của mã (khóa AUTH_SECRET); mỗi email + mục đích chỉ có một mã còn hiệu lực.
+model AuthCode {
+  email     String
+  purpose   String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@id([email, purpose])
+}
+
+/// Dữ liệu học của một người dùng. Lưu dạng JSON, luôn được kiểm tra bằng Zod (src/lib/learner-schema.ts)
+/// trước khi ghi và sau khi đọc.
+model LearnerState {
+  userId     String   @id
+  /// ProgressState: lý thuyết, quiz, nghe chép, XP, streak
+  progress   Json
+  /// RoadmapProfile hoặc null nếu chưa tạo lộ trình
+  roadmap    Json?
+  /// RoadmapLog: các ô đã tích, số giây nói, ghi chú lỗi
+  roadmapLog Json
+  /// Các khoá học ngoài tiếng Anh: { zh?: { progress, roadmap, roadmapLog } } (coursesSchema)
+  courses    Json     @default("{}")
+  /// Tăng mỗi lần ghi — chống ghi đè khi mở nhiều tab/thiết bị
+  version    Int      @default(1)
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Đơn mua gói AI. Thanh toán bằng chuyển khoản (VietQR), nội dung chuyển khoản = code; admin đối soát rồi duyệt.
+model Order {
+  id        String    @id @default(cuid())
+  /// Mã đơn ngắn, ghi trong nội dung chuyển khoản (vd EQ7K3M9P)
+  code      String    @unique
+  userId    String
+  plan      String
+  months    Int
+  amount    Int
+  /// pending | paid | cancelled
+  status    String    @default("pending")
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
+  /// Email admin đã duyệt / huỷ
+  handledBy String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+/// Số lượt AI đã dùng trong một ngày (giờ Việt Nam) — giới hạn lượt/ngày của gói AI.
+model AiUsage {
+  userId String
+  /// YYYY-MM-DD theo Asia/Ho_Chi_Minh
+  day    String
+  count  Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, day])
+}
+
+/// Mã giới thiệu do admin tạo: người dùng nhập mã → được dùng đầy đủ tính năng AI trong grantDays ngày.
+model ReferralCode {
+  /// Viết HOA, chữ + số + gạch ngang (vd ENGQUIZ-VIP)
+  code      String    @id
+  note      String?
+  /// Số ngày được dùng gói AI kể từ lúc nhập mã (null = không thời hạn)
+  grantDays Int?
+  /// Số người được dùng tối đa (null = không giới hạn)
+  maxUses   Int?
+  usedCount Int       @default(0)
+  /// Sau thời điểm này không nhập được mã nữa (null = không hết hạn)
+  expiresAt DateTime?
+  active    Boolean   @default(true)
+  createdBy String
+  createdAt DateTime  @default(now())
+
+  redemptions ReferralRedemption[]
+}
+
+model ReferralRedemption {
+  id         String   @id @default(cuid())
+  code       String
+  userId     String
+  redeemedAt DateTime @default(now())
+
+  referral ReferralCode @relation(fields: [code], references: [code], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([code, userId])
+  @@index([userId])
+}

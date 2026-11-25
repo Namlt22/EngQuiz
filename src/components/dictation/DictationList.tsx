@@ -14,11 +14,6 @@ const KIND_ICON: Record<DictationKind, React.ReactNode> = {
   story: <BookOpen className="size-5" />,
   conversation: <MessagesSquare className="size-5" />,
 };
-const KIND_TONE: Record<DictationKind, string> = {
-  grammar: "from-violet-500 to-indigo-500",
-  story: "from-emerald-500 to-teal-500",
-  conversation: "from-orange-500 to-amber-500",
-};
 
 export function DictationList({ exercises }: { exercises: DictationExercise[] }) {
   const p = useProgress();
@@ -49,7 +44,7 @@ export function DictationList({ exercises }: { exercises: DictationExercise[] })
         return (
           <section key={kind}>
             <div className="mb-3 flex items-center gap-3">
-              <span className={`grid size-10 place-items-center rounded-xl bg-gradient-to-br text-white ${KIND_TONE[kind]}`}>{KIND_ICON[kind]}</span>
+              <span className="grid size-10 place-items-center rounded-xl bg-surface-2 text-primary">{KIND_ICON[kind]}</span>
               <div>
                 <h2 className="font-bold">{DICTATION_KIND_LABELS[kind].label}</h2>
                 <p className="text-xs text-muted">{DICTATION_KIND_LABELS[kind].description}</p>

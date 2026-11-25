@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 184 48" width="184" height="48">
+  <defs>
+    <linearGradient id="o3l-bg" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse"><stop stop-color="#6366F1"/><stop offset="1" stop-color="#A855F7"/></linearGradient>
+    <linearGradient id="o3l-txt" x1="100" y1="0" x2="172" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#6366F1"/><stop offset="1" stop-color="#A855F7"/></linearGradient>
+    <style>.o3l-eng{fill:#0F172A}@media (prefers-color-scheme:dark){.o3l-eng{fill:#F1F5F9}}</style>
+  </defs>
+  <circle cx="24" cy="24" r="22" fill="url(#o3l-bg)"/>
+  <g fill="#fff">
+    <rect x="9" y="19" width="5" height="10" rx="2.5"/>
+    <rect x="17.5" y="13" width="5" height="22" rx="2.5"/>
+    <rect x="26" y="10" width="5" height="28" rx="2.5"/>
+    <rect x="34.5" y="17" width="5" height="14" rx="2.5" opacity=".7"/>
+  </g>
+  <text x="58" y="34" font-family="'Be Vietnam Pro', system-ui, sans-serif" font-weight="800" font-size="27" letter-spacing="-0.5"><tspan class="o3l-eng">Eng</tspan><tspan fill="url(#o3l-txt)">Quiz</tspan></text>
+</svg>
