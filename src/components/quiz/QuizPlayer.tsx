@@ -20,7 +20,7 @@ interface Answered {
   correct: boolean;
 }
 
-export function QuizPlayer({ set }: { set: QuizSet }) {
+export function QuizPlayer({ set, onSaved }: { set: QuizSet; onSaved?: (percent: number, correct: number) => void }) {
   const [items, setItems] = useState<QuizItem[]>(set.items);
   const [round, setRound] = useState(0);
   const [index, setIndex] = useState(0);
@@ -69,6 +69,7 @@ export function QuizPlayer({ set }: { set: QuizSet }) {
       const n = Number(e.key);
       if (!checked && n >= 1 && n <= 6) {
         if (q.type === "mcq" && n <= q.options.length) setResponse({ type: "mcq", choice: n - 1 });
+        if (q.type === "true_false" && n <= 2) setResponse({ type: "true_false", value: n === 1 });
         if (q.type === "error_id") {
           const idx = q.segments.map((s, i) => (s.underline ? i : -1)).filter((i) => i >= 0)[n - 1];
           if (idx !== undefined) setResponse({ type: "error_id", choice: idx });
@@ -91,7 +92,7 @@ export function QuizPlayer({ set }: { set: QuizSet }) {
   }
 
   if (done) {
-    return <QuizResult set={set} answers={answers} isRetryRound={items.length !== set.items.length} onRestart={restart} />;
+    return <QuizResult set={set} answers={answers} isRetryRound={items.length !== set.items.length} onRestart={restart} onSaved={onSaved} />;
   }
 
   const progress = ((index + (checked ? 1 : 0)) / items.length) * 100;
@@ -164,11 +165,13 @@ function QuizResult({
   answers,
   isRetryRound,
   onRestart,
+  onSaved,
 }: {
   set: QuizSet;
   answers: Answered[];
   isRetryRound: boolean;
   onRestart: (onlyWrong: boolean) => void;
+  onSaved?: (percent: number, correct: number) => void;
 }) {
   const correct = answers.filter((a) => a.correct).length;
   const total = answers.length;
@@ -195,13 +198,17 @@ function QuizResult({
       progressActions.addXp(correct);
       return;
     }
-    if (set.kind === "topic") {
+    if (set.kind === "game") {
+      // Game ngữ pháp: chỉ cộng XP; điểm do trang game tự lưu (không ghi vào nhật ký lộ trình).
+      progressActions.addXp(correct);
+      onSaved?.(percent, correct);
+    } else if (set.kind === "topic") {
       progressActions.recordQuiz(byTopic[0][0], percent, correct);
     } else {
       progressActions.addXp(correct * 2);
       progressActions.recordQuizSet(set.id, percent);
     }
-  }, [isRetryRound, set.kind, set.id, byTopic, percent, correct]);
+  }, [isRetryRound, set.kind, set.id, byTopic, percent, correct, onSaved]);
 
   const passed = percent >= PASS_PERCENT;
   const topicSlug = set.kind === "topic" ? byTopic[0][0] : undefined;
@@ -275,6 +282,8 @@ function questionText(q: QuizItem["question"]): string {
       return q.words.join(" / ");
     case "matching":
       return q.prompt;
+    case "true_false":
+      return q.statement;
     default:
       return q.prompt;
   }

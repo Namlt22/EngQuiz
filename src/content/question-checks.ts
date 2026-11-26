@@ -34,6 +34,10 @@ export function expectSelfGrading(q: Question) {
       expect([...q.pairs].sort(), q.id).toEqual(q.right.map((_, i) => i));
       expect(q.pairs.length).toBe(q.left.length);
       break;
+    case "true_false":
+      expect(q.statement.length, q.id).toBeGreaterThan(3);
+      if (!q.answer) expect(q.correction, `${q.id}: câu sai cần có câu sửa`).toBeTruthy();
+      break;
     default:
       expect(q.answers.length, q.id).toBeGreaterThan(0);
       for (const a of q.answers) expect(gradeQuestion(q, { type: q.type, text: a } as never), `${q.id}: ${a}`).toBe(true);

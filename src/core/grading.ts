@@ -9,7 +9,8 @@ export type QuizResponse =
   | { type: "verb_form" | "gap_fill" | "transform"; text: string }
   | { type: "error_id"; choice: number }
   | { type: "word_order"; order: string[] }
-  | { type: "matching"; pairs: number[] };
+  | { type: "matching"; pairs: number[] }
+  | { type: "true_false"; value: boolean | null };
 
 function matchesAny(text: string, answers: string[]): boolean {
   return answers.some((a) => isEquivalent(text, a));
@@ -33,6 +34,8 @@ export function gradeQuestion(q: Question, r: QuizResponse): boolean {
         r.pairs.length === q.pairs.length &&
         r.pairs.every((p, i) => p === q.pairs[i])
       );
+    case "true_false":
+      return r.type === "true_false" && r.value === q.answer;
   }
 }
 
@@ -50,6 +53,8 @@ export function correctAnswerText(q: Question): string {
       return q.answers[0];
     case "matching":
       return q.left.map((l, i) => `${l} — ${q.right[q.pairs[i]]}`).join(" · ");
+    case "true_false":
+      return q.answer ? "Đúng" : q.correction ? `Sai → ${q.correction}` : "Sai";
   }
 }
 
@@ -68,5 +73,7 @@ export function isResponseComplete(q: Question, r: QuizResponse | null): boolean
       return q.type === "word_order" && r.order.length === q.words.length;
     case "matching":
       return r.pairs.every((p) => p >= 0);
+    case "true_false":
+      return r.value !== null;
   }
 }

@@ -5,9 +5,12 @@ import { EN_POS_LABEL, EN_VOCAB_TOPICS } from "./index";
 const allWords = EN_VOCAB_TOPICS.flatMap((t) => t.words.map((w) => ({ topic: t.id, w })));
 
 describe("từ vựng tiếng Anh theo chủ đề", () => {
-  it("600 từ, mỗi chủ đề 25 từ, id chủ đề không trùng", () => {
-    expect(allWords).toHaveLength(600);
-    for (const t of EN_VOCAB_TOPICS) expect(t.words, t.id).toHaveLength(25);
+  it("hơn 1 000 từ, mỗi chủ đề 14–33 từ, id chủ đề không trùng", () => {
+    expect(allWords.length).toBeGreaterThan(1000);
+    for (const t of EN_VOCAB_TOPICS) {
+      expect(t.words.length, t.id).toBeGreaterThanOrEqual(14);
+      expect(t.words.length, t.id).toBeLessThanOrEqual(33);
+    }
     const ids = EN_VOCAB_TOPICS.map((t) => t.id);
     expect(new Set(ids).size).toBe(ids.length);
   });

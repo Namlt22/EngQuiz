@@ -9,7 +9,8 @@ import { CATEGORY_LABELS } from "@/content/levels";
 import { TOPIC_CONTENT } from "@/content/topics";
 import type { Category, LevelCode, Question } from "@/content/types";
 
-export type QuizSetKind = "topic" | "category" | "level";
+/** "game": bộ câu tạo động cho game ngữ pháp (src/core/en-grammar-games.ts), không thuộc danh sách quiz. */
+export type QuizSetKind = "topic" | "category" | "level" | "game";
 
 export interface QuizItem {
   question: Question;

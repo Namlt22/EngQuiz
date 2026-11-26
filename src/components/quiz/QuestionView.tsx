@@ -21,6 +21,7 @@ export const TYPE_LABELS: Record<Question["type"], string> = {
   transform: "Viết lại câu sao cho nghĩa không đổi",
   word_order: "Sắp xếp thành câu đúng",
   matching: "Nối cho phù hợp",
+  true_false: "Đúng hay sai?",
 };
 
 /** Khởi tạo câu trả lời rỗng cho từng dạng. */
@@ -32,6 +33,8 @@ export function emptyResponse(q: Question): QuizResponse | null {
       return { type: "word_order", order: [] };
     case "matching":
       return { type: "matching", pairs: q.left.map(() => -1) };
+    case "true_false":
+      return { type: "true_false", value: null };
     default:
       return null;
   }
@@ -55,7 +58,33 @@ export function QuestionView(props: QuestionViewProps) {
       return <WordOrder {...props} q={q} />;
     case "matching":
       return <Matching {...props} q={q} />;
+    case "true_false":
+      return <TrueFalse {...props} q={q} />;
   }
+}
+
+function TrueFalse({ q, response, onChange, checked }: P<"true_false">) {
+  const value = response?.type === "true_false" ? response.value : null;
+  const opts: [boolean, string][] = [
+    [true, "Đúng"],
+    [false, "Sai"],
+  ];
+  return (
+    <div className="space-y-5">
+      <p className="rounded-2xl bg-surface-2 px-5 py-4 text-xl font-semibold leading-relaxed md:text-2xl">{q.statement}</p>
+      <div className="grid grid-cols-2 gap-3">
+        {opts.map(([v, label], i) => {
+          const state = checked ? (v === q.answer ? "correct" : v === value ? "wrong" : "idle") : v === value ? "selected" : "idle";
+          return (
+            <OptionButton key={label} label={String(i + 1)} state={state} disabled={checked} onClick={() => onChange({ type: "true_false", value: v })}>
+              {label}
+            </OptionButton>
+          );
+        })}
+      </div>
+      {checked && !q.answer && q.correction && <p className="font-semibold text-success">{q.correction}</p>}
+    </div>
+  );
 }
 
 type P<T extends Question["type"]> = QuestionViewProps & { q: Extract<Question, { type: T }> };
@@ -383,6 +412,8 @@ export function describeResponse(q: Question, r: QuizResponse | null): string {
       return r.order.join(" ");
     case "matching":
       return q.type === "matching" ? q.left.map((l, i) => `${l} — ${r.pairs[i] >= 0 ? q.right[r.pairs[i]] : "?"}`).join(" · ") : "";
+    case "true_false":
+      return r.value === null ? "(bỏ trống)" : r.value ? "Đúng" : "Sai";
     default:
       return r.text.trim() || "(bỏ trống)";
   }

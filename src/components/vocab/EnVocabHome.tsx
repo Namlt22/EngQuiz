@@ -1,12 +1,13 @@
 "use client";
 
 /**
- * Trang /vocab: 600 từ tiếng Anh A1–B2 theo chủ đề, ôn thẻ lặp lại ngắt quãng (3 kiểu ôn).
+ * Trang /vocab: từ vựng tiếng Anh A1–B2 theo chủ đề, ôn thẻ lặp lại ngắt quãng (3 kiểu ôn).
  * Cấp và chủ đề nằm trên URL (?level=A2&topic=travel) để quay lại đúng chỗ.
  */
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BookOpen, Brain, Keyboard, Layers, Volume2 } from "lucide-react";
+import Link from "next/link";
+import { BookOpen, Brain, Gamepad2, Keyboard, Layers, Volume2 } from "lucide-react";
 import { EN_POS_LABEL, EN_VOCAB_LEVELS, EN_VOCAB_TOPICS } from "@/content/vocab-en";
 import type { LevelCode } from "@/content/types";
 import { MASTERED_BOX, buildQueue, dayNumber, decodeSrs } from "@/core/srs";
@@ -50,8 +51,11 @@ export function EnVocabHome() {
 
   return (
     <div className="space-y-5">
-      <header>
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-extrabold md:text-3xl">Từ vựng</h1>
+        <Link href={topic ? `/games/vocab/${topic.id}` : "/games"} className="btn-ghost text-sm">
+          <Gamepad2 className="size-4" /> Trò chơi
+        </Link>
       </header>
 
       <div role="tablist" aria-label="Cấp độ" className="flex flex-wrap gap-2">
@@ -70,7 +74,7 @@ export function EnVocabHome() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <TopicChip active={!topic} onClick={() => go(level)} label={`Tất cả · ${topics.length * 25}`} />
+        <TopicChip active={!topic} onClick={() => go(level)} label={`Tất cả · ${topics.reduce((n, t) => n + t.words.length, 0)}`} />
         {topics.map((t) => (
           <TopicChip key={t.id} active={topic?.id === t.id} onClick={() => go(level, t.id)} label={`${t.emoji} ${t.title}`} />
         ))}

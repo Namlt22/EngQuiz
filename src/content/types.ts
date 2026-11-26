@@ -103,6 +103,14 @@ export type Question =
       right: string[];
       /** pairs[i] = chỉ số của right ghép với left[i] */
       pairs: number[];
+    })
+  | (QBase & {
+      /** Câu cho sẵn đúng hay sai ngữ pháp (game ngữ pháp, src/core/en-grammar-games.ts). */
+      type: "true_false";
+      statement: string;
+      answer: boolean;
+      /** Câu đúng, hiện ra khi câu cho sẵn là sai. */
+      correction?: string;
     });
 
 export type QuestionType = Question["type"];
