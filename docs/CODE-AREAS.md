@@ -28,8 +28,9 @@ không import tới chúng, và chúng không import gì từ khu tiếng Trung.
 
 ## Lưu ý cho tính năng tiếng Anh mới
 
-- Menu (`components/layout/nav-items.ts`) thuộc khu dùng chung: lối vào tính năng mới đặt trên các trang tiếng Anh
-  (`/vocab`, `/grammar`, `/quiz`, `/levels`). Muốn thêm vào menu thì cần đồng ý sửa khu dùng chung.
+- Menu (`components/layout/nav-items.ts`) thuộc khu dùng chung. Chủ dự án đã đồng ý đưa `/a1-course`, `/level-test`
+  (Học) và `/games` (Luyện) vào `NAV_EN`; chỉ sửa `NAV_EN`, không đụng `NAV_ZH`. Lối vào khác đặt trên các trang
+  tiếng Anh (`/vocab`, `/grammar`, `/quiz`, `/levels`).
 - Tiến độ của các tính năng mới (điểm game, kết quả kiểm tra trình độ, tiến độ khoá A1 20 ngày) lưu ở
   `lib/en-extra-store.ts` (localStorage riêng của khoá tiếng Anh), vì bộ lưu tiến độ chung (`lib/progress`) và đồng bộ
   tài khoản (`lib/learner-*`) là khu dùng chung. XP vẫn cộng qua `progressActions.addXp` (chỉ gọi, không sửa).
