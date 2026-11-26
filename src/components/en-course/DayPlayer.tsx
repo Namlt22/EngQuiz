@@ -7,7 +7,6 @@ import type { CourseDay } from "@/content/en-course";
 import type { GameWord } from "@/core/en-vocab-games";
 import { isDayDone, isDayUnlocked, type DayGrammar } from "@/lib/en-course";
 import { EN_COURSE_PARTS, enExtraActions, getEnExtra, useEnExtra, type EnCoursePart } from "@/lib/en-extra-store";
-import { HideBottomNav } from "@/components/en-games/HideBottomNav";
 import { CheckPart, GrammarPart, ListeningPart, PART_LABEL, ReadingPart, SpeakingPart, WordsPart, WritingPart } from "./CourseParts";
 
 type Tab = EnCoursePart | "check";
@@ -80,7 +79,6 @@ export function DayPlayer({ day, unitTitle, totalDays, words, grammar }: Props) 
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 pb-10">
-      <HideBottomNav />
       {header}
       <nav className="-mx-4 overflow-x-auto px-4" aria-label="Các phần trong ngày">
         <ol className="flex min-w-max gap-2">

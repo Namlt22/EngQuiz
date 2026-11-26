@@ -66,6 +66,7 @@ export function isBlankCourse(d: CourseData): boolean {
     Object.keys(p.topics).length === 0 &&
     Object.keys(p.dictations).length === 0 &&
     Object.keys(p.speaking ?? {}).length === 0 &&
+    p.enExtra === undefined &&
     d.roadmap === null &&
     Object.values(log).every((r) => Object.keys(r).length === 0)
   );

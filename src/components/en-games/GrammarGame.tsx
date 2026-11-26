@@ -8,10 +8,8 @@ import type { LevelCode, Question } from "@/content/types";
 import { GRAMMAR_MODES, availableGrammarModes, buildGrammarGame, type GrammarMode } from "@/core/en-grammar-games";
 import { shuffle } from "@/core/en-vocab-games";
 import { enExtraActions, useEnExtra } from "@/lib/en-extra-store";
-import type { QuizSet } from "@/lib/quiz-sets";
 import { LevelBadge } from "@/components/ui/LevelBadge";
-import { QuizPlayer } from "@/components/quiz/QuizPlayer";
-import { HideBottomNav } from "./HideBottomNav";
+import { QuizPlayer, type GameQuizSet } from "@/components/quiz/QuizPlayer";
 
 const ICONS: Record<GrammarMode, React.ElementType> = { choose: ListChecks, truefalse: CheckCheck, fix: Wrench, type: Keyboard };
 export const GRAMMAR_MODE_LABEL: Record<GrammarMode, string> = { choose: "Chọn đáp án", truefalse: "Đúng hay sai", fix: "Sửa lỗi", type: "Gõ đáp án" };
@@ -32,7 +30,7 @@ export function GrammarGame({ slug, title, titleEn, level, questions }: Props) {
   const mode = modes.find((m) => m === params.get("mode")) ?? null;
 
   // Bộ câu trộn ở client sau khi chọn kiểu chơi (không lệch hydration).
-  const set: QuizSet | null = useMemo(() => {
+  const set: GameQuizSet | null = useMemo(() => {
     if (!mode) return null;
     const items = shuffle(buildGrammarGame(mode, questions)).map((question) => ({ question, topicSlug: slug }));
     return { id: grammarGameId(slug, mode), kind: "game", title, subtitle: GRAMMAR_MODE_LABEL[mode], level, items };
@@ -40,13 +38,7 @@ export function GrammarGame({ slug, title, titleEn, level, questions }: Props) {
 
   const onSaved = useCallback((percent: number) => mode && enExtraActions.recordGame(grammarGameId(slug, mode), percent), [mode, slug]);
 
-  if (set)
-    return (
-      <>
-        <HideBottomNav />
-        <QuizPlayer key={set.id} set={set} onSaved={onSaved} />
-      </>
-    );
+  if (set) return <QuizPlayer key={set.id} set={set} onSaved={onSaved} />;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">

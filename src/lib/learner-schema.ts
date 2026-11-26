@@ -33,6 +33,9 @@ export const LIMITS = {
   maxXp: 10_000_000,
   /** Số chữ Hán tối đa trong chuỗi "đã viết" (HSK 1–9 có khoảng 3 000 chữ). */
   hanziChars: 4000,
+  /** Tính năng thêm của khoá tiếng Anh (enExtra): điểm game, ngày học khoá A1. */
+  enGames: 2000,
+  enCourseDays: 200,
 } as const;
 
 const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -77,6 +80,27 @@ const notebookEntrySchema = z.strictObject({
   deleted: z.literal(true).optional(),
 });
 
+const levelCode = z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]);
+const coursePartScores = z.strictObject({
+  words: percent.optional(),
+  grammar: percent.optional(),
+  listening: percent.optional(),
+  reading: percent.optional(),
+  writing: percent.optional(),
+  speaking: percent.optional(),
+});
+
+/**
+ * Tính năng thêm chỉ của khoá tiếng Anh (src/lib/en-extra-store.ts): điểm game, kết quả kiểm tra trình độ,
+ * tiến độ khoá A1 20 ngày. Chỉ có trong `progress` của tiếng Anh; khoá khác không bao giờ có trường này.
+ */
+export const enExtraSchema = z.strictObject({
+  version: z.literal(1),
+  games: boundedRecord(key, percent, LIMITS.enGames),
+  placement: z.strictObject({ estimate: levelCode.nullable(), start: levelCode, at: z.number().int().min(0) }).optional(),
+  course: boundedRecord(z.string().regex(/^[A-C][12]-\d{1,3}$/), coursePartScores, LIMITS.enCourseDays),
+});
+
 export const progressSchema = z.strictObject({
   version: z.literal(1),
   topics: boundedRecord(key, topicProgressSchema, LIMITS.topics),
@@ -98,6 +122,8 @@ export const progressSchema = z.strictObject({
   streak: z.number().int().min(0).max(100_000),
   lastActiveDate: dateKey.optional(),
   activity: boundedRecord(dateKey, z.number().int().min(0).max(LIMITS.maxXp), LIMITS.activityDays),
+  // Tùy chọn: chỉ khoá tiếng Anh, và chỉ khi người học đã dùng game / kiểm tra trình độ / khoá A1.
+  enExtra: enExtraSchema.optional(),
 });
 
 export const roadmapProfileSchema = z.strictObject({

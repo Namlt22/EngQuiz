@@ -8,7 +8,6 @@ import { getLevel } from "@/content/levels";
 import { placement, shouldStop, TEST_LEVELS, type LevelAnswer, type Placement } from "@/core/en-level-test";
 import { enExtraActions, useEnExtra } from "@/lib/en-extra-store";
 import { SessionHeader } from "@/components/ui/SessionHeader";
-import { HideBottomNav } from "@/components/en-games/HideBottomNav";
 
 /** Khoá A1 20 ngày chỉ có cho A1; cấp khác dẫn về chủ điểm ngữ pháp của cấp đó. */
 const hasA1Course = (level: string) => level === "A1";
@@ -98,7 +97,6 @@ export function LevelTest() {
   const q = LEVEL_TEST[index];
   return (
     <div className="mx-auto max-w-2xl space-y-8">
-      <HideBottomNav />
       <SessionHeader current={index + 1} total={LEVEL_TEST.length} value={(index / LEVEL_TEST.length) * 100} onExit={() => setStage("intro")} />
       <div key={q.id} className="animate-pop-in space-y-6">
         <p lang="en" className="text-2xl font-semibold leading-relaxed">

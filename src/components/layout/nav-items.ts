@@ -1,4 +1,4 @@
-import { AudioLines, BookOpen, BookOpenText, Bot, Dumbbell, Headphones, House, Layers, MessageSquareText, MessagesSquare, Mic, NotebookPen, PenLine, Repeat, Route, type LucideIcon } from "lucide-react";
+import { AudioLines, BookOpen, BookOpenText, Bot, Dumbbell, Gamepad2, GraduationCap, Headphones, House, Layers, MessageSquareText, MessagesSquare, Mic, NotebookPen, PenLine, Repeat, Route, Target, type LucideIcon } from "lucide-react";
 import type { CourseCode } from "@/lib/course";
 
 /**
@@ -32,6 +32,7 @@ export const NAV_EN: NavEntry[] = [
       { href: "/ipa", label: "Phát âm", icon: AudioLines },
       { href: "/reading", label: "Đọc hiểu", icon: BookOpenText },
       { href: "/dialogues", label: "Hội thoại", icon: MessagesSquare },
+      { href: "/a1-course", label: "Khoá A1 20 ngày", icon: GraduationCap },
     ],
   },
   {
@@ -41,6 +42,8 @@ export const NAV_EN: NavEntry[] = [
     items: [
       { href: "/review", label: "Ôn thẻ hôm nay", icon: Repeat },
       { href: "/quiz", label: "Quiz", icon: PenLine },
+      { href: "/games", label: "Trò chơi", icon: Gamepad2 },
+      { href: "/level-test", label: "Kiểm tra trình độ", icon: Target },
       { href: "/sentences", label: "Đặt câu", icon: MessageSquareText },
       { href: "/dictation", label: "Nghe chép", icon: Headphones },
       { href: "/speaking", label: "Luyện nói", icon: Mic },
@@ -93,6 +96,10 @@ export const SESSION_ROUTES: readonly RegExp[] = [
   /^\/zh\/review\/?$/,
   /^\/sentences\/.+/,
   /^\/zh\/sentences\/.+/,
+  // Khoá tiếng Anh: ngày học khoá A1, game theo chủ đề, bài kiểm tra trình độ.
+  /^\/a1-course\/.+/,
+  /^\/games\/(vocab|grammar)\/.+/,
+  /^\/level-test\/?$/,
 ];
 
 export const isSessionRoute = (pathname: string) => SESSION_ROUTES.some((re) => re.test(pathname));

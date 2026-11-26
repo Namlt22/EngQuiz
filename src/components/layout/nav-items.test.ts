@@ -3,13 +3,13 @@ import { NAV_EN, NAV_ZH, isSessionRoute } from "./nav-items";
 
 describe("màn hình đang làm bài (ẩn thanh tab dưới)", () => {
   it("nhận các trang làm bài của cả hai khoá", () => {
-    for (const p of ["/quiz/topic-be", "/dictation/story-my-family", "/zh/dictation/d1-greeting", "/zh/mock/hsk1", "/review", "/zh/review", "/sentences/en-yes-no", "/zh/sentences/zh-ma"]) {
+    for (const p of ["/quiz/topic-be", "/dictation/story-my-family", "/zh/dictation/d1-greeting", "/zh/mock/hsk1", "/review", "/zh/review", "/sentences/en-yes-no", "/zh/sentences/zh-ma", "/a1-course/3", "/games/vocab/food", "/games/grammar/to-be", "/level-test"]) {
       expect(isSessionRoute(p), p).toBe(true);
     }
   });
 
   it("không ẩn ở trang danh sách hay trang chủ", () => {
-    for (const p of ["/", "/zh", "/quiz", "/dictation", "/zh/dictation", "/zh/mock", "/reading/my-family", "/reviews", "/sentences"]) {
+    for (const p of ["/", "/zh", "/quiz", "/dictation", "/zh/dictation", "/zh/mock", "/reading/my-family", "/reviews", "/sentences", "/a1-course", "/games"]) {
       expect(isSessionRoute(p), p).toBe(false);
     }
   });

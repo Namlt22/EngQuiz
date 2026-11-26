@@ -23,13 +23,29 @@ node scripts/check-areas.mjs --diff origin/claude/tender-volta-83h5q9
 Lệnh `--diff` liệt kê mọi file đã đổi theo khu vực và **báo lỗi** nếu có file thuộc khu tiếng Trung hoặc dùng chung.
 
 Test `src/core/en-areas.test.ts` chạy trong `npm test`: các module tiếng Anh mới (`*/en-*`, `content/en-course`,
-trang `/games`, `/level-test`, `/a1-course`) phải nằm trong khu tiếng Anh, tức là khu tiếng Trung và khu dùng chung
-không import tới chúng, và chúng không import gì từ khu tiếng Trung.
+trang `/games`, `/level-test`, `/a1-course`) phải nằm trong khu tiếng Anh (khu tiếng Trung và khu dùng chung không import
+tới chúng), trừ đúng hai module đồng bộ đã duyệt (`lib/en-extra-store.ts`, `core/en-extra-merge.ts`); và không module nào
+import từ khu tiếng Trung.
 
-## Lưu ý cho tính năng tiếng Anh mới
+Script đọc cả import `@/…` lẫn import tương đối (`./x`, `../x`).
 
-- Menu (`components/layout/nav-items.ts`) thuộc khu dùng chung: lối vào tính năng mới đặt trên các trang tiếng Anh
-  (`/vocab`, `/grammar`, `/quiz`, `/levels`). Muốn thêm vào menu thì cần đồng ý sửa khu dùng chung.
-- Tiến độ của các tính năng mới (điểm game, kết quả kiểm tra trình độ, tiến độ khoá A1 20 ngày) lưu ở
-  `lib/en-extra-store.ts` (localStorage riêng của khoá tiếng Anh), vì bộ lưu tiến độ chung (`lib/progress`) và đồng bộ
-  tài khoản (`lib/learner-*`) là khu dùng chung. XP vẫn cộng qua `progressActions.addXp` (chỉ gọi, không sửa).
+## Các sửa đổi khu dùng chung đã được duyệt (2026-11-26)
+
+Cho các tính năng tiếng Anh mới (game, kiểm tra trình độ, khoá A1 20 ngày), người dùng đồng ý sửa đúng ba chỗ:
+
+1. **Menu** — `components/layout/nav-items.ts`: thêm 3 mục vào `NAV_EN` (Khoá A1 20 ngày · Trò chơi · Kiểm tra trình độ).
+   `NAV_ZH` giữ nguyên.
+2. **Ẩn thanh tab khi đang làm bài** — `SESSION_ROUTES` trong cùng file: thêm `/a1-course/*`, `/games/(vocab|grammar)/*`,
+   `/level-test`.
+3. **Đồng bộ tài khoản** — tiến độ các tính năng mới (`lib/en-extra-store.ts`) lưu trong trường tuỳ chọn
+   `progress.enExtra` của khoá tiếng Anh (cột JSON `progress` sẵn có, không cần migration):
+   `lib/learner-schema.ts` (schema + giới hạn), `lib/learner-merge.ts` (gộp, hàm `core/en-extra-merge.ts`),
+   `lib/learner-sanitize.ts` (giữ nếu hợp lệ), `lib/learner-sync.ts` (không coi là trống), `components/auth/LearnerSync.tsx`
+   (đọc / ghi / theo dõi / xoá khi đổi tài khoản). Khoá tiếng Trung không bao giờ có trường này: test
+   `lib/learner-en-extra.test.ts` kiểm tra dữ liệu tiếng Trung gộp ra y như trước.
+
+Ngoài ba chỗ trên, tính năng tiếng Anh mới không sửa gì ở khu dùng chung. Vì vậy `--diff` sẽ liệt kê đúng các file trên ở
+mục SHARED (và báo lỗi); đó là các thay đổi đã duyệt. Mọi thay đổi dùng chung khác vẫn cần hỏi trước.
+
+Lối vào tính năng mới cũng có trên các trang tiếng Anh (`/vocab`, `/grammar`, `/quiz`). XP của các tính năng mới cộng
+qua `progressActions.addXp` (chỉ gọi, không sửa `lib/progress`).

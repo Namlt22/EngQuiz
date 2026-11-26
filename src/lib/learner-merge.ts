@@ -9,6 +9,7 @@ import { daysFor } from "./course-roadmap";
 import { cleanHanzi } from "./learner-sanitize";
 import { mergeNotebook } from "@/core/notebook";
 import { mergeSrs } from "@/core/srs";
+import { mergeEnExtra } from "@/core/en-extra-merge";
 import type { DictationProgress, ProgressState, TopicProgress } from "./progress-calc";
 import type { RoadmapLog } from "./roadmap";
 import { remapTasks } from "./roadmap-days";
@@ -38,7 +39,9 @@ function mergeDictation(a?: DictationProgress, b?: DictationProgress): Dictation
   return { ...best, done: Math.max(a.done, b.done) };
 }
 
-export function mergeProgress(a: ProgressState, b: ProgressState): ProgressState {
+type SyncedProgress = ProgressState & { enExtra?: CourseData["progress"]["enExtra"] };
+
+export function mergeProgress(a: SyncedProgress, b: SyncedProgress): SyncedProgress {
   const later = (a.lastActiveDate ?? "") >= (b.lastActiveDate ?? "") ? a : b;
   const speaking = mergeKeys(a.speaking ?? {}, b.speaking ?? {}, mergeDictation);
   const reading = mergeKeys(a.reading ?? {}, b.reading ?? {}, mergeDictation);
@@ -60,6 +63,8 @@ export function mergeProgress(a: ProgressState, b: ProgressState): ProgressState
     streak: later.streak,
     ...(later.lastActiveDate ? { lastActiveDate: later.lastActiveDate } : {}),
     activity: mergeKeys(a.activity, b.activity, (x = 0, y = 0) => Math.max(x, y)),
+    // Chỉ khoá tiếng Anh có trường này; khoá khác: cả hai bên đều không có → không thêm gì.
+    ...(a.enExtra || b.enExtra ? { enExtra: mergeEnExtra(a.enExtra, b.enExtra) as CourseData["progress"]["enExtra"] } : {}),
   };
 }
 

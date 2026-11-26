@@ -2,7 +2,7 @@
  * Làm sạch dữ liệu học đọc từ nguồn không tin cậy (localStorage, hoặc bản ghi cũ trong DB):
  * giữ lại phần hợp lệ, bỏ mục sai thay vì vứt cả khối dữ liệu. Kết quả luôn qua được learnerDataSchema.
  */
-import { LIMITS, progressSchema, topicProgressSchema, type CourseData, type CoursesData, type LearnerData } from "./learner-schema";
+import { LIMITS, enExtraSchema, progressSchema, topicProgressSchema, type CourseData, type CoursesData, type LearnerData } from "./learner-schema";
 import { EXTRA_COURSES } from "./course";
 import type { DictationProgress, ProgressState, TopicProgress } from "./progress-calc";
 import { parseLog, parseProfile } from "./roadmap";
@@ -75,7 +75,9 @@ export function sanitizeProgress(raw: unknown): ProgressState {
   if (srs) state.srs = srs;
   const notebook = sanitizeNotebook(r.notebook);
   if (notebook.length) state.notebook = notebook;
-  return progressSchema.parse(state);
+  // Tính năng thêm của khoá tiếng Anh: giữ nguyên nếu hợp lệ, hỏng thì bỏ (không khoá cả tài khoản).
+  const enExtra = enExtraSchema.safeParse(r.enExtra);
+  return progressSchema.parse(enExtra.success ? { ...state, enExtra: enExtra.data } : state);
 }
 
 export function sanitizeCourseData(raw: { progress: unknown; roadmap: unknown; roadmapLog: unknown }): CourseData {

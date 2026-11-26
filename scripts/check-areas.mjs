@@ -54,22 +54,23 @@ function walk(dir, out = []) {
   return out;
 }
 
-function resolveImport(spec) {
-  const base = path.join(ROOT, "src", spec.slice(2));
+/** "@/x" (gốc src) hoặc "./x", "../x" (tương đối với file đang đọc). */
+function resolveImport(spec, fromFile) {
+  const base = spec.startsWith("@/") ? path.join(ROOT, "src", spec.slice(2)) : path.resolve(path.dirname(fromFile), spec);
   for (const c of [base, `${base}.ts`, `${base}.tsx`, path.join(base, "index.ts"), path.join(base, "index.tsx")]) {
     if (existsSync(c) && statSync(c).isFile()) return rel(c);
   }
   return null;
 }
 
-/** Đồ thị import "@/..." của mọi file trong src/. */
+/** Đồ thị import ("@/..." và đường dẫn tương đối) của mọi file trong src/. */
 function importGraph() {
   const graph = new Map();
   for (const f of walk(path.join(ROOT, "src"))) {
     const text = readFileSync(f, "utf8");
     const deps = new Set();
-    for (const m of text.matchAll(/(?:from|import)\s*\(?\s*["'](@\/[^"']+)["']/g)) {
-      const r = resolveImport(m[1]);
+    for (const m of text.matchAll(/(?:from|import)\s*\(?\s*["'](@\/[^"']+|\.{1,2}\/[^"']+)["']/g)) {
+      const r = resolveImport(m[1], f);
       if (r) deps.add(r);
     }
     graph.set(rel(f), deps);

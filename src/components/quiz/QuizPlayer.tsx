@@ -20,7 +20,14 @@ interface Answered {
   correct: boolean;
 }
 
-export function QuizPlayer({ set, onSaved }: { set: QuizSet; onSaved?: (percent: number, correct: number) => void }) {
+/**
+ * Bộ câu tạo động cho game ngữ pháp (src/core/en-grammar-games.ts), không thuộc danh sách quiz.
+ * Khai báo ở đây thay vì sửa QuizSetKind trong lib/quiz-sets.ts vì file đó thuộc khu dùng chung (docs/CODE-AREAS.md).
+ */
+export type GameQuizSet = Omit<QuizSet, "kind"> & { kind: "game" };
+type AnyQuizSet = QuizSet | GameQuizSet;
+
+export function QuizPlayer({ set, onSaved }: { set: AnyQuizSet; onSaved?: (percent: number, correct: number) => void }) {
   const [items, setItems] = useState<QuizItem[]>(set.items);
   const [round, setRound] = useState(0);
   const [index, setIndex] = useState(0);
@@ -167,7 +174,7 @@ function QuizResult({
   onRestart,
   onSaved,
 }: {
-  set: QuizSet;
+  set: AnyQuizSet;
   answers: Answered[];
   isRetryRound: boolean;
   onRestart: (onlyWrong: boolean) => void;

@@ -11,6 +11,7 @@ import type { CourseData, CoursesData, LearnerData } from "@/lib/learner-schema"
 import { EXTRA_COURSES, type CourseCode } from "@/lib/course";
 import { getProgressState, replaceProgress, resetAllProgress, subscribeProgressInTab } from "@/lib/progress";
 import { getRoadmapState, replaceRoadmapState, resetAllRoadmaps, subscribeRoadmapInTab } from "@/lib/roadmap-store";
+import { getEnExtra, isBlankEnExtra, replaceEnExtra, resetEnExtra, subscribeEnExtraInTab } from "@/lib/en-extra-store";
 
 /** Tài khoản sở hữu dữ liệu đang nằm trên máy — tránh gộp nhầm dữ liệu của người khác. */
 const OWNER_KEY = "engquiz:owner";
@@ -41,7 +42,10 @@ export function useSyncStatus(): SyncStatus {
 
 function readCourse(course: CourseCode): CourseData {
   const { profile, log } = getRoadmapState(course);
-  return { progress: getProgressState(course), roadmap: profile ?? null, roadmapLog: log };
+  // Khoá tiếng Anh: kèm tiến độ game / kiểm tra trình độ / khoá A1 (lưu riêng ở en-extra-store), chỉ khi có.
+  const extra = course === "en" ? getEnExtra() : undefined;
+  const progress = extra && !isBlankEnExtra(extra) ? { ...getProgressState(course), enExtra: extra } : getProgressState(course);
+  return { progress, roadmap: profile ?? null, roadmapLog: log };
 }
 
 function readLocal(): LearnerData {
@@ -55,7 +59,9 @@ function readLocal(): LearnerData {
 }
 
 function writeCourse(course: CourseCode, data: CourseData) {
-  replaceProgress(data.progress, course);
+  const { enExtra, ...progress } = data.progress;
+  replaceProgress(progress, course);
+  if (course === "en") replaceEnExtra(enExtra);
   replaceRoadmapState({ profile: data.roadmap ?? undefined, log: data.roadmapLog }, course);
 }
 
@@ -70,9 +76,11 @@ function writeLocal(data: LearnerData) {
 function subscribeLocal(cb: () => void) {
   const a = subscribeProgressInTab(cb);
   const b = subscribeRoadmapInTab(cb);
+  const c = subscribeEnExtraInTab(cb);
   return () => {
     a();
     b();
+    c();
   };
 }
 
@@ -96,6 +104,7 @@ function writeOwner(userId: string | null) {
 function clearLocal() {
   resetAllProgress();
   resetAllRoadmaps();
+  resetEnExtra();
   writeOwner(null);
 }
 

@@ -2,10 +2,12 @@
 
 /**
  * Tiến độ của các tính năng chỉ có ở khoá tiếng Anh: game từ vựng / ngữ pháp, kiểm tra trình độ, khoá A1 20 ngày.
- * Lưu riêng trong localStorage ("engquiz:en-extra:v1") để không sửa bộ lưu tiến độ dùng chung (src/lib/progress.ts)
- * mà khoá tiếng Trung cũng dùng — xem docs/CODE-AREAS.md. XP vẫn cộng vào tổng qua progressActions.addXp.
+ * Lưu riêng trong localStorage ("engquiz:en-extra:v1"), không trộn vào bộ lưu tiến độ chung (src/lib/progress.ts)
+ * mà khoá tiếng Trung cũng dùng. Khi đăng nhập, đồng bộ vào tài khoản trong trường `progress.enExtra` của khoá
+ * tiếng Anh (src/components/auth/LearnerSync.tsx). XP vẫn cộng vào tổng qua progressActions.addXp.
  */
 import { useSyncExternalStore } from "react";
+import type { LevelCode } from "@/content/types";
 import { progressActions } from "./progress";
 
 export const EN_COURSE_PARTS = ["words", "grammar", "listening", "reading", "writing", "speaking"] as const;
@@ -13,9 +15,9 @@ export type EnCoursePart = (typeof EN_COURSE_PARTS)[number];
 
 export interface EnPlacement {
   /** Cấp đã nắm; null = chưa đạt A1. */
-  estimate: string | null;
+  estimate: LevelCode | null;
   /** Cấp nên học tiếp. */
-  start: string;
+  start: LevelCode;
   at: number;
 }
 
@@ -29,7 +31,8 @@ export interface EnExtraState {
 }
 
 const KEY = "engquiz:en-extra:v1";
-const EMPTY: EnExtraState = { version: 1, games: {}, course: {} };
+export const EMPTY_EN_EXTRA: EnExtraState = { version: 1, games: {}, course: {} };
+const EMPTY = EMPTY_EN_EXTRA;
 let state: EnExtraState = EMPTY;
 let loaded = false;
 const listeners = new Set<() => void>();
@@ -99,6 +102,29 @@ function subscribe(cb: () => void) {
 function getSnapshot() {
   load();
   return state;
+}
+
+/* ---------------- Cho bộ đồng bộ tài khoản ---------------- */
+
+/** Chưa có gì để đồng bộ (không gửi trường rỗng lên server). */
+export const isBlankEnExtra = (s: EnExtraState | undefined) =>
+  !s || (Object.keys(s.games).length === 0 && Object.keys(s.course).length === 0 && !s.placement);
+
+/** Thay toàn bộ bằng bản đã gộp với tài khoản (hoặc bản rỗng khi đổi tài khoản). */
+export function replaceEnExtra(next: EnExtraState | undefined) {
+  update(() => ({ ...EMPTY, ...(next ?? {}), games: next?.games ?? {}, course: next?.course ?? {} }));
+}
+
+export function resetEnExtra() {
+  replaceEnExtra(undefined);
+}
+
+/** Chỉ thay đổi trong tab này (thay đổi từ tab khác đến qua sự kiện storage, bộ đồng bộ của tab đó tự gửi). */
+export function subscribeEnExtraInTab(cb: () => void) {
+  listeners.add(cb);
+  return () => {
+    listeners.delete(cb);
+  };
 }
 
 /** Đọc ngoài React (vd trong useEffect): không bao giờ trả trạng thái rỗng của lần render hydrate. */

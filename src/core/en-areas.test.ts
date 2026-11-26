@@ -11,6 +11,11 @@ import { buildClassifier } from "../../scripts/check-areas.mjs";
 
 const ROOT = path.resolve(__dirname, "../..");
 const EN_ONLY = [/^src\/(components|core|lib)\/en-/, /^src\/content\/en-course\//, /^src\/content\/en-level-test\.ts$/, /^src\/app\/(games|level-test|a1-course)\//];
+/**
+ * Hai module tiếng Anh được bộ đồng bộ tài khoản (dùng chung) dùng tới — đã được người dùng đồng ý (2026-11-26):
+ * bộ lưu tiến độ các tính năng thêm và hàm gộp của nó. Script tự xếp chúng vào "dùng chung"; vẫn không được import zh.
+ */
+const SYNCED = new Set(["src/lib/en-extra-store.ts", "src/core/en-extra-merge.ts"]);
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
@@ -31,8 +36,12 @@ describe("ranh giới khu tiếng Anh", () => {
     expect(enOnly.length).toBeGreaterThan(0);
   });
 
-  it.each(enOnly)("%s thuộc khu tiếng Anh (khu tiếng Trung / dùng chung không dùng tới)", (f) => {
+  it.each(enOnly.filter((f) => !SYNCED.has(f)))("%s thuộc khu tiếng Anh (khu tiếng Trung / dùng chung không dùng tới)", (f) => {
     expect(classify(f)).toBe("en");
+  });
+
+  it("chỉ hai module đồng bộ đã duyệt được khu dùng chung dùng tới", () => {
+    expect(enOnly.filter((f) => classify(f) !== "en").sort()).toEqual([...SYNCED].sort());
   });
 
   it.each(enOnly)("%s không import gì từ khu tiếng Trung", (f) => {

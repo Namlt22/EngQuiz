@@ -9,7 +9,6 @@ import { ArrowRight, CheckCircle2, Volume2, XCircle } from "lucide-react";
 import { buildVocabRound, checkWritten, shuffle, type GameWord, type VocabMode, type VocabQuestion } from "@/core/en-vocab-games";
 import { useSpeech } from "@/lib/speech";
 import { SessionHeader } from "@/components/ui/SessionHeader";
-import { HideBottomNav } from "./HideBottomNav";
 
 export interface WordResult {
   wordId: string;
@@ -78,7 +77,6 @@ export function VocabGamePlayer({ words, mode, count = 10, onFinish, onExit }: P
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 pb-32">
-      <HideBottomNav />
       <SessionHeader current={Math.min(done + 1, total)} total={total} value={total ? (done / total) * 100 : 0} onExit={onExit} />
 
       <div key={index} className="animate-pop-in">
